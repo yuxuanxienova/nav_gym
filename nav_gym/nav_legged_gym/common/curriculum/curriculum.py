@@ -1,0 +1,2 @@
+"""Comon curriculum functions"""
+pass
