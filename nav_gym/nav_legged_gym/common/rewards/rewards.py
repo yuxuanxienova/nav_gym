@@ -142,28 +142,71 @@ def base_height(env: "LeggedEnv", params):
     return torch.square(base_height - params["height_target"])
 
 
+# def tracking_lin_vel(env: "LeggedEnv", params):
+#     # Tracking of linear velocity commands (xy axes)
+#     # "std" defines the width of the bel curve
+#     lin_vel_error = torch.sum(torch.square(env.commands[:, :2] - env.robot.root_lin_vel_b[:, :2]), dim=1)
+#     return torch.exp(-lin_vel_error / params["std"])
+
+
+# def tracking_ang_vel(env: "LeggedEnv", params):
+#     # Tracking of angular velocity commands (yaw)
+#     # "std" defines the width of the bel curve
+#     ang_vel_error = torch.square(env.commands[:, 2] - env.robot.root_ang_vel_b[:, 2])
+#     return torch.exp(-ang_vel_error / params["std"])
+def tracking_lin_vel_x(env: "LeggedEnv", params):
+    # Tracking of linear velocity commands (x axes)
+    # "std" defines the width of the bel curve
+    lin_vel_error = torch.square(env.command_generator.get_velocity_command()[:, 0] - env.robot.root_lin_vel_b[:, 0])
+    return torch.exp(-lin_vel_error / params["std"])
+
+
+def tracking_lin_vel_y(env: "LeggedEnv", params):
+    # Tracking of linear velocity commands (y axes)
+    # "std" defines the width of the bel curve
+    lin_vel_error = torch.square(env.command_generator.get_velocity_command()[:, 1] - env.robot.root_lin_vel_b[:, 1])
+    return torch.exp(-lin_vel_error / params["std"])
+
+
 def tracking_lin_vel(env: "LeggedEnv", params):
     # Tracking of linear velocity commands (xy axes)
     # "std" defines the width of the bel curve
-    lin_vel_error = torch.sum(torch.square(env.commands[:, :2] - env.robot.root_lin_vel_b[:, :2]), dim=1)
+    lin_vel_error = torch.sum(
+        torch.square(env.command_generator.get_velocity_command()[:, :2] - env.robot.root_lin_vel_b[:, :2]), dim=1
+    )
+
     return torch.exp(-lin_vel_error / params["std"])
+
+def tracking_lin_vel_direction(env: "LeggedEnv", params):
+    cmd_norm = env.command_generator.get_velocity_command()[:, :2].norm(p=2, dim=-1).clamp(min=1e-5)
+    cmd_normalized = env.command_generator.get_velocity_command()[:, :2] / cmd_norm.unsqueeze(-1)
+
+    dot_prod = torch.sum(cmd_normalized * env.robot.root_lin_vel_b[:, :2], dim=-1)
+    dot_prod[cmd_norm < 0.1] = params["max"] - torch.norm(env.robot.root_lin_vel_b[:, :2])  # stop cmd
+    dot_prod = torch.clamp(dot_prod, min=params["min"], max=params["max"])
+    return torch.clamp(dot_prod, min=params["min"], max=params["max"])
 
 
 def tracking_ang_vel(env: "LeggedEnv", params):
     # Tracking of angular velocity commands (yaw)
     # "std" defines the width of the bel curve
-    ang_vel_error = torch.square(env.commands[:, 2] - env.robot.root_ang_vel_b[:, 2])
+    ang_vel_error = torch.square(env.command_generator.get_velocity_command()[:, 2] - env.robot.root_ang_vel_b[:, 2])
     return torch.exp(-ang_vel_error / params["std"])
 
-
+# def feet_air_time(env: "LeggedEnv", params):
+#     # Reward long steps
+#     first_contact = env.robot.feet_last_air_time > 0.0
+#     reward = torch.sum((env.robot.feet_last_air_time - params["time_threshold"]) * first_contact, dim=1)
+#     # no reward for zero command
+#     reward *= torch.norm(env.commands[:, :2], dim=1) > 0.1
+#     return reward
 def feet_air_time(env: "LeggedEnv", params):
     # Reward long steps
     first_contact = env.robot.feet_last_air_time > 0.0
     reward = torch.sum((env.robot.feet_last_air_time - params["time_threshold"]) * first_contact, dim=1)
     # no reward for zero command
-    reward *= torch.norm(env.commands[:, :2], dim=1) > 0.1
+    reward *= torch.norm(env.command_generator.get_velocity_command()[:, :2], dim=1) > 0.1
     return reward
-
 
 def stumble(env: "LeggedEnv", params):
     # Penalize feet hitting vertical surfaces
@@ -174,12 +217,23 @@ def stumble(env: "LeggedEnv", params):
     )
 
 
+# def stand_still(env: "LeggedEnv", params):
+#     # Penalize motion at zero commands
+#     return torch.sum(torch.abs(env.robot.dof_pos - env.robot.default_dof_pos), dim=1) * (
+#         torch.norm(env.commands[:, :2], dim=1) < 0.1
+#     )
 def stand_still(env: "LeggedEnv", params):
     # Penalize motion at zero commands
     return torch.sum(torch.abs(env.robot.dof_pos - env.robot.default_dof_pos), dim=1) * (
-        torch.norm(env.commands[:, :2], dim=1) < 0.1
+        torch.norm(env.command_generator.get_velocity_command()[:, :2], dim=1) < 0.1
     )
 
+
+def base_motion(env: "LeggedEnv", params):
+    body_z_motion = torch.square(env.robot.root_lin_vel_b[:, 2])
+    body_ang_motion = torch.sum(torch.square(env.robot.root_ang_vel_b[:, :2]), dim=1)
+    rwd_sum = torch.exp(-body_z_motion / params["std_z"]) + torch.exp(-body_ang_motion / params["std_angvel"])
+    return rwd_sum
 
 """
 Position tracking rewards

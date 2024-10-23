@@ -2,10 +2,9 @@
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.legged_env import LeggedEnv
     from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 
-    ANY_ENV = Union[LeggedEnv,LeggedNavEnv]
+    ANY_ENV = Union[LeggedNavEnv]
 
 import torch
 from nav_gym.nav_legged_gym.utils.math_utils import quat_rotate_inverse, yaw_quat
@@ -76,18 +75,19 @@ def projected_gravity(env: "ANY_ENV", params):
 def base_lin_vel(env: "ANY_ENV", params):
     return env.robot.root_lin_vel_b
 
-def base_lin_vel2(env: "LeggedEnv", params):
+def base_lin_vel2(env: "ANY_ENV", params):
     vel_w = (env.robot.root_states[:, :3] - env.robot.last_root_states[:, :3]) / env.dt
     vel_b = quat_rotate_inverse(env.robot.root_quat_w, vel_w)
     return vel_b
 
-def base_ang_vel(env: "LeggedEnv", params):
+def base_ang_vel(env: "ANY_ENV", params):
     return env.robot.root_ang_vel_b
 
 
-def velocity_commands(env: "LeggedEnv", params):
-    return env.commands[:, :3]
-
+# def velocity_commands(env: "LeggedEnv", params):
+#     return env.commands[:, :3]
+def velocity_commands(env: "ANY_ENV", params):
+    return env.command_generator.get_velocity_command()
 
 def latent(env: "LeggedEnv", params):
     sensor = env.sensors[params["sensor"]]

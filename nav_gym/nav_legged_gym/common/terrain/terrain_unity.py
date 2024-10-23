@@ -7,7 +7,7 @@ from isaacgym import gymapi
 from nav_gym.nav_legged_gym.utils.warp_utils import convert_to_wp_mesh
 import torch
 from nav_gym import NAV_GYM_ROOT_DIR
-class Terrain:
+class TerrainUnity:
     def __init__(self,gym,sim,device,num_envs,env_spacing=5.0):
 
         self.gym = gym

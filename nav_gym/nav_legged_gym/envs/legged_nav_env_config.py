@@ -8,7 +8,7 @@ import nav_gym.nav_legged_gym.common.terminations.terminations as T
 import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
-
+from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 class LeggedNavEnvCfg:
     class env:
         """Common configuration for environment."""
@@ -118,17 +118,17 @@ class LeggedNavEnvCfg:
         # terrain_levels = {"func": C.terrain_levels_vel, "mode": "on_reset"}
         max_lin_vel_command = None
 
-    class commands:
-        resampling_time = 10.0  # time before commands are changed [s]
-        heading_command = True  # if true: compute ang vel command from heading error
-        rel_standing_envs = 0.02  # percentage of the robots are standing
-        rel_heading_envs = 1.0  # percentage of the robots follow heading command (the others follow angular velocity)
-        class ranges:
-            lin_vel_x: List = [-1.0, 1.0]  # min max [m/s]
-            lin_vel_y: List = [-1.0, 1.0]  # min max [m/s]
-            ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
-            heading: List = [-3.14, 3.14]  # [rad]
-
+    # class commands:
+    #     resampling_time = 10.0  # time before commands are changed [s]
+    #     heading_command = True  # if true: compute ang vel command from heading error
+    #     rel_standing_envs = 0.02  # percentage of the robots are standing
+    #     rel_heading_envs = 1.0  # percentage of the robots follow heading command (the others follow angular velocity)
+    #     class ranges:
+    #         lin_vel_x: List = [-1.0, 1.0]  # min max [m/s]
+    #         lin_vel_y: List = [-1.0, 1.0]  # min max [m/s]
+    #         ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
+    #         heading: List = [-3.14, 3.14]  # [rad]
+    commands = UnifromVelocityCommandCfg()
 
 if __name__ == "__main__":
     cfg = LeggedNavEnvCfg()

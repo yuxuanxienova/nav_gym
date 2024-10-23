@@ -38,7 +38,8 @@ class TerminationManager:
             #3.3 Enabling Sensors if Required
             if params.get("sensor") is not None:
                 env.enable_sensor(params["sensor"])
-
+        #4. initializing time counter
+        self.time_counter = torch.zeros(env.num_envs, device=env.device)
     def check_termination(self, env: "LeggedEnv"):
         """Check terminations
         Calls each termiantion function which was defined in the config (processed in self.__init__). Returns the logical OR of all functions.
@@ -53,4 +54,13 @@ class TerminationManager:
             terminated |= out
             if params.get("time_out", False): # record time-outs separately
                 self.time_out_buf |= out
+        #3. Updating Time Counters
+        self.time_counter += env.dt
         return terminated
+    def log_info(self, env, env_ids, extras_dict):
+        time_counter_termination = self.time_counter[env_ids][self.time_counter[env_ids] < env.max_episode_length_s]
+        if time_counter_termination.numel() == 0:
+            extras_dict["avg_termination_time"] = env.max_episode_length_s
+        else:
+            extras_dict["avg_termination_time"] = torch.mean(time_counter_termination)
+        self.time_counter[env_ids] = 0.0

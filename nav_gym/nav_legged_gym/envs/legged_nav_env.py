@@ -14,39 +14,39 @@ from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
-from nav_gym.nav_legged_gym.common.terrain.terrain import Terrain
+from nav_gym.nav_legged_gym.common.terrain.terrain_unity import TerrainUnity
 from nav_gym.nav_legged_gym.common.gym_interface import GymInterface
 from nav_gym.nav_legged_gym.common.rewards.reward_manager import RewardManager
 from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsManager
 from nav_gym.nav_legged_gym.common.terminations.termination_manager import TerminationManager
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
-
+from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 class LeggedNavEnv:
     robot: LeggedRobot
     cfg: LeggedNavEnvCfg
     """Environment for locomotion tasks using a legged robot."""
 #-------- 1. Initialize the environment--------
     def __init__(self, cfg: LeggedNavEnvCfg):
+        #1. Store the environment information from config
         self._init_done = False
-        
-        #1. Parse input arguments
         self.cfg = cfg
-        self.dt = cfg.control.decimation * cfg.gym.sim_params.dt
-        self._command_ranges = deepcopy(cfg.commands.ranges)
-        self._push_interval = np.ceil(cfg.randomization.push_interval_s / self.dt)
-
-        #2. Store the environment information from config
         self.num_envs = self.cfg.env.num_envs
         """Number of environment instances."""
         self.num_actions = self.cfg.env.num_actions
         """Number of actions in the environment."""
         self.dt = self.cfg.control.decimation * self.cfg.gym.sim_params.dt
         """Discretized time-step for episode horizon."""
+        #Note:
+        #simulation loop interval = sim_params.dt (0.005=1/240[s])
+        #control loop interval = control.decimation * sim_params.dt (4 * 0.005 = 0.02[s])
         self.max_episode_length_s = self.cfg.env.episode_length_s
         """Maximum duration of episode (in seconds)."""
         self.max_episode_length = math.ceil(self.max_episode_length_s / self.dt)
         """Maximum number of steps per episode."""
+        #2. Store other environment information
+        self._push_interval = int(np.ceil(cfg.randomization.push_interval_s / self.dt))
+        self._command_ranges = deepcopy(cfg.commands.ranges)
 
         #3. Create isaac-interface
         self.gym_iface = GymInterface(cfg.gym)
@@ -66,12 +66,12 @@ class LeggedNavEnv:
         self._init_external_forces()
 
         #8. Prepare mdp helper managers
+        self.command_generator: CommandBase = eval(self.cfg.commands.class_name)(self.cfg.commands, self)
         self.reward_manager = RewardManager(self)
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
         self.sensor_manager = SensorManager(self)
-
         #9. Perform initial reset of all environments (to fill up buffers)
         self.reset()
         # we are ready now! :)
@@ -79,7 +79,7 @@ class LeggedNavEnv:
     def _create_envs(self):
         """Design the environment instances."""
         # add terrain instance
-        self.terrain = Terrain(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs)
+        self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs)
         #----------------------------------------------------------
         # terrain_generator = TerrainGenerator(self.cfg.terrain)
         # self.terrain = Terrain(self.cfg.terrain, self.num_envs, self.gym_iface)
@@ -119,11 +119,13 @@ class LeggedNavEnv:
         # -- action buffers
         self.actions = torch.zeros(self.num_envs, self.num_actions, device=self.device)
         self.last_actions = torch.zeros_like(self.actions)
+        self.last_last_actions = torch.zeros_like(self.actions)
+        self.processed_actions = torch.zeros_like(self.actions)
         # -- command: x vel, y vel, yaw vel, heading
-        self.commands = torch.zeros(self.num_envs, 4, device=self.device)
-        self.heading_target = torch.zeros(self.num_envs, device=self.device)
-        self.is_heading_env = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
-        self.is_standing_env = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
+        # self.commands = torch.zeros(self.num_envs, 4, device=self.device)
+        # self.heading_target = torch.zeros(self.num_envs, device=self.device)
+        # self.is_heading_env = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
+        # self.is_standing_env = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
         # assets buffers
         # -- robot
         self.robot.init_buffers()
@@ -157,17 +159,24 @@ class LeggedNavEnv:
         self.last_actions[env_ids] = 0.0
         self.episode_length_buf[env_ids] = 0
         self.reset_buf[env_ids] = 1
+        # self.push_robots_buf[env_ids] = torch.randint(
+        #     0, self._push_interval, (len(env_ids), 1), device=self.device
+        # ).squeeze()
         # -- resample commands
-        self._resample_commands(env_ids)
+        # self._resample_commands(env_ids)
         # self._update_commands()
 
         self.extras["episode"] = dict()
         self.reward_manager.log_info(self, env_ids, self.extras["episode"])
         self.curriculum_manager.log_info(self, env_ids, self.extras["episode"])
-        # send timeout info to the algorithm
-        if self.cfg.env.send_timeouts:
-            self.extras["time_outs"] = self.termination_manager.time_out_buf
-
+        self.termination_manager.log_info(self, env_ids, self.extras["episode"])
+        # # send timeout info to the algorithm
+        # if self.cfg.env.send_timeouts:
+        #     self.extras["time_outs"] = self.termination_manager.time_out_buf
+        # -- resample commands
+        self.command_generator.log_info(self, env_ids, self.extras["episode"])
+        self.command_generator.resample(env_ids)
+        self.command_generator.update()
         # Resample disturbances
         external_forces = torch.zeros_like(self.external_forces[env_ids])
         external_torques = torch.zeros_like(self.external_torques[env_ids])
@@ -232,11 +241,11 @@ class LeggedNavEnv:
                 - (torch.Tensor) whether the current episode is completed or not
                 - (dict) misc information
         """
-        # -- environment specific pre-processing
+        #Control loop interval = control.decimation * sim_params.dt (4 * 0.005 = 0.02[s])
         processed_actions = self._preprocess_actions(actions)
         contact_forces = torch.zeros_like(self.robot.net_contact_forces)
-        # apply actions into simulator
         for _ in range(self.cfg.control.decimation):
+            #Simulation loop interval = sim_params.dt (0.005=1/240[s])
             # may include recomputing torques (based on actuator models)
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
@@ -312,8 +321,6 @@ class LeggedNavEnv:
         self.gym.clear_lines(self.viewer)
         #2. draw ray hits
         self.sensor_manager.debug_vis()
-        
-
     def _post_physics_step(self):
         """Check terminations, checks erminations and computes rewards, and cache common quantities."""
         # refresh all tensor buffers
@@ -358,26 +365,29 @@ class LeggedNavEnv:
          # check if need to resample
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
-        self._resample_commands(env_ids)
-        if self.cfg.commands.heading_command:
-            # Compute angular velocity from heading direction for heading envs
-            heading_env_ids = self.is_heading_env.nonzero(as_tuple=False).flatten()
-            forward = quat_apply(self.robot.root_quat_w[heading_env_ids, :], self.robot._forward_vec_b[heading_env_ids])
-            heading = torch.atan2(forward[:, 1], forward[:, 0])
-            self.commands[heading_env_ids, 2] = torch.clip(
-                0.5 * wrap_to_pi(self.heading_target[heading_env_ids] - heading),
-                self.cfg.commands.ranges.ang_vel_yaw[0],
-                self.cfg.commands.ranges.ang_vel_yaw[1],
-            )
-        # Enforce standing (i.e., zero velocity commands) for standing envs
-        standing_env_ids = self.is_standing_env.nonzero(as_tuple=False).flatten()
-        self.commands[standing_env_ids, :] = 0.0
+        self.command_generator.resample(env_ids)
+        self.command_generator.update()
+        # self._resample_commands(env_ids)
+        # if self.cfg.commands.heading_command:
+        #     # Compute angular velocity from heading direction for heading envs
+        #     heading_env_ids = self.is_heading_env.nonzero(as_tuple=False).flatten()
+        #     forward = quat_apply(self.robot.root_quat_w[heading_env_ids, :], self.robot._forward_vec_b[heading_env_ids])
+        #     heading = torch.atan2(forward[:, 1], forward[:, 0])
+        #     self.commands[heading_env_ids, 2] = torch.clip(
+        #         0.5 * wrap_to_pi(self.heading_target[heading_env_ids] - heading),
+        #         self.cfg.commands.ranges.ang_vel_yaw[0],
+        #         self.cfg.commands.ranges.ang_vel_yaw[1],
+        #     )
+        # # Enforce standing (i.e., zero velocity commands) for standing envs
+        # standing_env_ids = self.is_standing_env.nonzero(as_tuple=False).flatten()
+        # self.commands[standing_env_ids, :] = 0.0
     def _push_robots(self):
         """Random pushes the robots. Emulates an impulse by setting a randomized base velocity."""
         self.robot.root_states[:, 7:13] += torch.empty(self.num_envs, 6, device=self.device).uniform_(*self.cfg.randomization.push_vel)
         self.gym_iface.write_states_to_sim()
     def update_history(self):
         self.robot.update_history()
+        self.last_last_actions[:] = self.last_actions[:]
         self.last_actions[:] = self.actions[:]
 
 

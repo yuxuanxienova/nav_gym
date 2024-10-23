@@ -14,7 +14,7 @@ from nav_gym.nav_legged_gym.envs.legged_env_config import LeggedEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
-from nav_gym.nav_legged_gym.common.terrain.terrain import Terrain
+from nav_gym.nav_legged_gym.common.terrain.terrain_unity import TerrainUnity
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 
 class TestEnv(LeggedEnv):
