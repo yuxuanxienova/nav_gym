@@ -47,7 +47,7 @@ class LeggedNavEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                         "omni_scanner1": StandardRaycasterCfg(),
+                         "omni_scanner1": OmniScanRaycasterCfg(),
                          # "height_scanner2": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=OmniScanCfg()),
                           }
  

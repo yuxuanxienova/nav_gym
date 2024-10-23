@@ -46,10 +46,23 @@ class StandardRaycasterCfg(SensorCfgBase):
 
 @configclass
 class OmniScanRaycasterCfg(StandardRaycasterCfg):
-    attach_yaw_only: bool = True
+    class_name: str = "Raycaster"
+    terrain_mesh_names: Tuple[str, ...] = ("terrain",)
+    robot_name: str = "robot"
+    body_attachement_name: str = "base"
     attachement_pos: Tuple = (0.0, 0.0, 0.0)
-    max_distance: float = 10.0
+    attachement_quat: Tuple = (0.0, 0.0, 0.0, 1.0)
+    attach_yaw_only: bool = True
+    default_hit_value: float = -10.0  # which value to return when a ray misses the hit
+    default_hit_distance: float = 10.0  # which distance to return when a ray misses the hit
     pattern_cfg: Any = OmniPatternCfg()
+    post_process_func: Optional[Callable] = None  # function to apply to the raycasted values
+    visualize_friction: bool = False
+    max_xy_drift = 0.00
+    max_z_drift = 0.00
+    #new parameter
+    max_distance: float = 10.0
+    
 
 
 
