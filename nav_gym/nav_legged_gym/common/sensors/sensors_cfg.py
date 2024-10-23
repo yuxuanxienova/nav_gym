@@ -2,10 +2,22 @@ from typing import Tuple, Callable, Optional, Any, List
 from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern
 from legged_gym.utils import configclass
 
+#----------------------------Sensor Base-------------------------------
 @configclass
 class SensorCfgBase:
     enable_debug_vis: bool = False
 
+#----------------------------Raycaster Pattern--------------------------------
+@configclass
+class OmniPatternCfg(SensorCfgBase):
+    # width: int = 128
+    # height: int = 72
+    # far_plane: float = 4.0
+    horizontal_fov: float = 180
+    horizontal_res: float = 3.0#8.0
+    vertical_fov: float = 180
+    vertical_res: float = 3.0#8.0
+    pattern_func: Callable = omniscan_pattern  # realsense_pattern
 @configclass
 class GridPatternCfg(SensorCfgBase):
     resolution: float = 0.1
@@ -14,9 +26,9 @@ class GridPatternCfg(SensorCfgBase):
     max_xy_drift: float = 0.05
     direction: Tuple = (0.0, 0.0, -1.0)
     pattern_func: Callable = my_pattern_func    
-
+#----------------------------Raycaster -------------------------------
 @configclass
-class RaycasterCfg(SensorCfgBase):
+class StandardRaycasterCfg(SensorCfgBase):
     class_name: str = "Raycaster"
     terrain_mesh_names: Tuple[str, ...] = ("terrain",)
     robot_name: str = "robot"
@@ -33,21 +45,16 @@ class RaycasterCfg(SensorCfgBase):
     max_z_drift = 0.00
 
 @configclass
-class OmniPatternCfg(SensorCfgBase):
-    # width: int = 128
-    # height: int = 72
-    # far_plane: float = 4.0
-    horizontal_fov: float = 180
-    horizontal_res: float = 3.0#8.0
-    vertical_fov: float = 180
-    vertical_res: float = 3.0#8.0
-    pattern_func: Callable = omniscan_pattern  # realsense_pattern
-
-@configclass
-class OmniScanCfg(RaycasterCfg):
+class OmniScanRaycasterCfg(StandardRaycasterCfg):
     attach_yaw_only: bool = True
-    pattern_cfg: Any = OmniPatternCfg()
     attachement_pos: Tuple = (0.0, 0.0, 0.0)
     max_distance: float = 10.0
+    pattern_cfg: Any = OmniPatternCfg()
+
+
+
+
+
+
 
 

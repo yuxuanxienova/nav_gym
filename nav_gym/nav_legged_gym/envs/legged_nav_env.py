@@ -20,7 +20,7 @@ from nav_gym.nav_legged_gym.common.rewards.reward_manager import RewardManager
 from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsManager
 from nav_gym.nav_legged_gym.common.terminations.termination_manager import TerminationManager
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
-from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase
+from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 
 class LeggedNavEnv:
     robot: LeggedRobot
@@ -70,6 +70,7 @@ class LeggedNavEnv:
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
+        self.sensor_manager = SensorManager(self)
 
         #9. Perform initial reset of all environments (to fill up buffers)
         self.reset()
@@ -251,8 +252,7 @@ class LeggedNavEnv:
                 contact_forces,
             )
             #---------------------------TODO: check the sensors update
-            # for _, s in self.sensors.items():
-            #     s.needs_update()
+            self.sensor_manager.update()
             #--------------------------------
         self.robot.net_contact_forces[:] = contact_forces
         # render viewer
@@ -309,11 +309,12 @@ class LeggedNavEnv:
         self.gym_iface.render(sync_frame_time)
     def _draw_debug_vis(self):
         """Draws height measurement points for visualization."""
-        # draw height lines
-        if "height_scanner" not in self.sensors:
-            return
-        self.sensors["height_scanner"].debug_vis(self)
-        # self.sensors["height_scanner2"].debug_vis(self)
+        #1. clear previous lines
+        self.gym.clear_lines(self.viewer)
+        #2. draw ray hits
+        self.sensor_manager.debug_vis()
+        
+
     def _post_physics_step(self):
         """Check terminations, checks erminations and computes rewards, and cache common quantities."""
         # refresh all tensor buffers
@@ -346,8 +347,7 @@ class LeggedNavEnv:
             self.robot.update_buffers(dt=self.dt, env_ids=env_ids)
             # re-update sensors for envs that were reset
             #----------------------------------------------TODO: check the sensors update
-            # for _, s in self.sensors.items():
-            #     s.needs_update()
+            self.sensor_manager.update()
             #-------------------------------------------------------
 
         # update velocity commands

@@ -1,15 +1,16 @@
-from dataclasses import MISSING
-import torch
-import warp as wp
-import numpy as np
-import open3d as o3d
 
+#isaac
 from isaacgym.torch_utils import quat_apply
 from nav_gym.nav_legged_gym.utils.math_utils import matrix_from_quat, quat_apply_yaw, torch_rand_float, yaw_quat, quat_rotate_inverse
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.utils.warp_utils import ray_cast
 from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import *
-
+#python
+from dataclasses import MISSING
+import torch
+import warp as wp
+import numpy as np
+import open3d as o3d
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -40,9 +41,13 @@ class SensorBase:
     def needs_update(self):
         self.is_up_to_date = False
 
+    def debug_vis(self):
+        pass
+
 class Raycaster(SensorBase):
-    def __init__(self, cfg: RaycasterCfg, env: "BaseEnv"):
+    def __init__(self, cfg: StandardRaycasterCfg, env: "BaseEnv"):
         #1. Configuration and Environment Setup
+        self.env = env
         self.cfg = cfg
         self.terrain_mesh = env.terrain.wp_meshes
         self.robot = getattr(env, cfg.robot_name)
@@ -81,7 +86,7 @@ class Raycaster(SensorBase):
         self.sphere_geom = None
         self.is_up_to_date = False
 
-    def update(self, dt, env_ids=...):
+    def update(self,env_ids=...):
         """Perform raycasting on the terrain.
 
         Args:
@@ -137,15 +142,14 @@ class Raycaster(SensorBase):
         (from rays that didn't hit anything) are replaced with a default value."""
         return torch.nan_to_num(self.ray_distances, posinf=self.cfg.default_hit_distance)
     
-    def debug_vis(self, env: "BaseEnv"):
+    def debug_vis(self):
         """Visualizes the ray hits in the simulation environment"""
         #1. Initializing Visualization Geometry
         if self.sphere_geom is None:self.sphere_geom = BatchWireframeSphereGeometry(self.num_envs * self.num_rays, 0.02, 4, 4, None, color=(0, 1, 0))
-
         #2. Drawing Ray Hits
         points = self.ray_hits_world.clone()
         points[..., :2] -= self.drift[..., :2]
-        self.sphere_geom.draw(points, env.gym, env.viewer, env.envs[0])
+        self.sphere_geom.draw(points, self.env.gym, self.env.viewer, self.env.envs[0])
 
 
 
