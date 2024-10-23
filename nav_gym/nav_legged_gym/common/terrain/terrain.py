@@ -29,9 +29,13 @@ class Terrain:
 
         # Calculate the center of the mesh
         mesh_center = self.terrain_mesh.centroid
+        x=0.0
+        y=0.0
+        z=2.0
+        translation = np.array([-y, z, x])# standard to unity vector conversion: x_u,y_u,z_u->-y,z,x
 
         # Optionally, translate the mesh so that its center is at the origin
-        self.terrain_mesh.apply_translation(-mesh_center)
+        self.terrain_mesh.apply_translation(-mesh_center + translation)
 
         # Set the heading angle in degrees
         heading_angle_degrees = 90  # Replace with your desired angle in degrees
@@ -60,7 +64,7 @@ class Terrain:
 
         # Initialize the transform without any rotation
         self.tm_params.transform = gymapi.Transform()
-        self.tm_params.transform.p = gymapi.Vec3(0.0, 0.0, 0.0)  # Adjust as needed
+        self.tm_params.transform.p = gymapi.Vec3(0.0, 0.0, 0.0)  # dON'T CHANGE THIS, WILL CAUSE DIFFERNECE IN WP MESH
 
         # Set friction and restitution
         self.tm_params.static_friction = 0.5

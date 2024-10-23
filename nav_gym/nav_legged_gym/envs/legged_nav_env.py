@@ -130,7 +130,6 @@ class LeggedNavEnv:
     def _init_external_forces(self):
         self.external_forces = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
         self.external_torques = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
-
 #-------- 2. Reset the environment--------
     def reset(self) -> Tuple[torch.Tensor, Union[torch.Tensor, None]]:
         """Reset all environment instances."""
@@ -251,9 +250,9 @@ class LeggedNavEnv:
                 self.robot.net_contact_forces,
                 contact_forces,
             )
-            #---------------------------TODO: check the sensors update
+            #sensors update
             self.sensor_manager.update()
-            #--------------------------------
+
         self.robot.net_contact_forces[:] = contact_forces
         # render viewer
         self.render()
@@ -329,8 +328,6 @@ class LeggedNavEnv:
         self.common_step_counter += 1
         # update robot
         self.robot.update_buffers(dt=self.dt)
-        for _, s in self.sensors.items():
-            s.needs_update()
         # rewards, resets, ...
         # -- terminations
         self.reset_buf = self.termination_manager.check_termination(self)
@@ -346,9 +343,7 @@ class LeggedNavEnv:
             # re-update robots for envs that were reset
             self.robot.update_buffers(dt=self.dt, env_ids=env_ids)
             # re-update sensors for envs that were reset
-            #----------------------------------------------TODO: check the sensors update
             self.sensor_manager.update()
-            #-------------------------------------------------------
 
         # update velocity commands
         self._update_commands()
