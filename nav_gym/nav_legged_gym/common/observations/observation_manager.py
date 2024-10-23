@@ -1,26 +1,27 @@
+#isaac
+from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+#python
 import torch
-
-
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 class ObsManager:
-    def __init__(self, env):
+    def __init__(self, env:LeggedNavEnvCfg):
         #1. Initializing Attributes
         self.obs_per_group = {}
         self.obs_dims_per_group = {}
         self.obs = {}
-        if env.cfg.__dict__.get("observations", None) is None:
+        if class_to_dict(env.cfg).get("observations", None) is None:
             return
-        self.cfg = env.cfg.observations
-        obs_groups = self.cfg.__dict__
+        obs_cfg_dict =class_to_dict(env.cfg.observations)
         #2. Iterating Over Observation Groups
-        for group_name, obs_group in obs_groups.items():
-            if obs_group is None:
+        for group_name, obs_group_dict in obs_cfg_dict.items():
+            if obs_group_dict is None:
                 continue
             #2.1 Initializing Observation Group
             self.obs_per_group[group_name] = []
             obs_dim = 0
-            add_noise = obs_group.add_noise
+            add_noise = obs_group_dict["add_noise"]
             #2.2 Iterating Over Observation Functions in the Group
-            for _, params in obs_group.__dict__.items():
+            for _, params in obs_group_dict.items():
                 if not isinstance(params, dict):
                     continue
                 if not add_noise:  # turn off all noise
@@ -76,3 +77,8 @@ class ObsManager:
 
     def _add_uniform_noise(self, obs, noise_level):
         return obs + (2 * torch.rand_like(obs) - 1) * noise_level
+
+if __name__ == "__main__":
+    cfg = LeggedNavEnvCfg()
+    print(cfg.observations)
+

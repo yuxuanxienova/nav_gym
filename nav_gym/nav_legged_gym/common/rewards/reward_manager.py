@@ -1,5 +1,5 @@
 import torch
-
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 
 class RewardManager:
     def __init__(self, env):
@@ -12,11 +12,11 @@ class RewardManager:
         self.episode_sums = {}
         self.reward = 0.0
         self.only_positive_rewards = False
-        if env.cfg.__dict__.get("rewards", None) is None:
+        if class_to_dict(env.cfg).get("rewards", None) is None:
             return
         self.only_positive_rewards = env.cfg.rewards.only_positive_rewards
         #2. Iterating Over Reward Configurations
-        for name, params in env.cfg.rewards.__dict__.items():
+        for name, params in class_to_dict(env.cfg.rewards).items():
             #2.1 Remove zero scales + Multiply non-zero ones by dt
             if not isinstance(params, dict) or params["scale"] == 0:
                 continue

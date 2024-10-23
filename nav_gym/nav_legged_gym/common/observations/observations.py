@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.legged_env import LeggedEnv
+    from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 
-    ANY_ENV = Union[LeggedEnv]
+    ANY_ENV = Union[LeggedEnv,LeggedNavEnv]
 
 import torch
 from nav_gym.nav_legged_gym.utils.math_utils import quat_rotate_inverse, yaw_quat
@@ -68,11 +69,11 @@ def imu_ang_vel(env: "ANY_ENV", params):
 """ Locomotion specific observation functions"""
 
 
-def projected_gravity(env: "LeggedEnv", params):
+def projected_gravity(env: "ANY_ENV", params):
     return env.robot.projected_gravity_b
 
 
-def base_lin_vel(env: "LeggedEnv", params):
+def base_lin_vel(env: "ANY_ENV", params):
     return env.robot.root_lin_vel_b
 
 def base_lin_vel2(env: "LeggedEnv", params):

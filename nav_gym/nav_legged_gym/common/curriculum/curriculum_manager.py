@@ -1,23 +1,22 @@
 import torch
-
 # solves circular imports of LeggedRobot
 from typing import TYPE_CHECKING
-
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs import LeggedEnv
+    from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 
 
 class CurriculumManager:
-    def __init__(self, env: "LeggedEnv"):
+    def __init__(self, env: "LeggedNavEnv"):
         """Prepares a list of fucntions"""
         #1. Initializing Attributes
         self.functions = {"on_reset": {}, "on_command_resample": {}}
         self.params = {}
-        if env.cfg.__dict__.get("curriculum", None) is None:
+        if class_to_dict(env.cfg).get("curriculum", None) is None:
             return
         #2. Registering Curriculum Functions
         #Iterates over each curriculum configuration defined in env.cfg.curriculum and registers the corresponding functions and parameters.
-        for name, params in env.cfg.curriculum.__dict__.items():
+        for name, params in class_to_dict(env.cfg.curriculum).items():
             if not isinstance(params, dict):
                 continue
             #2.1 Retrieves the mode from params. If not specified, defaults to "on_reset"
@@ -30,7 +29,7 @@ class CurriculumManager:
             if params.get("sensor") is not None:
                 env.enable_sensor(params["sensor"])
 
-    def update_curriculum(self, env: "LeggedEnv", env_ids, mode="on_reset"):
+    def update_curriculum(self, env: "LeggedNavEnv", env_ids, mode="on_reset"):
         """Update curriculum
         Calls each update function which was defined in the config (processed in self.__init__). Each function modifies the env directly.
         """
@@ -38,7 +37,7 @@ class CurriculumManager:
             params = self.params[name]
             function(env, env_ids, params)
 
-    def log_info(self, env: "LeggedEnv", env_ids, extras_dict):
+    def log_info(self, env: "LeggedNavEnv", env_ids, extras_dict):
         # if "terrain_levels" in self.params.keys():
         #     extras_dict["terrain_level"] = torch.mean(env.terrain.terrain_levels.float())
         if "max_lin_vel_command" in self.params.keys():

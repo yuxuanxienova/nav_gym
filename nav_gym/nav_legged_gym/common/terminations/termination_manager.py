@@ -1,5 +1,5 @@
 import torch
-
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 # solves circular imports of LeggedRobot
 from typing import TYPE_CHECKING
 
@@ -15,13 +15,13 @@ class TerminationManager:
         self.params = {}
         self.time_out_buf = torch.zeros_like(env.reset_buf)
         self.reset_on_termination = True
-        if env.cfg.__dict__.get("terminations", None) is None:
+        if class_to_dict(env.cfg).get("terminations", None) is None:
             return
         #2. Retrieves the reset_on_termination flag from the environment's terminations configuration.
         #This flag determines whether the environment should reset when a termination condition is met.
         self.reset_on_termination = env.cfg.terminations.reset_on_termination
         #3. Iterating Over Termination Configurations
-        for name, params in env.cfg.terminations.__dict__.items():
+        for name, params in class_to_dict(env.cfg.terminations).items():
             if not isinstance(params, dict):
                 continue
             #3.1 Handling Degrees of Freedom (DOFs) and Bodies as Parameters

@@ -50,7 +50,4 @@ class OmniScanCfg(RaycasterCfg):
     attachement_pos: Tuple = (0.0, 0.0, 0.0)
     max_distance: float = 10.0
 
-@configclass
-class SensorsCfg:
-    # height_scanner = RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg())
-    pass
+
