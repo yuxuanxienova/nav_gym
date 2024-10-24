@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import SensorCfgBase, OmniPatternCfg, FootScanPatternCfg
 def my_pattern_func(pattern_cfg, device):
     # Example: generate rays in a circular pattern
     num_rays = 16
@@ -35,4 +37,28 @@ def omniscan_pattern(pattern_cfg, device: str) -> Tuple[torch.Tensor, torch.Tens
     ray_directions = -torch.stack([x, y, z], dim=1)#Dim: (num_rays, 3)
     ray_starts = torch.zeros_like(ray_directions)#Dim: (num_rays, 3)
     # print("ray_directions", ray_directions)
+    return ray_starts, ray_directions
+
+
+def foot_scan_pattern(pattern_cfg: "FootScanPatternCfg", device: str) -> Tuple[torch.Tensor, torch.Tensor]:
+    """The foot scan pattern for ray casting.
+    Args:
+        pattern_cfg (FootScanPatternCfg): The config for the pattern.
+        device (str): The device
+    Returns:
+        ray_starts (torch.Tensor): The starting positions of the rays
+        ray_directions (torch.Tensor): The ray directions
+    """
+    pattern = []
+    for i, r in enumerate(pattern_cfg.radii):
+        for j in range(pattern_cfg.num_points[i]):
+            angle = 2.0 * np.pi * j / pattern_cfg.num_points[i]
+            x = r * np.cos(angle)
+            y = r * np.sin(angle)
+            z = 0.0
+            pattern.append([x, y, z])
+    ray_starts = torch.tensor(pattern, dtype=torch.float).to(device)
+
+    ray_directions = torch.zeros_like(ray_starts)
+    ray_directions[..., :] = torch.tensor(list(pattern_cfg.direction), device=device)
     return ray_starts, ray_directions

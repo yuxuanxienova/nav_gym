@@ -1,7 +1,7 @@
 
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robots_cfg import LeggedRobotCfg,anymal_d_robot_cfg
 from nav_gym.nav_legged_gym.common.gym_interface.gym_interface_cfg import GymInterfaceCfg, ViewerCfg,SimParamsCfg,PhysxCfg
-from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import StandardRaycasterCfg,OmniScanRaycasterCfg
+from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import StandardRaycasterCfg,OmniScanRaycasterCfg,FootScanCfg
 import nav_gym.nav_legged_gym.common.observations.observations as O
 import nav_gym.nav_legged_gym.common.rewards.rewards as R
 import nav_gym.nav_legged_gym.common.terminations.terminations as T
@@ -49,6 +49,7 @@ class LeggedNavEnvCfg:
         raycasters_dict = {
                          "omni_scanner1": OmniScanRaycasterCfg(),
                          # "height_scanner2": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=OmniScanCfg()),
+                         "foot_scanner_lf": FootScanCfg(body_attachement_name="LF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                           }
  
 

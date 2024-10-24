@@ -97,9 +97,9 @@ class Raycaster(SensorBase):
         # quats = states[..., 3:7]
         env_ids = torch.arange(self.num_envs, device=self.device) if env_ids is ... else env_ids
         #1. Robot State Retrieval
-        pos = self.robot.root_pos_w #Dim:[num_envs,3]
-        quats = self.robot.root_quat_w #Dim:[num_envs,4]
-
+        states = self.robot.rigid_body_states[env_ids, self.body_idx, :].squeeze(1)
+        pos = states[..., :3]#Dim:[num_envs,3]
+        quats = states[..., 3:7]#Dim:[num_envs,4]
         #2. Transforming Rays to World Frame
         if self.cfg.attach_yaw_only:
             ray_starts_world = quat_apply_yaw(quats.repeat(1, self.num_rays), self.ray_starts[env_ids]) + pos.unsqueeze(1)#Dim:[num_envs, num_rays, 3]
