@@ -16,7 +16,7 @@ class TerrainUnity:
         self.num_envs = num_envs
         self.env_spacing = env_spacing
         # Load your terrain mesh here
-        asset_root = os.path.join(NAV_GYM_ROOT_DIR,"assets")
+        asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
         terrain_file = "/terrain/simple_terrain2.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
@@ -88,7 +88,7 @@ class TerrainUnity:
         spacing = self.env_spacing
         self.env_origins[:, 0] = spacing * xx.flatten()[:self.num_envs]
         self.env_origins[:, 1] = spacing * yy.flatten()[:self.num_envs]
-        self.env_origins[:, 2] = 0.0
+        self.env_origins[:, 2] = -1.0
         
     def sample_new_init_poses(self,env_ids):
         # Sample new initial poses for the environments

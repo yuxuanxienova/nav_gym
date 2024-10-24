@@ -17,7 +17,7 @@ class LeggedRobotCfg(ArticulationCfg):
 
 anymal_d_robot_cfg = LeggedRobotCfg(
     asset_name="anymal_d",
-    asset_file = "anymal_c/urdf/anymal_c.urdf",
+    asset_file = "anymal_d/urdf/anymal_d.urdf",
     feet_names=".*FOOT",
     self_collisions=True,
     replace_cylinder_with_capsule=True,

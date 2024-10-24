@@ -22,7 +22,6 @@ from nav_gym.nav_legged_gym.common.terminations.termination_manager import Termi
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
-from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 class LeggedNavEnv:
     robot: LeggedRobot
     cfg: LeggedNavEnvCfg
@@ -33,8 +32,11 @@ class LeggedNavEnv:
         self._init_done = False
         self.cfg = cfg
         self.num_envs = self.cfg.env.num_envs
+        """Number of environment instances."""
         self.num_actions = self.cfg.env.num_actions
+        """Number of actions in the environment."""
         self.dt = self.cfg.control.decimation * self.cfg.gym.sim_params.dt
+        """Discretized time-step for episode horizon."""
         #Note:
         #simulation loop interval = sim_params.dt (0.005=1/240[s])
         #control loop interval = control.decimation * sim_params.dt (4 * 0.005 = 0.02[s])
@@ -70,15 +72,8 @@ class LeggedNavEnv:
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
         self.sensor_manager = SensorManager(self)
-        #9. Store the environment information from managers
-        self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
-        self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
-        #10. Perform initial reset of all environments (to fill up buffers)
+        #9. Perform initial reset of all environments (to fill up buffers)
         self.reset()
-        #11. Create debug usage
-        self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
-        self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
-        self.sphere_geoms_blue = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 0, 1))
         # we are ready now! :)
         self._init_done = True
     def _create_envs(self):
@@ -246,11 +241,11 @@ class LeggedNavEnv:
                 - (torch.Tensor) whether the current episode is completed or not
                 - (dict) misc information
         """
-        #Control loop interval = control.decimation * sim_params.dt (4 * 0.0025 = 0.01[s])
+        #Control loop interval = control.decimation * sim_params.dt (4 * 0.005 = 0.02[s])
         processed_actions = self._preprocess_actions(actions)
         contact_forces = torch.zeros_like(self.robot.net_contact_forces)
         for _ in range(self.cfg.control.decimation):
-            #Simulation loop interval = sim_params.dt (0.0025[s])
+            #Simulation loop interval = sim_params.dt (0.005=1/240[s])
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
             self._apply_external_disturbance()
@@ -280,7 +275,7 @@ class LeggedNavEnv:
         # Story memory
         self.update_history()
         # return mdp tuples
-        return (self.obs_buf, self.obs_manager.get_obs_from_group("privileged") ,self.rew_buf, self.reset_buf, self.extras)
+        return (self.obs_buf, self.rew_buf, self.reset_buf, self.extras)
     def _preprocess_actions(self, actions: torch.Tensor) -> torch.Tensor:
         """Pre-process actions from the environment into actor's commands.
         The step call (by default) performs the following operations:
@@ -325,15 +320,6 @@ class LeggedNavEnv:
         self.gym.clear_lines(self.viewer)
         #2. draw ray hits
         self.sensor_manager.debug_vis()
-        #3. Drawing the Axis
-        sphere_pos_init = self.robot.root_states[:, :3]
-        self.sphere_geoms_red.draw(sphere_pos_init , self.gym, self.viewer, self.envs[0])
-        x_offset = torch.tensor([0.5,0,0],device=self.device)
-        y_offset = torch.tensor([0,0.5,0],device=self.device)
-        z_offset = torch.tensor([0,0,0.5],device=self.device)
-        self.sphere_geoms_red.draw(sphere_pos_init + x_offset, self.gym, self.viewer, self.envs[0])
-        self.sphere_geoms_green.draw(sphere_pos_init + y_offset, self.gym, self.viewer, self.envs[0])
-        self.sphere_geoms_blue.draw(sphere_pos_init + z_offset, self.gym, self.viewer, self.envs[0])
     def _post_physics_step(self):
         """Check terminations, checks erminations and computes rewards, and cache common quantities."""
         # refresh all tensor buffers
@@ -402,12 +388,6 @@ class LeggedNavEnv:
         self.robot.update_history()
         self.last_last_actions[:] = self.last_actions[:]
         self.last_actions[:] = self.actions[:]
-#-------- 4. Get/Set functions--------
-    def get_observations(self):
-        return self.obs_manager.get_obs_from_group("policy")
-
-    def get_privileged_observations(self):
-        return self.obs_manager.get_obs_from_group("privileged")
 
 
 

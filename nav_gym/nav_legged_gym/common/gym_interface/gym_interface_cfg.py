@@ -95,3 +95,9 @@ class GymInterfaceCfg:
 
     sim_params: SimParamsCfg = SimParamsCfg()
     viewer: ViewerCfg = ViewerCfg()
+
+if __name__ == "__main__":
+    gyminterfacecfg = GymInterfaceCfg(graphics_device_id=0)
+    gyminterfacecfg = GymInterfaceCfg(SimParamsCfg(dt=0.01))
+
+

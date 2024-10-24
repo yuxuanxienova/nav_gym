@@ -77,6 +77,16 @@ class ObsManager:
 
     def _add_uniform_noise(self, obs, noise_level):
         return obs + (2 * torch.rand_like(obs) - 1) * noise_level
+    def get_obs_dims_from_group(self, group_name):
+        if group_name in self.obs_dims_per_group:
+            return self.obs_dims_per_group[group_name]
+        else:
+            return None
+    def get_obs_from_group(self,group_name:str):
+        if group_name in self.obs:
+            return self.obs[group_name]
+        else:
+            return None
 
 if __name__ == "__main__":
     cfg = LeggedNavEnvCfg()

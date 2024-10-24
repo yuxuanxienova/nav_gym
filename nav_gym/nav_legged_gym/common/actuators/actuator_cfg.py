@@ -55,7 +55,7 @@ class ActuatorNetLSTMCfg(DCMotorCfg):
 """ Instances """
 import os
 anymal_d_actuator_cfg = ActuatorNetMLPCfg(
-    network_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "assets") + "/actuator_model/anymal_d_actuator.jit",
+    network_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "resources") + "/actuator_model/anymal_d_actuator.jit",
     gear_ratio=1.0,
     peak_motor_torque=140.0,
     motor_velocity_limit=8.5,
