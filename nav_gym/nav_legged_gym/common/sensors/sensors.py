@@ -97,30 +97,30 @@ class Raycaster(SensorBase):
         # quats = states[..., 3:7]
         env_ids = torch.arange(self.num_envs, device=self.device) if env_ids is ... else env_ids
         #1. Robot State Retrieval
-        pos = self.robot.root_pos_w
-        quats = self.robot.root_quat_w
+        pos = self.robot.root_pos_w #Dim:[num_envs,3]
+        quats = self.robot.root_quat_w #Dim:[num_envs,4]
 
         #2. Transforming Rays to World Frame
         if self.cfg.attach_yaw_only:
-            ray_starts_world = quat_apply_yaw(quats.repeat(1, self.num_rays), self.ray_starts[env_ids]) + pos.unsqueeze(1)
-            ray_directions_world = self.ray_directions[env_ids]
+            ray_starts_world = quat_apply_yaw(quats.repeat(1, self.num_rays), self.ray_starts[env_ids]) + pos.unsqueeze(1)#Dim:[num_envs, num_rays, 3]
+            ray_directions_world = quat_apply_yaw(quats.repeat(1, self.num_rays), self.ray_directions[env_ids])
         else:
             ray_starts_world = quat_apply(quats.repeat(1, self.num_rays), self.ray_starts[env_ids]) + pos.unsqueeze(1)
             ray_directions_world = quat_apply(quats.repeat(1, self.num_rays), self.ray_directions[env_ids])
         #2.(Optional)----Debug Raycasting----
-        self.num_rays=3
-        self.drift = torch.zeros(self.num_envs, self.num_rays, 3, device=self.device)
-        self.drift[..., :2] = torch_rand_float(
-            -self.cfg.max_xy_drift, self.cfg.max_xy_drift, (self.num_envs, 2), device=self.device
-        ).unsqueeze(1)
-        self.drift[..., 2] = torch_rand_float(-self.cfg.max_z_drift, self.cfg.max_z_drift, (self.num_envs, 1), device=self.device)
-        self.ray_hits_world = torch.zeros(self.num_envs, self.num_rays, 3, device=self.device)
-        self.ray_distances = torch.zeros(self.num_envs, self.num_rays, 1, device=self.device)
-        ray_starts_debug = torch.tensor([[0,0,0] , [0,0,0] , [0,0,0]]).repeat(len(env_ids),1).to(self.device).float()#Dim:[num_envs,3]
-        ray_starts_world = quat_apply_yaw(quats.repeat(1, 1), ray_starts_debug ) + pos.unsqueeze(1)
+        # self.num_rays=3
+        # self.drift = torch.zeros(self.num_envs, self.num_rays, 3, device=self.device)
+        # self.drift[..., :2] = torch_rand_float(
+        #     -self.cfg.max_xy_drift, self.cfg.max_xy_drift, (self.num_envs, 2), device=self.device
+        # ).unsqueeze(1)
+        # self.drift[..., 2] = torch_rand_float(-self.cfg.max_z_drift, self.cfg.max_z_drift, (self.num_envs, 1), device=self.device)
+        # self.ray_hits_world = torch.zeros(self.num_envs, self.num_rays, 3, device=self.device)
+        # self.ray_distances = torch.zeros(self.num_envs, self.num_rays, 1, device=self.device)
+        # ray_starts_debug = torch.tensor([[0,0,0] , [0,0,0] , [0,0,0]]).repeat(len(env_ids),1).to(self.device).float()#Dim:[num_envs,3]
+        # ray_starts_world = quat_apply_yaw(quats.repeat(1, 1), ray_starts_debug ) + pos.unsqueeze(1)
 
-        ray_directions_debug = torch.tensor([[0,0,-1], [0,1,0] , [1,0,0]]).repeat(len(env_ids),1).to(self.device).float()#Dim:[num_envs,3]
-        ray_directions_world = quat_apply_yaw(quats.repeat(1, 1), ray_directions_debug) 
+        # ray_directions_debug = torch.tensor([[0,0,-1], [0,1,0] , [1,0,0]]).repeat(len(env_ids),1).to(self.device).float()#Dim:[num_envs,3]
+        # ray_directions_world = quat_apply_yaw(quats.repeat(1, 1), ray_directions_debug) 
         #-------------------------------
 
         #3. Raycasting

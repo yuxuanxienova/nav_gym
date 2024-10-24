@@ -54,6 +54,11 @@ class TerminationManager:
             terminated |= out
             if params.get("time_out", False): # record time-outs separately
                 self.time_out_buf |= out
+            #Print info
+            if torch.any(out):
+                print(f"[INFO]Termination {name} triggered")
+                if name == "illegal_contact":
+                    print(f"Contact forces: {torch.norm(env.robot.net_contact_forces[:, params['body_indices'], :], dim=-1)}")
         #3. Updating Time Counters
         self.time_counter += env.dt
         return terminated
