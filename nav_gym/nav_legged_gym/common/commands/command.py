@@ -39,7 +39,7 @@ class CommandBase:
         # sets command data
         raise NotImplementedError()
 
-    def set_velocity_command(self, command):
+    def set_velocity_commands(self, command):
         # sets command data
         raise NotImplementedError()
 
@@ -101,7 +101,36 @@ class UnifromVelocityCommand(CommandBase):
 
         # update standing envs
         self.is_standing_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.prob_standing_envs
+    def set_velocity_commands(self, command):
+        """
+        Sets the velocity commands for all environments.
 
+        Args:
+            x_vel (float or torch.Tensor): Desired x-axis linear velocity.
+            y_vel (float or torch.Tensor): Desired y-axis linear velocity.
+            yaw_vel (float or torch.Tensor): Desired yaw angular velocity.
+        """
+        x_vel, y_vel, yaw_vel = command
+        # Ensure inputs are tensors
+        if not isinstance(x_vel, torch.Tensor):
+            x_vel = torch.tensor(x_vel, device=self.device)
+        if not isinstance(y_vel, torch.Tensor):
+            y_vel = torch.tensor(y_vel, device=self.device)
+        if not isinstance(yaw_vel, torch.Tensor):
+            yaw_vel = torch.tensor(yaw_vel, device=self.device)
+        
+        # Expand to [num_envs] if inputs are scalars
+        if x_vel.dim() == 0:
+            x_vel = x_vel.expand(self.num_envs)
+        if y_vel.dim() == 0:
+            y_vel = y_vel.expand(self.num_envs)
+        if yaw_vel.dim() == 0:
+            yaw_vel = yaw_vel.expand(self.num_envs)
+        
+        # Assign commands using broadcasting
+        self.commands[:, 0] = x_vel
+        self.commands[:, 1] = y_vel
+        self.commands[:, 2] = yaw_vel
     def update(self, env_ids=None):
         """Sets velocity commands to zero for standing envs, computes angular velocity from heading direction."""
 

@@ -6,6 +6,7 @@ from isaacgym import gymapi
 
 from nav_gym.nav_legged_gym.utils.warp_utils import convert_to_wp_mesh
 import torch
+
 from nav_gym import NAV_GYM_ROOT_DIR
 class TerrainUnity:
     def __init__(self,gym,sim,device,num_envs,env_spacing=5.0):
@@ -17,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/simple_terrain2.obj"
+        terrain_file = "/terrain/LevelPlane55.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
@@ -29,9 +30,9 @@ class TerrainUnity:
 
         # Calculate the center of the mesh
         mesh_center = self.terrain_mesh.centroid
-        x=0.0
-        y=0.0
-        z=2.0
+        x=-40.0
+        y=-40.0
+        z=-0.5
         translation = np.array([-y, z, x])# standard to unity vector conversion: x_u,y_u,z_u->-y,z,x
 
         # Optionally, translate the mesh so that its center is at the origin
@@ -78,17 +79,69 @@ class TerrainUnity:
         # Add the terrain mesh to the simulation
         self.gym.add_triangle_mesh(self.sim, self.vertices.flatten(), self.triangles.flatten(), self.tm_params)
 
+    # def _calcu_env_origins(self):
+    #     self.custom_origins = False
+    #     self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)#Dim:(num_envs, 3)
+    #     # create a grid of robots
+    #     num_cols = np.floor(np.sqrt(self.num_envs))
+    #     num_rows = np.ceil(self.num_envs / num_cols)
+    #     xx, yy = torch.meshgrid(torch.arange(num_rows), torch.arange(num_cols))
+    #     spacing = self.env_spacing
+    #     self.env_origins[:, 0] = spacing * xx.flatten()[:self.num_envs]
+    #     self.env_origins[:, 1] = spacing * yy.flatten()[:self.num_envs]
+    #     self.env_origins[:, 2] = -1.0
     def _calcu_env_origins(self):
         self.custom_origins = False
-        self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)#Dim:(num_envs, 3)
-        # create a grid of robots
+        self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)  # Dim:(num_envs, 3)
+        # Create a grid of robots
         num_cols = np.floor(np.sqrt(self.num_envs))
         num_rows = np.ceil(self.num_envs / num_cols)
         xx, yy = torch.meshgrid(torch.arange(num_rows), torch.arange(num_cols))
         spacing = self.env_spacing
         self.env_origins[:, 0] = spacing * xx.flatten()[:self.num_envs]
         self.env_origins[:, 1] = spacing * yy.flatten()[:self.num_envs]
-        self.env_origins[:, 2] = -1.0
+        # Remove the hardcoded z value
+        # self.env_origins[:, 2] = -1.0
+
+        # Prepare ray origins and directions
+        z_max = 60.0  # Set a height above the highest possible terrain point
+        ray_origins = np.zeros((self.num_envs, 3))
+        ray_origins[:, 0] = self.env_origins[:, 0].cpu().numpy()
+        ray_origins[:, 1] = self.env_origins[:, 1].cpu().numpy()
+        ray_origins[:, 2] = z_max  # Start raycasting from above
+
+        ray_directions = np.zeros((self.num_envs, 3))
+        ray_directions[:, 2] = -1.0  # Pointing downwards along the z-axis
+
+        # Perform raycasting
+        ray_intersections, index_ray, index_tri = self.terrain_mesh.ray.intersects_location(
+            ray_origins=ray_origins, ray_directions=ray_directions
+        )
+
+        num_rays = ray_origins.shape[0]
+        highest_intersections = np.zeros((num_rays, 3))
+
+        # Loop through each ray to find the intersection with the largest z-value
+        for ray_idx in range(num_rays):
+            # Get the indices of intersections for the current ray
+            indices = np.where(index_ray == ray_idx)[0]
+            
+            if len(indices) == 0:
+                # Handle rays that did not intersect the mesh
+                print(f"[WARNING] Ray {ray_idx} did not hit the terrain")
+                # You can set a default z-value or handle it as needed
+                highest_intersections[ray_idx] = [ray_origins[ray_idx, 0], ray_origins[ray_idx, 1], 0.0]  # Default z=0.0
+                continue
+            
+            # Get all intersections for this ray
+            intersections = ray_intersections[indices]
+            
+            # Find the intersection with the maximum z-value
+            max_z_idx = np.argmax(intersections[:, 2])
+            highest_intersections[ray_idx] = intersections[max_z_idx]
+
+        # Update env_origins z-coordinate with the terrain height
+        self.env_origins[:, 2] = torch.tensor(highest_intersections[:, 2], device=self.device)
         
     def sample_new_init_poses(self,env_ids):
         # Sample new initial poses for the environments

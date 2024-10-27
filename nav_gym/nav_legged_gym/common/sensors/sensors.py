@@ -45,7 +45,7 @@ class SensorBase:
         pass
 
 class Raycaster(SensorBase):
-    def __init__(self, cfg: StandardRaycasterCfg, env: "BaseEnv"):
+    def __init__(self, cfg: RaycasterCfg, env: "BaseEnv"):
         #1. Configuration and Environment Setup
         self.env = env
         self.cfg = cfg
@@ -92,9 +92,12 @@ class Raycaster(SensorBase):
         Args:
             env_ids (List[int], optional): Subset of environments for which to return the ray hits. Defaults to ....
         """
+        if type(env_ids) == float:
+            env_ids = int(env_ids)
         # states = self.robot.rigid_body_states[env_ids, self.body_idx, :].squeeze(1)
         # pos = states[..., :3]
         # quats = states[..., 3:7]
+        
         env_ids = torch.arange(self.num_envs, device=self.device) if env_ids is ... else env_ids
         #1. Robot State Retrieval
         states = self.robot.rigid_body_states[env_ids, self.body_idx, :].squeeze(1)

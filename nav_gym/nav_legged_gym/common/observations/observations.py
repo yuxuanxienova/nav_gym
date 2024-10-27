@@ -38,7 +38,7 @@ def actions(env: "ANY_ENV", params):
 
 
 def ray_cast(env: "ANY_ENV", params):
-    sensor = env.sensors[params["sensor"]]
+    sensor = env.sensor_manager.get_sensor(params["sensor"])
     heights = env.robot.root_pos_w[:, 2].unsqueeze(1) - 0.5 - sensor.get_data()[..., 2]
     return heights
 
@@ -55,6 +55,23 @@ def ray_cast_up(env: "ANY_ENV", params):
     heights = sensor.get_data()[..., 2] - env.robot.root_pos_w[:, 2].unsqueeze(1) + 0.5
     return heights
 
+# def height_scan(env: "ANY_ENV", params):
+#     sensor = env.sensors[params["sensor"]]
+#     offset = sensor.cfg.attachement_pos[2]
+#     height = sensor.get_distances() - offset
+#     return height.reshape(env.num_envs, -1)
+def height_scan(env: "ANY_ENV", params):
+    sensor = env.sensor_manager.get_sensor(params["sensor"])
+    offset = sensor.cfg.attachement_pos[2]
+    height = sensor.get_distances() - offset
+    return height.reshape(env.num_envs, -1)
+
+def point_cloud(env: "ANY_ENV", params):
+    sensor = env.sensor_manager.get_sensor(params["sensor"])
+    offset = sensor.cfg.attachement_pos
+    # Convert the tuple to a Tensor and move it to the same device as sensor data
+    sensor_pos_w =(env.robot.root_pos_w + torch.tensor(offset, device=sensor.get_data().device)).reshape(1, 1, -1)
+    return (sensor.get_data() - sensor_pos_w).reshape(env.num_envs, -1)
 
 def imu_acc(env: "ANY_ENV", params):
     sensor = env.sensors[params["sensor"]]

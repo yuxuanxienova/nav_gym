@@ -12,7 +12,7 @@ class PhysxCfg:
     Reference: :cls:`isaacgym.gymapi.PhysXParams`
     """
 
-    use_gpu: bool = False
+    use_gpu: bool = True
     """Use PhysX GPU."""
 
     num_threads: int = 10
@@ -63,7 +63,7 @@ class SimParamsCfg:
     substeps: int = 1
     up_axis: str = "UP_AXIS_Z"  # "UP_AXIS_Y", "UP_AXIS_Z"
     gravity: tuple = (0.0, 0.0, -9.81)
-    use_gpu_pipeline: bool = False
+    use_gpu_pipeline: bool = True
 
     physx: PhysxCfg = PhysxCfg()
     """PhysX specific simulation parameters."""

@@ -1,5 +1,5 @@
 from typing import Tuple, Callable, Optional, Any, List
-from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern, foot_scan_pattern
+from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern, foot_scan_pattern, grid_pattern
 from legged_gym.utils import configclass
 
 #----------------------------Sensor Base-------------------------------
@@ -33,9 +33,17 @@ class FootScanPatternCfg(SensorCfgBase):
     num_points: Tuple[int, ...] = (6, 8, 10, 12, 16)
     direction: Tuple = (0.0, 0.0, -1.0)
     pattern_func: Callable = foot_scan_pattern
+
+@configclass
+class GridPatternCfg:
+    resolution: float = 0.1
+    width: float = 1.0
+    length: float = 1.6
+    direction: Tuple = (0.0, 0.0, -1.0)
+    pattern_func: Callable = grid_pattern
 #----------------------------Raycaster -------------------------------
 @configclass
-class StandardRaycasterCfg(SensorCfgBase):
+class RaycasterCfg(SensorCfgBase):
     class_name: str = "Raycaster"
     terrain_mesh_names: Tuple[str, ...] = ("terrain",)
     robot_name: str = "robot"
@@ -52,7 +60,7 @@ class StandardRaycasterCfg(SensorCfgBase):
     max_z_drift = 0.00
 
 @configclass
-class OmniScanRaycasterCfg(StandardRaycasterCfg):
+class OmniScanRaycasterCfg(RaycasterCfg):
     class_name: str = "Raycaster"
     terrain_mesh_names: Tuple[str, ...] = ("terrain",)
     robot_name: str = "robot"
@@ -71,7 +79,7 @@ class OmniScanRaycasterCfg(StandardRaycasterCfg):
     max_distance: float = 10.0
 
 @configclass
-class FootScanCfg(StandardRaycasterCfg):
+class FootScanCfg(RaycasterCfg):
     class_name: str = "Raycaster_footscan"
     yaw_attachment_name: str = "base"  # This version follows the yaw of the base
     attach_yaw_only: bool = True

@@ -37,8 +37,8 @@ class ObsManager:
                 #Storing Observation Function and Parameters
                 self.obs_per_group[group_name].append((function, params))
                 #Enabling Sensors if Required
-                if params.get("sensor") is not None:
-                    env.enable_sensor(params["sensor"])
+                # if params.get("sensor") is not None:
+                #     env.enable_sensor(params["sensor"])
                 #Accumulating Observation Dimensions
                 obs_dim += function(env, params).shape[1]
             self.obs_dims_per_group[group_name] = obs_dim
@@ -69,6 +69,15 @@ class ObsManager:
                 #Scaling Observations
                 if scale is not None:
                     obs *= scale
+                # NaN Check After Processing
+                if torch.isnan(obs).any():
+                    print(f"NaN detected in observation '{function.__name__}' within group '{group}'.")
+                    # Optional: Print more detailed information
+                    nan_indices = torch.isnan(obs).nonzero(as_tuple=False)
+                    print(f"NaN indices in '{function.__name__}': {nan_indices}")
+                    # Optional: Handle the NaN (e.g., replace, abort, etc.)
+                    # For example, you can replace NaNs with zeros:
+                    # obs = torch.nan_to_num(obs, nan=0.0)
                 #Collecting Processed Observations
                 obs_list.append(obs)
             #3.2 Concatenating Observations Within the Group

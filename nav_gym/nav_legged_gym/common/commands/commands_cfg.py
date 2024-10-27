@@ -9,10 +9,10 @@ class UnifromVelocityCommandCfg:
     curriculum = False
     max_curriculum = 1.0
     num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw
-    resampling_time = 10.0  # time before commands are changed [s]
-    heading_command = True  # if true: compute ang vel command from heading error
+    resampling_time = 15.0  # time before commands are changed [s]
+    heading_command = False  # if true: compute ang vel command from heading error
     prob_standing_envs = 0.05  # percentage of the robots are standing
-    prob_heading_envs = 0.5  # percentage of the robots follow heading command (the others follow angular velocity)
+    prob_heading_envs = 0.3  # percentage of the robots follow heading command (the others follow angular velocity)
     prob_zero_dim = 0.05
 
     @configclass

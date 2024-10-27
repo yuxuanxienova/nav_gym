@@ -141,6 +141,8 @@ def base_height(env: "LeggedEnv", params):
     base_height = torch.mean(env.robot.root_pos_w[:, 2].unsqueeze(1) - measured_heights, dim=1)
     return torch.square(base_height - params["height_target"])
 
+def survival(env: "LeggedEnv", params):
+    return torch.ones(env.num_envs, device=env.device).reshape(env.num_envs, )
 
 # def tracking_lin_vel(env: "LeggedEnv", params):
 #     # Tracking of linear velocity commands (xy axes)

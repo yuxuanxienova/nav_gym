@@ -3,9 +3,9 @@ class TrainConfig:
     runner_class_name = 'OnPolicyRunner'
     class policy:
         init_noise_std = 1.0
-        actor_hidden_dims = [128, 64, 32]
-        critic_hidden_dims = [128, 64, 32]
-        activation = 'elu' # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+        actor_hidden_dims = [128, 64, 32 ]#
+        critic_hidden_dims = [128, 64, 32]#
+        activation = 'relu' # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
         # only for 'ActorCriticRecurrent':
         # rnn_type = 'lstm'
         # rnn_hidden_size = 512
@@ -24,16 +24,16 @@ class TrainConfig:
         gamma = 0.99
         lam = 0.95
         desired_kl = 0.01
-        max_grad_norm = 1.
+        max_grad_norm = 1.0
 
     class runner:
         policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
-        num_steps_per_env = 24 # per iteration
-        max_iterations = 5000 # number of policy updates
+        num_steps_per_env = 24 #24 per iteration
+        max_iterations = 6000 # number of policy updates
 
         # logging
-        save_interval = 500 # check for potential saves every this many iterations
+        save_interval = 300 # check for potential saves every this many iterations
         experiment_name = 'test'
         run_name = ''
         # load and resume

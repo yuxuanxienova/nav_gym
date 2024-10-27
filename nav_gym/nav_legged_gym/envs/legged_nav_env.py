@@ -64,18 +64,20 @@ class LeggedNavEnv:
         self._init_external_forces()
 
         #8. Prepare mdp helper managers
+        self.sensor_manager = SensorManager(self)
         self.command_generator: CommandBase = eval(self.cfg.commands.class_name)(self.cfg.commands, self)
         self.reward_manager = RewardManager(self)
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
-        self.sensor_manager = SensorManager(self)
+        
         #9. Store the environment information from managers
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
         #10. Perform initial reset of all environments (to fill up buffers)
         self.reset()
         #11. Create debug usage
+        self.play_mode = False
         self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
         self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
         self.sphere_geoms_blue = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 0, 1))
@@ -214,26 +216,7 @@ class LeggedNavEnv:
         #root_state[:, 7:13].uniform_(-0.5, 0.5)
         # set into robot
         self.robot.set_root_state(env_ids, root_state)
-    def _resample_commands(self, env_ids):
-        """Randomly select commands of some environments."""
-        if len(env_ids) == 0:
-            return
 
-        r = torch.empty(len(env_ids), device=self.device)
-        # print(self.commands[env_ids], env_ids)
-        self.commands[env_ids, 0] = r.uniform_(self._command_ranges.lin_vel_x[0], self._command_ranges.lin_vel_x[1])
-        # linear velocity - y direction
-        self.commands[env_ids, 1] = r.uniform_(self._command_ranges.lin_vel_y[0], self._command_ranges.lin_vel_y[1])
-        # # ang vel yaw - rotation around z
-        self.commands[env_ids, 2] = r.uniform_(self._command_ranges.ang_vel_yaw[0], self._command_ranges.ang_vel_yaw[1])
-        # heading target
-        if self.cfg.commands.heading_command:
-            self.heading_target[env_ids] = r.uniform_(self._command_ranges.heading[0], self._command_ranges.heading[1])
-            # update heading envs
-            self.is_heading_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.commands.rel_heading_envs
-
-        # update standing envs
-        self.is_standing_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.commands.rel_standing_envs
 #-------- 3. Step the environment--------
     def step(self, actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, Any]]:
         """Apply actions, simulate, call self.post_physics_step()
@@ -325,15 +308,15 @@ class LeggedNavEnv:
         self.gym.clear_lines(self.viewer)
         #2. draw ray hits
         self.sensor_manager.debug_vis()
-        #3. Drawing the Axis
-        sphere_pos_init = self.robot.root_states[:, :3]
-        self.sphere_geoms_red.draw(sphere_pos_init , self.gym, self.viewer, self.envs[0])
-        x_offset = torch.tensor([0.5,0,0],device=self.device)
-        y_offset = torch.tensor([0,0.5,0],device=self.device)
-        z_offset = torch.tensor([0,0,0.5],device=self.device)
-        self.sphere_geoms_red.draw(sphere_pos_init + x_offset, self.gym, self.viewer, self.envs[0])
-        self.sphere_geoms_green.draw(sphere_pos_init + y_offset, self.gym, self.viewer, self.envs[0])
-        self.sphere_geoms_blue.draw(sphere_pos_init + z_offset, self.gym, self.viewer, self.envs[0])
+        # #3. Drawing the Axis
+        # sphere_pos_init = self.robot.root_states[:, :3]
+        # self.sphere_geoms_red.draw(sphere_pos_init , self.gym, self.viewer, self.envs[0])
+        # x_offset = torch.tensor([0.5,0,0],device=self.device)
+        # y_offset = torch.tensor([0,0.5,0],device=self.device)
+        # z_offset = torch.tensor([0,0,0.5],device=self.device)
+        # self.sphere_geoms_red.draw(sphere_pos_init + x_offset, self.gym, self.viewer, self.envs[0])
+        # self.sphere_geoms_green.draw(sphere_pos_init + y_offset, self.gym, self.viewer, self.envs[0])
+        # self.sphere_geoms_blue.draw(sphere_pos_init + z_offset, self.gym, self.viewer, self.envs[0])
     def _post_physics_step(self):
         """Check terminations, checks erminations and computes rewards, and cache common quantities."""
         # refresh all tensor buffers
@@ -349,12 +332,12 @@ class LeggedNavEnv:
         # update robot
         self.robot.update_buffers(dt=self.dt)
         # rewards, resets, ...
+        # -- rewards
+        self.rew_buf = self.reward_manager.compute_reward(self)
         # -- terminations
         self.reset_buf = self.termination_manager.check_termination(self)
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
-        # -- rewards
-        self.rew_buf = self.reward_manager.compute_reward(self)
-        if len(env_ids) != 0 and self.termination_manager.reset_on_termination:
+        if len(env_ids) != 0 and self.termination_manager.reset_on_termination and not self.play_mode:
             # -- update curriculum
             if self._init_done:
                 self.curriculum_manager.update_curriculum(self, env_ids)
@@ -378,22 +361,13 @@ class LeggedNavEnv:
          # check if need to resample
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
-        self.command_generator.resample(env_ids)
+        if not self.play_mode:  
+            self.command_generator.resample(env_ids)
         self.command_generator.update()
-        # self._resample_commands(env_ids)
-        # if self.cfg.commands.heading_command:
-        #     # Compute angular velocity from heading direction for heading envs
-        #     heading_env_ids = self.is_heading_env.nonzero(as_tuple=False).flatten()
-        #     forward = quat_apply(self.robot.root_quat_w[heading_env_ids, :], self.robot._forward_vec_b[heading_env_ids])
-        #     heading = torch.atan2(forward[:, 1], forward[:, 0])
-        #     self.commands[heading_env_ids, 2] = torch.clip(
-        #         0.5 * wrap_to_pi(self.heading_target[heading_env_ids] - heading),
-        #         self.cfg.commands.ranges.ang_vel_yaw[0],
-        #         self.cfg.commands.ranges.ang_vel_yaw[1],
-        #     )
-        # # Enforce standing (i.e., zero velocity commands) for standing envs
-        # standing_env_ids = self.is_standing_env.nonzero(as_tuple=False).flatten()
-        # self.commands[standing_env_ids, :] = 0.0
+
+    def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
+        command = (x_vel, y_vel, yaw_vel)
+        self.command_generator.set_velocity_commands(command)
     def _push_robots(self):
         """Random pushes the robots. Emulates an impulse by setting a randomized base velocity."""
         self.robot.root_states[:, 7:13] += torch.empty(self.num_envs, 6, device=self.device).uniform_(*self.cfg.randomization.push_vel)

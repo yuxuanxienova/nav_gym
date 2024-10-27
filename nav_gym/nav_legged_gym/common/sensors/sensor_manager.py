@@ -17,6 +17,12 @@ class SensorManager:
     def debug_vis(self):
         for sensor_name, sensor in self.sensors_dict.items():
             sensor.debug_vis() 
+    def get_sensor(self,sensor_name:str)->SensorBase:
+        if self.sensors_dict.__contains__(sensor_name):
+            return self.sensors_dict[sensor_name]
+        else:
+            print("[ERROR]sensor name not found: ", sensor_name)
+            return None
         
 if __name__ == "__main__":
     print(LeggedNavEnvCfg.sensors.raycasters_dict.items())

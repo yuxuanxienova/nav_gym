@@ -101,3 +101,4 @@ class LeggedRobot(Articulation):
 
         self.feet_positions[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 0:3][env_ids, ...]
         self.feet_velocities[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 7:10][env_ids, ...]
+

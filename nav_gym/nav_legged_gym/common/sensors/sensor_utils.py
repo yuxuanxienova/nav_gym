@@ -62,3 +62,29 @@ def foot_scan_pattern(pattern_cfg: "FootScanPatternCfg", device: str) -> Tuple[t
     ray_directions = torch.zeros_like(ray_starts)
     ray_directions[..., :] = torch.tensor(list(pattern_cfg.direction), device=device)
     return ray_starts, ray_directions
+def grid_pattern(pattern_cfg: "GridPatternCfg", device: str) -> Tuple[torch.Tensor, torch.Tensor]:
+    """A regular grid pattern for ray casting.
+
+    Args:
+        pattern_cfg (GridPatternCfg): The config for the pattern.
+        device (str): The device
+    Returns:
+        ray_starts (torch.Tensor): The starting positions of the rays
+        ray_directions (torch.Tensor): The ray directions
+
+    """
+    y = torch.arange(
+        start=-pattern_cfg.width / 2, end=pattern_cfg.width / 2 + 1.0e-9, step=pattern_cfg.resolution, device=device
+    )
+    x = torch.arange(
+        start=-pattern_cfg.length / 2, end=pattern_cfg.length / 2 + 1.0e-9, step=pattern_cfg.resolution, device=device
+    )
+    grid_x, grid_y = torch.meshgrid(x, y)
+    num_rays = grid_x.numel()
+    ray_starts = torch.zeros(num_rays, 3, device=device)
+    ray_starts[:, 0] = grid_x.flatten()
+    ray_starts[:, 1] = grid_y.flatten()
+
+    ray_directions = torch.zeros_like(ray_starts)
+    ray_directions[..., :] = torch.tensor(list(pattern_cfg.direction), device=device)
+    return ray_starts, ray_directions
