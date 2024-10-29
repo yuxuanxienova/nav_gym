@@ -48,14 +48,12 @@ class LeggedNavEnvCfg:
     class sensors:
         raycasters_dict = {
                         #  "omni_scanner1": OmniScanRaycasterCfg(),
-                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg()),
+                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
                         #  "foot_scanner_lf": FootScanCfg(body_attachement_name="LF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                         #  "foot_scanner_rf": FootScanCfg(body_attachement_name="RF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                         #  "foot_scanner_lh": FootScanCfg(body_attachement_name="LH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                         #  "foot_scanner_rh": FootScanCfg(body_attachement_name="RH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                           }
- 
-
     class randomization:
         # randomize_friction: bool = True
         # friction_range: Tuple = (0.5, 1.25)
