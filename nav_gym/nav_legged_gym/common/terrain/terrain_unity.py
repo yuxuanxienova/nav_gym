@@ -9,7 +9,7 @@ import torch
 
 from nav_gym import NAV_GYM_ROOT_DIR
 class TerrainUnity:
-    def __init__(self,gym,sim,device,num_envs,env_spacing=5.0):
+    def __init__(self,gym,sim,device,num_envs,env_spacing=2.0):
 
         self.gym = gym
         self.sim = sim
@@ -18,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/LevelPlane55.obj"
+        terrain_file = "/terrain/CombinedMesh_v4_3.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:

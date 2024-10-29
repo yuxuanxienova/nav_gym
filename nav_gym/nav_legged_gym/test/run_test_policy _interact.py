@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241025-233550/" + "model_300.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241029-120802/" + "model_4200.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)

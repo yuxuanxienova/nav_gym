@@ -12,12 +12,12 @@ class UnifromVelocityCommandCfg:
     resampling_time = 15.0  # time before commands are changed [s]
     heading_command = False  # if true: compute ang vel command from heading error
     prob_standing_envs = 0.05  # percentage of the robots are standing
-    prob_heading_envs = 0.3  # percentage of the robots follow heading command (the others follow angular velocity)
+    prob_heading_envs = 0.5  # percentage of the robots follow heading command (the others follow angular velocity)
     prob_zero_dim = 0.05
 
     @configclass
     class Ranges:
-        lin_vel_x: Tuple = (-1.0, 1.0)  # min max [m/s]
+        lin_vel_x: Tuple = (-3.0, 3.0)  # min max [m/s]
         lin_vel_y: Tuple = (-1.0, 1.0)  # min max [m/s]
         ang_vel_yaw: Tuple = (-1.5, 1.5)  # min max [rad/s]
         heading: Tuple = (-3.14, 3.14)  # [rad]
