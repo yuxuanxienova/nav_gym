@@ -157,11 +157,10 @@ class HierarchicalEnv:
     def reset_idx(self,env_ids):
         self.ll_env.reset_idx(env_ids)
         self.sensor_manager.update()
-        
-        self.extras["episode"] = dict()
-        self.reward_manager.log_info(self, env_ids, self.extras["episode"])
-        self.curriculum_manager.log_info(self, env_ids, self.extras["episode"])
-        self.termination_manager.log_info(self, env_ids, self.extras["episode"])
+
+        # self.extras["episode"] = dict()
+        # self.reward_manager.log_info(self, env_ids, self.extras["episode"])
+        # self.termination_manager.log_info(self, env_ids, self.extras["episode"])
 
         self.total_distance[env_ids] = 0.0
         self.episode_length_buf[env_ids] = 0

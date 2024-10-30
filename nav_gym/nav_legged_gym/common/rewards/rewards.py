@@ -334,7 +334,7 @@ def tracking_pos_hl_final(env: "HierarchicalEnv", params):
 def tracking_pos_hl(env: "HierarchicalEnv", params):
     distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
     distance[distance>50.0] = 50.0
-    rew = (1. /(1. + torch.square(distance)))
+    rew = (1. /(1. + torch.square(distance/20.0)))
     # rew = (20*is_close - distance)*_command_duration_mask(env, params["duration"])
     # rew = env.termination_manager.time_out_buf*(40*is_close - 0*distance)
     return rew
