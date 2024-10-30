@@ -14,9 +14,9 @@ class SensorManager:
     def update(self):
         for sensor_name, sensor in self.sensors_dict.items():
             sensor.update() 
-    def debug_vis(self):
+    def debug_vis(self,envs):
         for sensor_name, sensor in self.sensors_dict.items():
-            sensor.debug_vis() 
+            sensor.debug_vis(envs) 
     def get_sensor(self,sensor_name:str)->SensorBase:
         if self.sensors_dict.__contains__(sensor_name):
             return self.sensors_dict[sensor_name]

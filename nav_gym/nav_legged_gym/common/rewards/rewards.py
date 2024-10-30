@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.legged_env import LeggedEnv
+    from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
+    from nav_gym.nav_legged_gym.envs.hierarchical_env import HierarchicalEnv
 
-    ANY_ENV = Union[LeggedEnv]
+    ANY_ENV = Union[LeggedNavEnv]
 
 import torch
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -302,3 +303,42 @@ def base_acc(env: "LeggedEnv", params):
 
 def feet_acc(env: "LeggedEnv", params):
     return torch.sum(torch.norm(env.robot.body_acc[:, env.robot.feet_indices], dim=-1), dim=1)
+
+"""
+High level specific reward Functions
+"""
+
+def _command_duration_mask(env: "LeggedEnvPos", duration):
+    mask = env.command_time_left <= duration
+    return mask / duration
+
+
+def termination_hl(env: "HierarchicalEnv", params):
+    # Terminal reward / penalty
+    distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
+    distance[distance>4.0] = 4.0
+    # return env.reset_buf * ((1-env.termination_manager.time_out_buf) + 0*0.1*distance)
+    return env.reset_buf * ((1-env.termination_manager.time_out_buf) + 0.1*distance)
+
+
+def tracking_pos_hl_final(env: "HierarchicalEnv", params):
+    distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
+    height_diff = torch.abs(env.pos_target[:, 2] - env.robot.root_pos_w[:, 2])
+    is_close = (distance < 0.5).float() # 0.3
+    distance[distance>4.0] = 4.0
+    rew = env.termination_manager.time_out_buf*(20*is_close - distance)
+    # rew = (20*is_close - distance)*_command_duration_mask(env, params["duration"])
+    # rew = env.termination_manager.time_out_buf*(40*is_close - 0*distance)
+    return rew
+
+def tracking_pos_hl(env: "HierarchicalEnv", params):
+    distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
+    distance[distance>50.0] = 50.0
+    rew = (1. /(1. + torch.square(distance)))
+    # rew = (20*is_close - distance)*_command_duration_mask(env, params["duration"])
+    # rew = env.termination_manager.time_out_buf*(40*is_close - 0*distance)
+    return rew
+
+def total_distance_hl_final(env: "LeggedEnvPos", params):
+    rew = env.termination_manager.time_out_buf*env.total_distance
+    return rew

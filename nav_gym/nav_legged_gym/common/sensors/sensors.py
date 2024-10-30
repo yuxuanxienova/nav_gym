@@ -145,14 +145,14 @@ class Raycaster(SensorBase):
         (from rays that didn't hit anything) are replaced with a default value."""
         return torch.nan_to_num(self.ray_distances, posinf=self.cfg.default_hit_distance)
     
-    def debug_vis(self):
+    def debug_vis(self, envs):
         """Visualizes the ray hits in the simulation environment"""
         #1. Initializing Visualization Geometry
         if self.sphere_geom is None:self.sphere_geom = BatchWireframeSphereGeometry(self.num_envs * self.num_rays, 0.02, 4, 4, None, color=(0, 1, 0))
         #2. Drawing Ray Hits
         points = self.ray_hits_world.clone()
         points[..., :2] -= self.drift[..., :2]
-        self.sphere_geom.draw(points, self.env.gym, self.env.viewer, self.env.envs[0])
+        self.sphere_geom.draw(points, self.env.gym, self.env.viewer, envs[0])
 
 
 

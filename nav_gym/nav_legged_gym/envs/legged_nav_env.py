@@ -302,12 +302,13 @@ class LeggedNavEnv:
         ):
             self._draw_debug_vis()
         self.gym_iface.render(sync_frame_time)
-    def _draw_debug_vis(self):
-        """Draws height measurement points for visualization."""
         #1. clear previous lines
         self.gym.clear_lines(self.viewer)
+
+    def _draw_debug_vis(self):
+        """Draws height measurement points for visualization."""
         #2. draw ray hits
-        self.sensor_manager.debug_vis()
+        self.sensor_manager.debug_vis(self.envs)
         # #3. Drawing the Axis
         # sphere_pos_init = self.robot.root_states[:, :3]
         # self.sphere_geoms_red.draw(sphere_pos_init , self.gym, self.viewer, self.envs[0])

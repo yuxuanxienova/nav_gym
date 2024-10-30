@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
+    from nav_gym.nav_legged_gym.envs.hierarchical_env import HierarchicalEnv
 
     ANY_ENV = Union[LeggedNavEnv]
 
@@ -149,3 +150,7 @@ def expert_outputs_fuse(env: "LeggedEnvPosFuse", params):
         return torch.zeros(env.num_envs, env.cfg.env.num_experts * env.num_actions, device=env.device)
     else:
         return env.expert_outputs.reshape(env.num_envs,-1)
+    
+"""High Level Observation Functions"""
+def position_target(env: "HierarchicalEnv", params):
+    return env.pos_target - env.robot.root_pos_w
