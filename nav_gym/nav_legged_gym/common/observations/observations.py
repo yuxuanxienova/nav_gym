@@ -70,8 +70,8 @@ def point_cloud(env: "ANY_ENV", params):
     sensor = env.sensor_manager.get_sensor(params["sensor"])
     offset = sensor.cfg.attachement_pos
     # Convert the tuple to a Tensor and move it to the same device as sensor data
-    sensor_pos_w =(env.robot.root_pos_w + torch.tensor(offset, device=sensor.get_data().device)).reshape(1, 1, -1)
-    return (sensor.get_data() - sensor_pos_w).reshape(env.num_envs, -1)
+    sensor_pos_w =(env.robot.root_pos_w + torch.tensor(offset, device=sensor.get_data().device)).reshape(env.num_envs, 1, -1)#Dim:(num_envs,1, 3)
+    return (sensor.get_data() - sensor_pos_w).reshape(env.num_envs, -1)#Dim:(num_envs, n_points, 3)
 
 def imu_acc(env: "ANY_ENV", params):
     sensor = env.sensors[params["sensor"]]
