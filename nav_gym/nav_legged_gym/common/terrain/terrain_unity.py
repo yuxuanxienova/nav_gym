@@ -18,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/NavMap_v1.obj"
+        terrain_file = "/terrain/CombinedMesh_v4_5.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
@@ -30,8 +30,8 @@ class TerrainUnity:
 
         # Calculate the center of the mesh
         mesh_center = self.terrain_mesh.centroid
-        x=0.0
-        y=0.0
+        x=-98.0
+        y=2.0
         z=0.0
         translation = np.array([-y, z, x])# standard to unity vector conversion: x_u,y_u,z_u->-y,z,x
 
@@ -77,8 +77,8 @@ class TerrainUnity:
         self.tm_params.restitution = 0.0
 
         # Get the environment origins
-        # self._calcu_env_origins_grid()
-        self._calcu_env_origins_custom()
+        self._calcu_env_origins_grid()
+        # self._calcu_env_origins_custom()
 
     def add_to_sim(self):
         # Add the terrain mesh to the simulation
@@ -187,9 +187,12 @@ class TerrainUnity:
             max_z_idx = np.argmax(intersections[:, 2])
             highest_intersections[ray_idx] = intersections[max_z_idx]
 
+            #offset
+            z_offset = torch.tensor([0.2]).repeat(self.env_origins.shape[0]).to(self.device)
+
         # Update env_origins z-coordinate with the terrain height
-        self.env_origins[:, 2] = torch.tensor(highest_intersections[:, 2], device=self.device)
-        
+        self.env_origins[:, 2] = torch.tensor(highest_intersections[:, 2], device=self.device) + z_offset
+
     def sample_new_init_poses(self,env_ids):
         # Sample new initial poses for the environments
         return self.env_origins[env_ids] 

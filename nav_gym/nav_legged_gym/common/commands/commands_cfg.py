@@ -17,7 +17,7 @@ class UnifromVelocityCommandCfg:
 
     @configclass
     class Ranges:
-        lin_vel_x: Tuple = (-3.0, 3.0)  # min max [m/s]
+        lin_vel_x: Tuple = (-2.0, 2.0)  # min max [m/s]
         lin_vel_y: Tuple = (-1.0, 1.0)  # min max [m/s]
         ang_vel_yaw: Tuple = (-1.5, 1.5)  # min max [rad/s]
         heading: Tuple = (-3.14, 3.14)  # [rad]

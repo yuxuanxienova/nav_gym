@@ -13,7 +13,7 @@ class LeggedNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 2048
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -102,14 +102,14 @@ class LeggedNavEnvCfg:
         # general params
         only_positive_rewards: bool = False
         # reward functions
-        termination = {"func": R.termination, "scale": -4}
+        termination = {"func": R.termination, "scale": -7}
         tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 10.0, "std": 0.25}
         tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 5.0, "std": 0.25}
         lin_vel_z = {"func": R.lin_vel_z, "scale": -0.04}
         ang_vel_xy = {"func": R.ang_vel_xy, "scale": -0.01}
         torques = {"func": R.torques, "scale": -0.00002}
         dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        feet_air_time = {"func": R.feet_air_time, "scale": 0.3, "time_threshold": 0.5}
+        feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
         collision_THIGHSHANK = {"func": R.collision, "scale": -1, "bodies": ".*(THIGH|SHANK)"}
         collision_base = {"func": R.collision, "scale": -1, "bodies": "base"}
         action_rate = {"func": R.action_rate, "scale": -0.0001}
@@ -117,7 +117,7 @@ class LeggedNavEnvCfg:
         stand_still = {"func": R.stand_still, "scale": -0.0}
         base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
         flat_orientation = {"func": R.flat_orientation, "scale": -0.0}
-        survival = {"func": R.survival, "scale": 0.8}
+        survival = {"func": R.survival, "scale": 1.0}
         # stumble = {"func": "stumble", "scale": -1.0, "hv_ratio": 2.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         
