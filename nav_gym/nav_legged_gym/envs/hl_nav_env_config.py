@@ -9,11 +9,14 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
-class LeggedNavEnvCfg:
+from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+class HLNavEnvCfg:
+    ll_env_cfg = LeggedNavEnvCfg()
+    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 2048
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
