@@ -1,4 +1,4 @@
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+from nav_gym.nav_legged_gym.envs.legged_nav_env_pc_config import LeggedNavEnvCfg
 from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.train_config import TrainConfig
@@ -11,7 +11,7 @@ import torch.optim as optim  # Import the optimizer
 from torch.utils.tensorboard import SummaryWriter  # Import SummaryWriter
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241025-233550/" + "model_300.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241029-120802/" + "model_4200.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)

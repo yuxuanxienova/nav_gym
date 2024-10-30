@@ -13,7 +13,7 @@ class LeggedNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 2048
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -48,7 +48,8 @@ class LeggedNavEnvCfg:
     class sensors:
         raycasters_dict = {
                         #  "omni_scanner1": OmniScanRaycasterCfg(),
-                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
+                        # "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
+                          "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True), 
                         #  "foot_scanner_lf": FootScanCfg(body_attachement_name="LF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                         #  "foot_scanner_rf": FootScanCfg(body_attachement_name="RF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
                         #  "foot_scanner_lh": FootScanCfg(body_attachement_name="LH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
@@ -108,7 +109,7 @@ class LeggedNavEnvCfg:
         ang_vel_xy = {"func": R.ang_vel_xy, "scale": -0.01}
         torques = {"func": R.torques, "scale": -0.00002}
         dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        feet_air_time = {"func": R.feet_air_time, "scale": 0.1, "time_threshold": 0.5}
+        feet_air_time = {"func": R.feet_air_time, "scale": 0.3, "time_threshold": 0.5}
         collision_THIGHSHANK = {"func": R.collision, "scale": -1, "bodies": ".*(THIGH|SHANK)"}
         collision_base = {"func": R.collision, "scale": -1, "bodies": "base"}
         action_rate = {"func": R.action_rate, "scale": -0.0001}
