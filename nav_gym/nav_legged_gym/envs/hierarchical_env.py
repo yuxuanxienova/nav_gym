@@ -27,7 +27,7 @@ from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSpher
 from nav_gym.nav_legged_gym.envs.hl_nav_env_config import HLNavEnvCfg
 import os
 from nav_gym import NAV_GYM_ROOT_DIR
-class HierarchicalEnv:
+class LocalNavEnv:
     def __init__(self, cfg:HLNavEnvCfg, ll_env_cls:LeggedNavEnv) -> None:
         self.cfg = cfg
         #1. Parse the configuration
@@ -116,6 +116,7 @@ class HierarchicalEnv:
         return self.obs_dict["policy"], self.obs_manager.get_obs_from_group("privileged"),self.rew_buf, self.reset_buf, self.extras
     
     def _preprocess_actions(self, actions: torch.Tensor):
+        self.ll_env.set_velocity_commands(actions)
         return actions  
     def _get_ll_actions(self):
         """Apply actions to simulation buffers in the environment."""
@@ -173,7 +174,7 @@ class HierarchicalEnv:
     def get_privileged_observations(self):
         return self.obs_manager.get_obs_from_group("privileged")
 if __name__ == "__main__":
-    env = HierarchicalEnv(HLNavEnvCfg(), LeggedNavEnv)
+    env = LocalNavEnv(HLNavEnvCfg(), LeggedNavEnv)
     while True:
         actions = torch.rand(env.num_envs, env.num_actions)
         obs, _,rew, done, extras = env.step(actions)

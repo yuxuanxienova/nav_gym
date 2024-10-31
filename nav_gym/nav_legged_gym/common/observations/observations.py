@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
-    from nav_gym.nav_legged_gym.envs.hierarchical_env import HierarchicalEnv
+    from nav_gym.nav_legged_gym.envs.hierarchical_env import LocalNavEnv
 
     ANY_ENV = Union[LeggedNavEnv]
 
@@ -152,5 +152,5 @@ def expert_outputs_fuse(env: "LeggedEnvPosFuse", params):
         return env.expert_outputs.reshape(env.num_envs,-1)
     
 """High Level Observation Functions"""
-def position_target(env: "HierarchicalEnv", params):
+def position_target(env: "LocalNavEnv", params):
     return env.pos_target - env.robot.root_pos_w

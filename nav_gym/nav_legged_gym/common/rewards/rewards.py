@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
-    from nav_gym.nav_legged_gym.envs.hierarchical_env import HierarchicalEnv
+    from nav_gym.nav_legged_gym.envs.hierarchical_env import LocalNavEnv
 
     ANY_ENV = Union[LeggedNavEnv]
 
@@ -313,7 +313,7 @@ def _command_duration_mask(env: "LeggedEnvPos", duration):
     return mask / duration
 
 
-def termination_hl(env: "HierarchicalEnv", params):
+def termination_hl(env: "LocalNavEnv", params):
     # Terminal reward / penalty
     distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
     distance[distance>4.0] = 4.0
@@ -321,7 +321,7 @@ def termination_hl(env: "HierarchicalEnv", params):
     return env.reset_buf * ((1-env.termination_manager.time_out_buf) + 0.1*distance)
 
 
-def tracking_pos_hl_final(env: "HierarchicalEnv", params):
+def tracking_pos_hl_final(env: "LocalNavEnv", params):
     distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
     height_diff = torch.abs(env.pos_target[:, 2] - env.robot.root_pos_w[:, 2])
     is_close = (distance < 0.5).float() # 0.3
@@ -331,7 +331,7 @@ def tracking_pos_hl_final(env: "HierarchicalEnv", params):
     # rew = env.termination_manager.time_out_buf*(40*is_close - 0*distance)
     return rew
 
-def tracking_pos_hl(env: "HierarchicalEnv", params):
+def tracking_pos_hl(env: "LocalNavEnv", params):
     distance = torch.norm(env.pos_target - env.robot.root_pos_w, dim=1) #.clip(max=4.0)
     distance[distance>50.0] = 50.0
     rew = (1. /(1. + torch.square(distance/20.0)))

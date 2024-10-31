@@ -1,0 +1,7 @@
+Bootstrap: docker-daemon
+From:navgym:latest
+
+%post
+chmod -R 777 /opt
+
+%environment

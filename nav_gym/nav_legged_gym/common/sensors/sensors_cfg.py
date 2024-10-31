@@ -1,6 +1,6 @@
 from typing import Tuple, Callable, Optional, Any, List
 from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern, foot_scan_pattern, grid_pattern
-from legged_gym.utils import configclass
+from nav_gym.nav_legged_gym.utils.config_utils import configclass
 
 #----------------------------Sensor Base-------------------------------
 @configclass

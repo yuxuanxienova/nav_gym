@@ -2,7 +2,7 @@
 from nav_gym.nav_legged_gym.envs.legged_nav_env_pc_config import LeggedNavEnvCfg
 from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.train_config import TrainConfig
+from nav_gym.nav_legged_gym.train.runner_train_config import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.modules.VAE import VAE
 import torch
