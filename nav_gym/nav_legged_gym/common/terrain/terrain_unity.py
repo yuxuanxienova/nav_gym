@@ -18,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/NavMap_v1.obj"
+        terrain_file = "/terrain/CombinedMesh_v4_3.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
@@ -30,8 +30,8 @@ class TerrainUnity:
 
         # Calculate the center of the mesh
         mesh_center = self.terrain_mesh.centroid
-        x=0.0#-98.0
-        y=0.0#2.0
+        x=-10.0#-98.0
+        y=10.0#2.0
         z=0.0
         translation = np.array([-y, z, x])# standard to unity vector conversion: x_u,y_u,z_u->-y,z,x
 
