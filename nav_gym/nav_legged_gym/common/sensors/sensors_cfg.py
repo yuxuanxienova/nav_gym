@@ -90,7 +90,17 @@ class FootScanCfg(RaycasterCfg):
     def normalize(self, *args, **kwargs):
         print(args, kwargs)
 
+@configclass
+class BaseScanCfg(RaycasterCfg):
+    class_name: str = "Raycaster_footscan"
+    yaw_attachment_name: str = "base"  # This version follows the yaw of the base
+    attach_yaw_only: bool = True
+    pattern_cfg = FootScanPatternCfg(radii=(0.05,), num_points=(5,))
+    attachement_pos: Tuple = (0.0, 0.0, 20.0)
+    debug_color: Tuple = (0.0, 1.0, 0.0)
 
+    def normalize(self, *args, **kwargs):
+        print(args, kwargs)
 
 
 

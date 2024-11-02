@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from nav_gym.learning.algorithms import PPO
 from nav_gym.learning.modules import ActorCritic, ActorCriticRecurrent
 from nav_gym.learning.modules.discriminator import Discriminator
-from nav_gym.learning.modules.plotter import Plotter
+from nav_gym.learning.modules.fld.plotter import Plotter
 from nav_gym.learning.samplers import OfflineSampler, RandomSampler, GMMSampler, ALPGMMSampler, OfflineSamplerPAE
 # from nav_gym.learning.env import VecEnv
 from nav_gym.learning.utils import store_code_state

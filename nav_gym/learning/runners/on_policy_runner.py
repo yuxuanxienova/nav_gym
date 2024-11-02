@@ -38,7 +38,7 @@ import torch
 
 from nav_gym.learning.algorithms import PPO
 from nav_gym.learning.modules import ActorCritic, ActorCriticRecurrent
-# from test_legged_gym.rsl_rl.env import VecEnv
+# from test_legged_gym.nav_gym.learning.env import VecEnv
 from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
 
 class OnPolicyRunner:

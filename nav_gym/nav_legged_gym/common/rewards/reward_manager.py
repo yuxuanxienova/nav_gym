@@ -32,8 +32,8 @@ class RewardManager:
             self.reward_functions[name] = function
             self.reward_params[name] = params
             #2.4 Enabling Sensors
-            if params.get("sensor") is not None:
-                env.enable_sensor(params["sensor"])
+            # if params.get("sensor") is not None:
+            #     env.enable_sensor(params["sensor"])
 
         #3. Initializing Episode Sums
         #For each reward, it creates a PyTorch tensor initialized to zeros with the shape (env.num_envs,)

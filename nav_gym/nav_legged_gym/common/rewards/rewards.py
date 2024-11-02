@@ -114,7 +114,11 @@ def mech_power(env: "ANY_ENV", params):
 """
 Locomotion specific reward Functions
 """
-
+def base_motion(env: "LeggedEnv", params):
+    body_z_motion = torch.square(env.robot.root_lin_vel_b[:, 2])
+    body_ang_motion = torch.sum(torch.square(env.robot.root_ang_vel_b[:, :2]), dim=1)
+    rwd_sum = torch.exp(-body_z_motion / params["std_z"]) + torch.exp(-body_ang_motion / params["std_angvel"])
+    return rwd_sum
 
 def lin_vel_z(env: "LeggedEnv", params):
     # Penalize z axis base linear velocity
@@ -138,7 +142,8 @@ def vertical_orientation(env: "LeggedEnv", params):
 
 def base_height(env: "LeggedEnv", params):
     # Penalize base height away from target
-    measured_heights = env.sensors[params["sensor"]].get_data()
+    # measured_heights = env.sensors[params["sensor"]].get_data()
+    measured_heights = env.sensor_manager.get_sensor(params["sensor"]).get_data()
     base_height = torch.mean(env.robot.root_pos_w[:, 2].unsqueeze(1) - measured_heights, dim=1)
     return torch.square(base_height - params["height_target"])
 

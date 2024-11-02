@@ -13,12 +13,15 @@ from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 import torch
 
 # rsl-rl
-from nav_gym.learning.algorithms import PPO
-from nav_gym.learning.modules import ActorCritic, ActorCriticSeparate, EmpiricalNormalization
+from nav_gym.learning.algorithms.ppo_m import PPO
+from nav_gym.learning.modules.actor_critic_module import ActorCritic, ActorCriticSeparate
+from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
+from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
 from nav_gym.learning.env import VecEnv
 from nav_gym.learning.utils import store_code_state
-
-
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
+from nav_gym.learning.distribution.gaussian import Gaussian
+from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
@@ -40,7 +43,7 @@ def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normal
 
 # JL: THIS DOES NOT SUPPORT ASYMMETRIC AC MODELS
 # JL: THIS ONLY WORKS WITH TEACHER_STUDENT SETUP IN WHEELED_LEGGED_ENV
-class OnPolicyModulizedRunner:
+class OnPolicyRunner:
     def __init__(self, env: VecEnv, train_cfg, log_dir=None, device="cpu"):
         self.cfg = train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
@@ -53,7 +56,8 @@ class OnPolicyModulizedRunner:
         obs, extras = self.env.get_observations()
 
         # Define observation space
-        obs_names = self.env.cfg.observations.teacher_obs_list
+        # obs_names = self.env.cfg.observations.teacher_obs_list
+        obs_names = class_to_dict(self.env.cfg.observations).keys()
 
         # Define actor critic model
         if "num_logits" in self.action_dist_cfg:
@@ -109,7 +113,7 @@ class OnPolicyModulizedRunner:
         self.tot_timesteps = 0
         self.tot_time = 0
         self.current_learning_iteration = 0
-        self.git_status_repos = [rsl_rl.__file__]
+        # self.git_status_repos = [nav_gym.learning.__file__]
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
@@ -120,13 +124,13 @@ class OnPolicyModulizedRunner:
 
             if self.logger_type == "neptune":
                 pass
-                # from rsl_rl.utils.neptune_utils import NeptuneSummaryWriter
+                # from nav_gym.learning.utils.neptune_utils import NeptuneSummaryWriter
                 #
                 # self.writer = NeptuneSummaryWriter(log_dir=self.log_dir, flush_secs=10, cfg=self.cfg)
                 # self.writer.log_config(self.env.cfg, self.cfg, self.alg_cfg, self.policy_cfg) # TODO
             elif self.logger_type == "wandb":
                 pass
-                # from rsl_rl.utils.wandb_utils import WandbSummaryWriter
+                # from nav_gym.learning.utils.wandb_utils import WandbSummaryWriter
                 #
                 # self.writer = WandbSummaryWriter(log_dir=self.log_dir, flush_secs=10, cfg=self.cfg)
                 # self.writer.log_config(self.env.cfg, self.cfg, self.alg_cfg, self.policy_cfg)
@@ -219,8 +223,8 @@ class OnPolicyModulizedRunner:
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
             ep_infos.clear()
-            if it == start_iter:
-                store_code_state(self.log_dir, self.git_status_repos)
+            # if it == start_iter:
+            #     store_code_state(self.log_dir, self.git_status_repos)
 
         self.save(os.path.join(self.log_dir, "model_{}.pt".format(self.current_learning_iteration)))
         # TODO(areske): return something less noisy, e.g. exponential moving average
@@ -338,5 +342,8 @@ class OnPolicyModulizedRunner:
             self.alg.actor_critic.to(device)
         policy = self.alg.actor_critic.act_inference
         return policy
+    def train_mode(self):
+        self.alg.actor_critic.train()
 
-
+    def eval_mode(self):
+        self.alg.actor_critic.eval()

@@ -1,5 +1,5 @@
 from nav_gym.learning.samplers.base import BaseSampler
-from nav_gym.learning.modules.gmm import GaussianMixture
+from nav_gym.learning.modules.fld.gmm import GaussianMixture
 import torch
 
 

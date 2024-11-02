@@ -1,3 +1,6 @@
+from nav_gym.learning.modules.config.model_config import ArchitectureCfg, GaussianDistributionCfg
+from typing import List, Tuple, Union, Optional
+
 class TrainConfig:
     seed = 1
     runner_class_name = 'OnPolicyModulizedRunner'
@@ -12,9 +15,9 @@ class TrainConfig:
     #     # rnn_num_layers = 1
     class actor_critic:
         class_name:str = "ActorCriticSeparate"
-        # actor_architecture = 
-        # critic_architecture =
-        # action_distribution = 
+        actor_architecture = ArchitectureCfg()
+        critic_architecture = ArchitectureCfg()
+        action_distribution = GaussianDistributionCfg()
 
         
     class algorithm:
@@ -23,7 +26,6 @@ class TrainConfig:
         use_clipped_value_loss = True
         clip_param = 0.2
         entropy_coef = 0.0075
-        entropy_coef_decay=1.0
         num_learning_epochs = 5
         num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
         learning_rate = 1.e-3 #5.e-4
@@ -38,14 +40,18 @@ class TrainConfig:
         algorithm_class_name = 'PPO'
         num_steps_per_env = 24 #24 per iteration
         max_iterations = 15000 # number of policy updates
+        empirical_normalization: bool = True
 
         # logging
         save_interval = 300 # check for potential saves every this many iterations
         experiment_name = 'local_nav'
-        run_name = ''
+        run_name: Union[int, str] = ""
         # load and resume
-        resume = False
-        load_run = -1 # -1 = last run
-        checkpoint = -1 # -1 = last saved model
-        resume_path = None # updated from load_run and chkpt
+        resume: bool = False
+        load_run: Union[int, str] = -1  # -1 = last run
+        checkpoint: int = -1  # -1 = last saved model
+        resume_path: Optional[str] = None  # updated from load_run and chkpt
 
+        logger: str = "tensorboard"  # tensorboard, wandb, or neptune
+        # wandb_project: str = "legged_gym"
+        # neptune_project: str = "legged_gym"

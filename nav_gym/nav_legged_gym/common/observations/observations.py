@@ -21,7 +21,15 @@ def dof_pos_selected(env: "ANY_ENV", params):
     indices = params["dof_indices"]
     return env.robot.dof_pos[indices] - env.robot.default_dof_pos[indices]
 
+def dof_pos_history_selected(env: "ANY_ENV", params):
+    indices = params["dof_indices"]
+    hist_index = params["hist_index"]
+    return env.dof_pos_history[:, hist_index, indices]
+def dof_vel_history_selected(env: "ANY_ENV", params):
+    indices = params["dof_indices"]
+    hist_index = params["hist_index"]
 
+    return env.dof_vel_history[:, hist_index, indices]
 def dof_vel(env: "ANY_ENV", params):
     return env.robot.dof_vel
 
@@ -36,8 +44,10 @@ def dof_pos_abs(env: "ANY_ENV", params):
 
 def actions(env: "ANY_ENV", params):
     return env.actions
-
-
+def last_actions(env: "ANY_ENV", params):
+    return env.last_actions
+def last_last_actions(env: "ANY_ENV", params):
+    return env.last_last_actions
 def ray_cast(env: "ANY_ENV", params):
     sensor = env.sensor_manager.get_sensor(params["sensor"])
     heights = env.robot.root_pos_w[:, 2].unsqueeze(1) - 0.5 - sensor.get_data()[..., 2]
