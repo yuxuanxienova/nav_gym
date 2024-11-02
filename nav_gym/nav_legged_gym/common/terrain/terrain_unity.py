@@ -72,8 +72,8 @@ class TerrainUnity:
         self.tm_params.transform.p = gymapi.Vec3(0.0, 0.0, 0.0)  # dON'T CHANGE THIS, WILL CAUSE DIFFERNECE IN WP MESH
 
         # Set friction and restitution
-        self.tm_params.static_friction = 0.5
-        self.tm_params.dynamic_friction = 0.5
+        self.tm_params.static_friction = 1.0
+        self.tm_params.dynamic_friction = 1.0
         self.tm_params.restitution = 0.0
 
         # Get the environment origins
