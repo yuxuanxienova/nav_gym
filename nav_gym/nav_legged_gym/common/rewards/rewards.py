@@ -39,16 +39,26 @@ def dof_vel(env: "ANY_ENV", params):
     # Penalize dof velocities
     return torch.sum(torch.square(env.robot.dof_vel), dim=1)
 
+def dof_vel_selected(env: "ANY_ENV", params):
+    # Penalize dof velocities
+    return torch.sum(torch.square(env.robot.dof_vel[:, params["dof_indices"]]), dim=1)
+
 
 def dof_acc(env: "ANY_ENV", params):
     # Penalize dof accelerations
     return torch.sum(torch.square(env.robot.dof_acc), dim=1)
 
+def dof_acc_selected(env: "ANY_ENV", params):
+    # Penalize dof accelerations
+    return torch.sum(torch.square(env.robot.dof_acc[:, params["dof_indices"]]), dim=1)
+
 
 def action_rate(env: "ANY_ENV", params):
     # Penalize changes in actions
     return torch.sum(torch.square(env.last_actions - env.actions), dim=1)
-
+def action_rate_2(env: "ANY_ENV", params):
+    # Penalize 2nd order changes in actions (technically 2nd order change of last_actions)
+    return torch.sum(torch.square(env.last_last_actions - 2.0 * env.last_actions + env.actions), dim=1)
 
 def collision(env: "ANY_ENV", params):
     # Penalize collisions on selected bodies
@@ -347,3 +357,88 @@ def tracking_pos_hl(env: "LocalNavEnv", params):
 def total_distance_hl_final(env: "LeggedEnvPos", params):
     rew = env.termination_manager.time_out_buf*env.total_distance
     return rew
+
+
+"""
+Local navigation specific reward Functions
+"""
+def tracking_dense(env: "LeggedEnv", params):
+    max_error = params["max_error"]
+    total_reward = 1.0 - torch.clip(env.goal_error_z_check, 0.0, max_error) / max_error
+    return total_reward
+
+def goal_dot_prod(env: "LeggedEnv", params):
+    goal_radius = params["goal_radius"]
+
+    vector_to_goal = env.target_pos - env.robot.root_pos_w
+    vector_to_goal = vector_to_goal / torch.norm(vector_to_goal, dim=1).unsqueeze(1)
+    dot_prod = torch.sum(vector_to_goal * env.robot.root_lin_vel_w, dim=1)
+    total_reward = torch.clip(dot_prod , 0.0, params["max_magnitude"])
+    total_reward[env.goal_error_z_check < goal_radius] = params["max_magnitude"]
+
+    return total_reward
+
+def goal_dot_prod_decay(env: "LeggedEnv", params):
+    reward = goal_dot_prod(env, params)
+    return reward 
+
+def action_limits_penalty(env: "LeggedEnv", params):
+    soft_ratio = params["soft_ratio"]
+    vel_limit = env.scaled_action_max * soft_ratio
+
+    return torch.sum(
+        (torch.abs(env.scaled_action) - vel_limit).clip(min=0.0),
+        dim=1,
+    )
+
+def near_goal_stability(env: "ANY_ENV", params):
+
+    total_reward = torch.sum(torch.exp(-torch.square(env.robot.root_states[:, 7:]) / params["std"]), dim=1)
+    total_reward[env.goal_error_z_check > params["threshold"]] = 0.0
+
+    return total_reward
+
+def exp_bonus(env: "ANY_ENV", params):
+    penalty_max = params["max_count"]
+
+    # Encourage to explore temporally
+    # TODO: only valid history
+    dist_to_memory_poses = torch.norm(
+        env.robot.root_pos_w[:, :2].unsqueeze(1) - env.global_memory.all_graph_nodes_abs[:, :, :2], dim=2
+    )
+    min_dis = torch.min(dist_to_memory_poses, dim=1)
+
+    ids = torch.linspace(0, env.num_envs - 1, env.num_envs).to(env.device).to(torch.long)
+    counts_visited = env.global_memory.all_graph_nodes_abs_counts[ids, min_dis[1]]
+
+    penalty = counts_visited
+    penalty_clipped = torch.clip(penalty, 0.0, penalty_max)
+    total_reward = 1.0 - penalty_clipped
+    return total_reward
+
+def global_exp_volume(env: "ANY_ENV", params):
+    # Encourage to explore globally, Naive version, encourage to add new point to global graph
+    add_wp_local = env.global_memory.add_wp
+    total_rwd = add_wp_local.to(torch.float)
+    return total_rwd
+
+def face_front(env: "ANY_ENV", params):
+    # robot's moving direction in the cone of the front direction of the robot
+    angle_limit = params["angle_limit"]
+    min_vel = params["min_vel"]
+
+    lin_vel_norm = torch.norm(env.robot.root_lin_vel_b[:, :2], dim=1)
+    lin_vel_direction = env.robot.root_lin_vel_b[:, :2] / (lin_vel_norm.unsqueeze(1) + 1e-6)
+
+    lin_vel_angle_in_base = torch.abs(torch.atan2(lin_vel_direction[:, 1], lin_vel_direction[:, 0]))
+
+    # penalize if the linear velocity angle is larger than the angle limit. range: [0.0, 2.0]
+    facing_reward = torch.ones(env.num_envs, device=env.device, dtype=torch.float32)
+
+    # zero if the angle is above the limit
+    facing_reward[lin_vel_angle_in_base > angle_limit] = 0.0
+
+    # ignore when small speed.
+    facing_reward[lin_vel_norm < min_vel] = 1.0
+
+    return facing_reward

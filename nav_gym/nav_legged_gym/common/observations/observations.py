@@ -164,3 +164,83 @@ def expert_outputs_fuse(env: "LeggedEnvPosFuse", params):
 """High Level Observation Functions"""
 def position_target(env: "LocalNavEnv", params):
     return env.pos_target - env.robot.root_pos_w
+
+def llc_obs(env: "LocalNavEnv", params):
+    llc_obs_dict = env.ll_env.obs_manager.compute_obs(env.ll_env)
+    obs_to_get = llc_obs_dict[params["name"]]
+    return obs_to_get
+
+def height_trav_map(env: "ANY_ENV", params):
+
+    height_sensor = env.sensors[params["sensor"]]
+
+    height_map = height_sensor.get_data()[..., 2] - env.robot.root_pos_w[:, 2].unsqueeze(1)
+    max_height = params["max_height"]
+    min_height = params["min_height"]
+
+    traversability_map = env.traversability_map[params["sensor"]].clone()
+
+    traversability_map = env.ll_env.traversability_scales * traversability_map
+    traversability_map = env.ll_env.traversability_offsets + traversability_map
+
+    # Occlusion handling
+    occlusion = (height_map > max_height) | (height_map < min_height)  # this includes unhit rays
+
+    height_map[occlusion] = params["occlusion_fill_height"]
+    traversability_map[occlusion] = params["occlusion_fill_travers"]
+
+    # height_map = torch.clip(height_map, min_height,  max_height)
+
+    # traversability as a second channel
+    stacked_map = torch.stack([height_map, traversability_map], dim=1)
+    return stacked_map
+
+def wp_pos_history(env: "ANY_ENV", params):
+    decimation = params["decimation"]
+    num_obs = params["num_points"]
+    clip_range = params["clip_range"]
+    ob_dim_single = 6
+    # ob_dim_single = 4
+    output = torch.zeros([env.num_envs, num_obs,  ob_dim_single], device=env.device)
+
+    wp_history_data = env.wp_history.history_pos.clone()
+    pose_history_data = env.pose_history_exp.history_pos.clone()
+
+
+    for i in range(num_obs):
+        idx = i * decimation
+        pos = 0
+
+        # history_pos_xy = pose_history_data[:, idx, :2]
+        # wp_history_xy = wp_history_data[:, idx, :2]
+        output[:, i, pos: pos + 3] = torch.clamp(pose_history_data[:, idx], -clip_range,clip_range)
+        # output[:, i, pos: pos + 2] = max_dist_clip(history_pos_xy, clip_range)
+        pos += 3
+        output[:, i, pos: pos + 3] = torch.clamp(wp_history_data[:, idx], -clip_range, clip_range)
+        # output[:, i, pos: pos + 2] = max_dist_clip(wp_history_xy, clip_range)
+        pos += 3
+
+    return output
+def node_positions_times(env: "ANY_ENV", params):
+    graph_poses_data = env.global_memory.all_graph_nodes.clone()
+    graph_poses_data = graph_poses_data[:, : params["num_points"], :]
+
+    # graph_quats_data = env.global_memory.all_graph_nodes_quat.clone()
+    # graph_quats_data = graph_quats_data[:, : params["num_points"], :]
+    # _, _, yaws = get_euler_xyz(graph_quats_data.reshape(-1, 4))
+    # yaws = yaws.reshape(graph_quats_data.shape[0], graph_quats_data.shape[1], 1)
+
+    graph_counts_data = env.global_memory.all_graph_nodes_abs_counts.unsqueeze(-1).clone()
+    graph_counts_data = graph_counts_data[:, : params["num_points"], :] * env.dt
+
+    ub = params["counter_limit"]
+    graph_counts_data[graph_counts_data > ub] = ub
+
+    graph_data = torch.cat((graph_poses_data, graph_counts_data), dim=2)
+
+    # set zero for nodes that are not used
+    num_nodes = env.global_memory.num_nodes
+    range_tensor = torch.arange(params["num_points"], device=env.device).repeat(num_nodes.shape[0], 1)
+    graph_data[range_tensor >= num_nodes.unsqueeze(1)] = 0.0
+
+    return graph_data

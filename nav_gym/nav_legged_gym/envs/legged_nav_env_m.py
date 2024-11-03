@@ -301,9 +301,7 @@ class LeggedNavEnv:
             gymtorch.unwrap_tensor(self.external_torques),
             gymapi.ENV_SPACE,
         )
-    def  set_observation_buffer(self):
-        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
-        self.extras["observations"] = self.obs_dict
+
     def update_substep_history(self):
         if self.num_envs > 1:
             self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :]
@@ -409,7 +407,9 @@ class LeggedNavEnv:
 
     # def get_privileged_observations(self):
     #     return self.obs_manager.get_obs_from_group("privileged")
-
+    def  set_observation_buffer(self):
+        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        self.extras["observations"] = self.obs_dict
 #-------- 5. Other functions--------
     def update_learning_curriculum(self):
         pass

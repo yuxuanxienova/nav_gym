@@ -29,11 +29,12 @@ class BetaDistribution(nn.Module):
             self.scale = cfg["scale"]
 
     def get_beta_parameters(self, logits):
-        ratio = self.sigmoid(logits[:, : self.output_dim])  # (0, 1) a/(a+b) (Mean)
-        sum = (self.soft_plus(logits[:, self.output_dim :]) + 1) * self.scale  # (1, ~ (a+b)
+        #logits: [num_envs, 2*action_dim]
+        ratio = self.sigmoid(logits[:, : self.output_dim])  # (0, 1) a/(a+b) (Mean) Dim: [num_envs, action_dim]
+        sum = (self.soft_plus(logits[:, self.output_dim :]) + 1) * self.scale  # (1, ~ (a+b) Dim: [num_envs, action_dim]
 
-        alpha = ratio * sum
-        beta = sum - alpha
+        alpha = ratio * sum #Dim: [num_envs, action_dim]
+        beta = sum - alpha #Dim: [num_envs, action_dim]
 
         # For numerical stability
         alpha += 1.0e-6
