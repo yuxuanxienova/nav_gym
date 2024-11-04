@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
-    from nav_gym.nav_legged_gym.envs.hierarchical_env import LocalNavEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
+    from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
 
-    ANY_ENV = Union[LeggedNavEnv]
+    ANY_ENV = Union[LocomotionEnv]
 
 import torch
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi

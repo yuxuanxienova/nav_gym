@@ -10,8 +10,8 @@ import math
 import torch
 import abc
 # legged-gym
-from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
+from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -24,20 +24,20 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
-from nav_gym.nav_legged_gym.envs.hl_nav_env_config import HLNavEnvCfg
+from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
 from nav_gym.nav_legged_gym.envs.modules.pose_history import PoseHistoryData
 import os
 from nav_gym import NAV_GYM_ROOT_DIR
 class LocalNavEnv:
     #-------- 1. Initialization -----------
-    def __init__(self, cfg:HLNavEnvCfg, ll_env_cls:LeggedNavEnv) -> None:
+    def __init__(self, cfg:LocalNavEnvCfg, ll_env_cls:LocomotionEnv) -> None:
         self.cfg = cfg
         #1. Parse the configuration
         cfg.ll_env_cfg.gym.headless = cfg.gym.headless
         cfg.ll_env_cfg.env.num_envs = cfg.env.num_envs
         #1.1 Create the low-level environment
-        self.ll_env: LeggedNavEnv = ll_env_cls(cfg.ll_env_cfg)
+        self.ll_env: LocomotionEnv = ll_env_cls(cfg.ll_env_cfg)
         self.ll_env.play_mode = True #enable play mode
         #1.2 Extract the necessary attributes
         self.sim = self.ll_env.sim

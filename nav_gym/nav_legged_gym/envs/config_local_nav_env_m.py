@@ -9,7 +9,7 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
 from nav_gym.nav_legged_gym.utils.config_utils import configclass
 from nav_gym.nav_legged_gym.envs.modules.utils import distance_compare
 #---Local Navigation Module Config Parameters---
@@ -21,8 +21,8 @@ NUM_HISTORY = 50
 NUM_NODES = 20
 SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
-class HLNavEnvCfg:
-    ll_env_cfg = LeggedNavEnvCfg()
+class LocalNavEnvCfg:
+    ll_env_cfg = LocomotionEnvCfg()
     hl_decimation: int = 24 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 1.0
     max_y_vel = 0.5
@@ -198,5 +198,5 @@ class HLNavEnvCfg:
 
 
 if __name__ == "__main__":
-    cfg = HLNavEnvCfg()
+    cfg = LocalNavEnvCfg()
 

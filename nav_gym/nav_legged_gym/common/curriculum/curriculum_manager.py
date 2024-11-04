@@ -3,11 +3,11 @@ import torch
 from typing import TYPE_CHECKING
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
 
 
 class CurriculumManager:
-    def __init__(self, env: "LeggedNavEnv"):
+    def __init__(self, env: "LocomotionEnv"):
         """Prepares a list of fucntions"""
         #1. Initializing Attributes
         self.functions = {"on_reset": {}, "on_command_resample": {}}
@@ -29,7 +29,7 @@ class CurriculumManager:
             if params.get("sensor") is not None:
                 env.enable_sensor(params["sensor"])
 
-    def update_curriculum(self, env: "LeggedNavEnv", env_ids, mode="on_reset"):
+    def update_curriculum(self, env: "LocomotionEnv", env_ids, mode="on_reset"):
         """Update curriculum
         Calls each update function which was defined in the config (processed in self.__init__). Each function modifies the env directly.
         """
@@ -37,7 +37,7 @@ class CurriculumManager:
             params = self.params[name]
             function(env, env_ids, params)
 
-    def log_info(self, env: "LeggedNavEnv", env_ids, extras_dict):
+    def log_info(self, env: "LocomotionEnv", env_ids, extras_dict):
         # if "terrain_levels" in self.params.keys():
         #     extras_dict["terrain_level"] = torch.mean(env.terrain.terrain_levels.float())
         if "max_lin_vel_command" in self.params.keys():

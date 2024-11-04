@@ -334,6 +334,7 @@ class OnPolicyRunner:
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
         self.current_learning_iteration = loaded_dict["iter"]
+        print(f"Loaded model from {path} at iteration {self.current_learning_iteration}")
         return loaded_dict["infos"]
 
     def get_inference_policy(self, device=None):

@@ -9,9 +9,9 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
-class HLNavEnvCfg:
-    ll_env_cfg = LeggedNavEnvCfg()
+from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+class LocalNavEnvCfg:
+    ll_env_cfg = LocomotionEnvCfg()
     hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     class env:
         """Common configuration for environment."""
@@ -157,5 +157,5 @@ class HLNavEnvCfg:
 
 
 if __name__ == "__main__":
-    cfg = HLNavEnvCfg()
+    cfg = LocalNavEnvCfg()
 

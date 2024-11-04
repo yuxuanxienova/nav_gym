@@ -1,7 +1,7 @@
 
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robots_cfg import LeggedRobotCfg,anymal_d_robot_cfg
 from nav_gym.nav_legged_gym.common.gym_interface.gym_interface_cfg import GymInterfaceCfg, ViewerCfg,SimParamsCfg,PhysxCfg
-from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import RaycasterCfg,OmniScanRaycasterCfg,FootScanCfg,GridPatternCfg
+from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import RaycasterCfg,OmniScanRaycasterCfg,FootScanCfg,GridPatternCfg,BaseScanCfg
 import nav_gym.nav_legged_gym.common.observations.observations as O
 import nav_gym.nav_legged_gym.common.rewards.rewards as R
 import nav_gym.nav_legged_gym.common.terminations.terminations as T
@@ -9,11 +9,11 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
-class LeggedNavEnvCfg:
+class LocomotionEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 2
+        num_envs: int = 3
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -47,15 +47,9 @@ class LeggedNavEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                         "omni_scanner1": OmniScanRaycasterCfg(),
-                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg()),
-                        #  "foot_scanner_lf": FootScanCfg(body_attachement_name="LF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_rf": FootScanCfg(body_attachement_name="RF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_lh": FootScanCfg(body_attachement_name="LH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_rh": FootScanCfg(body_attachement_name="RH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
+                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=2.0, length=3.0, resolution=0.2),max_xy_drift=0.075,max_z_drift=0.075),
+                        #  "base_scan_center" : BaseScanCfg(body_attachement_name="base", enable_debug_vis=False)  # to check base height
                           }
- 
-
     class randomization:
         # randomize_friction: bool = True
         # friction_range: Tuple = (0.5, 1.25)
@@ -73,53 +67,49 @@ class LeggedNavEnvCfg:
 
     class observations:
 
-        class policy:
-            # optinal parameters: scale, clip([min, max]), noise
+        class prop:
             # --add this to every group--
             add_noise: bool = True  # turns off the noise in all observations
             #---------------------------
-            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
-            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
-            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05}
             velocity_commands: dict = {"func": O.velocity_commands}
             dof_pos: dict = {"func": O.dof_pos, "noise": 0.01}
+            dof_prev_pos: dict = {"func": O.dof_pos_history_selected,"noise": 1e-3,"dofs": ".*(HAA|HFE|KFE)","hist_index": -4,}  # 0.005 x 4
             dof_vel: dict = {"func": O.dof_vel, "noise": 1.5}
+            dof_prev_vel: dict = {"func": O.dof_vel_history_selected, "noise": 3e-1, "dofs": ".*", "hist_index": -4}
             actions: dict = {"func": O.actions}
+
+        class exte:
+            # --add this to every group--
+            add_noise: bool = True  # turns off the noise in all observations
+            #--------------------------- 
             height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
-            # bpearl: dict = {"func_name": O.ray_cast, "noise": 0.1, "sensor": "bpearl_front"}
-            # bpearl2: dict = {"func_name": O.ray_cast, "noise": 0.1, "sensor": "bpearl_rear"}
-            # omni_scan: dict = {"func": O.point_cloud, "noise": 0.1, "sensor": "omni_scanner1"}
-            # foot_scan_lf: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_lf", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_rf: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_rf", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_lh: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_lh", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_rh: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_rh", "mean" : 0.05, "scale" : 10.0}
-        class point_cloud:
+        class priv:
             # --add this to every group--
             add_noise: bool = True  # turns off the noise in all observations
             #---------------------------
-            omni_scan: dict = {"func": O.point_cloud, "noise": 0.1, "sensor": "omni_scanner1", "noise": 0.1}
+            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05}
+            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
+            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
+
+        # teacher_obs_list = ["prop", "exte", "priv"]
 
     class rewards:
         # general params
-        only_positive_rewards: bool = False
+        only_positive_rewards: bool = True
         # reward functions
-        termination = {"func": R.termination, "scale": -5}
-        tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 1.0, "std": 0.25}
+        # termination = {"func": R.termination, "scale": -7}
+        tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
-        lin_vel_z = {"func": R.lin_vel_z, "scale": -0.04}
-        ang_vel_xy = {"func": R.ang_vel_xy, "scale": -0.01}
-        torques = {"func": R.torques, "scale": -0.00002}
+        base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 1.0, "std_angvel": 2.0}
+        base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
+        torques = {"func": R.torques, "scale": -1e-6}
         dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        feet_air_time = {"func": R.feet_air_time, "scale": 0.01, "time_threshold": 0.5}
-        collision_THIGHSHANK = {"func": R.collision, "scale": -1, "bodies": ".*(THIGH|SHANK)"}
-        collision_base = {"func": R.collision, "scale": -1, "bodies": "base"}
+        feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
+        collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
+        collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
         action_rate = {"func": R.action_rate, "scale": -0.0001}
         dof_vel = {"func": R.dof_vel, "scale": -0.0}
-        stand_still = {"func": R.stand_still, "scale": -0.0}
-        base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
-        flat_orientation = {"func": R.flat_orientation, "scale": -0.0}
-        survival = {"func": R.survival, "scale": 0.5}
-        # stumble = {"func": "stumble", "scale": -1.0, "hv_ratio": 2.0}
+        survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         
 
@@ -151,7 +141,7 @@ class LeggedNavEnvCfg:
 
 
 if __name__ == "__main__":
-    cfg = LeggedNavEnvCfg()
+    cfg = LocomotionEnvCfg()
     cfg_dict = class_to_dict(cfg)
     print(cfg.env.num_envs)
     print(cfg.gym.viewer.eye)

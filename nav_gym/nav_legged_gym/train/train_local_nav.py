@@ -1,7 +1,8 @@
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config_m import LeggedNavEnvCfg
-from nav_gym.nav_legged_gym.envs.legged_nav_env_m import LeggedNavEnv
-from nav_gym.learning.runners.on_policy_modulized_runner import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.runner_train_config_m_ll import TrainConfig
+from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
+from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
+from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
+from nav_gym.nav_legged_gym.train.config_train_locomotion import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 import torch
 import os
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
 
-    env = LeggedNavEnv(LeggedNavEnvCfg())
+    env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
     # runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

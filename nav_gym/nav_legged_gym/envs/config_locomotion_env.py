@@ -9,7 +9,7 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
-class LeggedNavEnvCfg:
+class LocomotionEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -150,7 +150,7 @@ class LeggedNavEnvCfg:
 
 
 if __name__ == "__main__":
-    cfg = LeggedNavEnvCfg()
+    cfg = LocomotionEnvCfg()
     cfg_dict = class_to_dict(cfg)
     print(cfg.env.num_envs)
     print(cfg.gym.viewer.eye)

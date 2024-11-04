@@ -39,12 +39,12 @@ import torch
 from nav_gym.learning.algorithms import PPO
 from nav_gym.learning.modules import ActorCritic, ActorCriticRecurrent
 # from test_legged_gym.nav_gym.learning.env import VecEnv
-from nav_gym.nav_legged_gym.envs.legged_nav_env import LeggedNavEnv
+from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
 
 class OnPolicyRunner:
 
     def __init__(self,
-                 env: LeggedNavEnv,
+                 env: LocomotionEnv,
                  train_cfg,
                  log_dir=None,
                  device='cpu'):

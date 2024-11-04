@@ -1,6 +1,6 @@
 
 from nav_gym.nav_legged_gym.common.sensors.sensors import Raycaster,SensorBase
-from nav_gym.nav_legged_gym.envs.legged_nav_env_config import LeggedNavEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
 from typing import Dict
 class SensorManager:
     def __init__(self,env):
@@ -25,4 +25,4 @@ class SensorManager:
             return None
         
 if __name__ == "__main__":
-    print(LeggedNavEnvCfg.sensors.raycasters_dict.items())
+    print(LocomotionEnvCfg.sensors.raycasters_dict.items())
