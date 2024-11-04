@@ -10,7 +10,7 @@ import math
 import torch
 import abc
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_env_m import LocomotionEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -23,6 +23,7 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
+from nav_gym.nav_legged_gym.envs.modules.fld_module import FLDModule
 class LocomotionEnv:
     robot: LeggedRobot
     cfg: LocomotionEnvCfg
@@ -74,9 +75,11 @@ class LocomotionEnv:
         #9. Store the environment information from managers
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
-        #10. Perform initial reset of all environments (to fill up buffers)
+        #10. Initialize Other Modules
+        self.fld_module = FLDModule(self)
+        #11. Perform initial reset of all environments (to fill up buffers)
         self.reset()
-        #11. Create debug usage
+        #12. Create debug usage
         self.play_mode = False
         self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
         self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
@@ -356,6 +359,9 @@ class LocomotionEnv:
         self.common_step_counter += 1
         # update robot
         self.robot.update_buffers(dt=self.dt)
+        #----update other modules-----
+        self.fld_module.update()
+        #-----------------------------
         # rewards, resets, ...
         # -- rewards
         self.rew_buf = self.reward_manager.compute_reward(self)
@@ -389,6 +395,7 @@ class LocomotionEnv:
         if not self.play_mode:  
             self.command_generator.resample(env_ids)
         self.command_generator.update()
+        self.fld_module.sample_latent_encoding(env_ids)
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         command = (x_vel, y_vel, yaw_vel)
