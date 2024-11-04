@@ -220,9 +220,9 @@ class OnPolicyRunner:
             self.current_learning_iteration = it
             if self.log_dir is not None:
                 self.log(locals())
-            if it % self.save_interval == 0:
-                self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
-            ep_infos.clear()
+                if it % self.save_interval == 0:
+                    self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
+                ep_infos.clear()
             # if it == start_iter:
             #     store_code_state(self.log_dir, self.git_status_repos)
 

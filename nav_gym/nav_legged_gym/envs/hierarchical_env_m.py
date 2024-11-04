@@ -169,7 +169,9 @@ class LocalNavEnv:
         return ll_action  
     def _draw_hl_debug_vis(self):
         if self.cfg.env.enable_debug_vis:
-            self.sensor_manager.debug_vis(self.ll_env.envs)
+            # self.sensor_manager.debug_vis(self.ll_env.envs)
+            # self._draw_global_memory()
+            self._draw_target_position()
     def _post_ll_step(self):
         #update the metrics
         self.command_time_left -= self.dt
@@ -270,3 +272,6 @@ class LocalNavEnv:
                 gymapi.Vec3(graph_poses[i, 0], graph_poses[i, 1], graph_poses[i, 2] + height_offset), r=None
             )
             gymutil.draw_lines(sphere_geom_graph, self.gym, self.viewer, self.ll_env.envs[0], sphere_pose)
+    def _draw_target_position(self):
+        self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
+        self.sphere_geoms_red.draw(self.pos_target[0], self.gym, self.viewer, self.ll_env.envs[0])

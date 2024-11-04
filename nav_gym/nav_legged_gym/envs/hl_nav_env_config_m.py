@@ -23,7 +23,7 @@ SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
 class HLNavEnvCfg:
     ll_env_cfg = LeggedNavEnvCfg()
-    hl_decimation: int = 5 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 24 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 1.0
     max_y_vel = 0.5
     max_yaw_rate = 1.25
@@ -48,7 +48,7 @@ class HLNavEnvCfg:
         send_timeouts: bool = True  # send time out information to the algorithm
         """Whether to send episode time-out information (added as part of infos)."""
 
-        enable_debug_vis: bool = False
+        enable_debug_vis: bool = True
 
 
     gym = GymInterfaceCfg()
