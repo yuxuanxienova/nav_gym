@@ -26,8 +26,8 @@ class CurriculumManager:
             self.functions[mode][name] = function
             self.params[name] = params
             #2.3 Ensures that any necessary sensors are active
-            if params.get("sensor") is not None:
-                env.enable_sensor(params["sensor"])
+            # if params.get("sensor") is not None:
+            #     env.enable_sensor(params["sensor"])
 
     def update_curriculum(self, env: "LocomotionEnv", env_ids, mode="on_reset"):
         """Update curriculum

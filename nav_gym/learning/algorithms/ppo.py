@@ -76,8 +76,10 @@ class PPO:
         if self.actor_critic.is_recurrent:
             self.transition.hidden_states = self.actor_critic.get_hidden_states()
         # Compute the actions and values
-
+        #obs: (num_envs, actor_obs_shape)
         action, log_prob = self.actor_critic.act(obs)
+        #action: (num_envs, action_shape)
+        #log_prob: (num_envs, 1)
         self.transition.actions = action.detach()
         self.transition.actions_log_prob = log_prob.detach()
         self.transition.values = self.actor_critic.evaluate(critic_obs).detach()

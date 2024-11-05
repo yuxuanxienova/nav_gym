@@ -392,6 +392,27 @@ def goal_tracking_dense_dot(env: "ANY_ENV", params):
 
     return dot_product
 
+def reach_goal(env: "ANY_ENV", params):
+    goal_radius = params["goal_radius"]
+    # Retrieve goal and robot positions as torch tensors
+    goal_position = torch.tensor(env.command_generator.get_goal_position_command(), dtype=torch.float32)
+    robot_position = torch.tensor(env.robot.root_pos_w, dtype=torch.float32)
+    # Calculate the vector from the robot to the goal
+    goal_vector = goal_position - robot_position
+    distance = torch.norm(goal_vector)  # Euclidean distance to the goal
+    # Define reward parameters
+    success_reward = params.get("success_reward", 100.0)  # Reward for reaching the goal
+    distance_penalty = params.get("distance_penalty", 1.0)  # Penalty per unit distance
+    # Calculate the total reward
+    if distance < goal_radius:
+        total_reward = torch.tensor(success_reward, dtype=torch.float32)  # Significant reward for reaching the goal
+    else:
+        total_reward = -distance_penalty * distance  # Negative reward proportional to distance
+    # Optionally scale the reward
+    total_reward = total_reward 
+    
+    return total_reward
+
 def action_limits_penalty(env: "LeggedEnv", params):
     soft_ratio = params["soft_ratio"]
     vel_limit = env.scaled_action_max * soft_ratio

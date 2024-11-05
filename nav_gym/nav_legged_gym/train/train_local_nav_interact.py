@@ -17,5 +17,6 @@ if __name__ == "__main__":
 
     env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
+    
     # runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

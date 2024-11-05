@@ -25,7 +25,7 @@ class LocomotionEnvCfg:
         send_timeouts: bool = True  # send time out information to the algorithm
         """Whether to send episode time-out information (added as part of infos)."""
 
-        enable_debug_vis: bool = True
+        enable_debug_vis: bool = False
 
 
     gym = GymInterfaceCfg()

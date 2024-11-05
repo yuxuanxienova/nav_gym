@@ -25,7 +25,7 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
-    env.set_flag_enable_resample(False)
+    env.set_flag_enable_resample_vel(False)
     env.set_flag_enable_reset(False)
     env.ll_env.set_flag_enable_resample(False)
     env.ll_env.set_flag_enable_reset(False)

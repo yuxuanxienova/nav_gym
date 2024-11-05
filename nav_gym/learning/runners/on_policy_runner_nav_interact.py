@@ -24,6 +24,7 @@ from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
 from nav_gym.nav_legged_gym.test.interact_module import InteractModule
+from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}
@@ -51,7 +52,7 @@ class OnPolicyRunner:
         self.actor_critic_cfg = train_cfg["actor_critic"]
         self.action_dist_cfg = self.actor_critic_cfg["action_distribution"]
         self.device = device
-        self.env = env
+        self.env:LocalNavEnv = env
         self.empirical_normalization = self.cfg["empirical_normalization"]
 
         obs, extras = self.env.get_observations()
@@ -175,9 +176,9 @@ class OnPolicyRunner:
                     # print(time.time() - self.interact_module.time_last_key_up)
                     if time.time() - self.interact_module.time_last_key_up < 10.0:
                         print("[INFO][OnPlociRunner] Keyboard Intervention")
-                        self.env.set_flag_enable_resample(False)
-                    elif self.env.flag_enable_resample == False:
-                        self.env.set_flag_enable_resample(True)
+                        self.env.set_flag_enable_resample_vel(False)
+                    elif self.env.flag_enable_resample_vel == False:
+                        self.env.set_flag_enable_resample_vel(True)
                     self.interact_module.update()
                     self.env.set_velocity_commands(self.interact_module.x_vel, self.interact_module.y_vel, self.interact_module.yaw_vel)
                     #--------------------------

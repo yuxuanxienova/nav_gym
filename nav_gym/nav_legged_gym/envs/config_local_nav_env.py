@@ -23,7 +23,7 @@ SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
 class LocalNavEnvCfg:
     ll_env_cfg = LocomotionEnvCfg()
-    hl_decimation: int = 24 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 1.0
     max_y_vel = 0.5
     max_yaw_rate = 1.25
@@ -36,7 +36,7 @@ class LocalNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 64
         """Number of environment instances."""
 
         num_actions: int = 3  
@@ -140,17 +140,18 @@ class LocalNavEnvCfg:
         # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
         # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
         goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 10}
+        reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
 
-        dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
-        dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}
-        torque_limits = {"func": R.torque_limits, "scale": -1.0e-6, "soft_ratio": 0.95}
+        # dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
+        # dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}
+        # torque_limits = {"func": R.torque_limits, "scale": -1.0e-6, "soft_ratio": 0.95}
 
-        action_limits = {"func": R.action_limits_penalty, "scale": -0.1, "soft_ratio": 0.95}
+        # action_limits = {"func": R.action_limits_penalty, "scale": -0.1, "soft_ratio": 0.95}
         # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
 
         # Exploration (when explicit memory is used)
-        global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
-        exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
+        # global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
+        # exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
         face_front = {
             "func": R.face_front,
             "angle_limit": 0.78,
@@ -158,8 +159,8 @@ class LocalNavEnvCfg:
             "scale": 0.025,
         }  # To account for the camera FOV. Vel direction in baseframe < 45 degrees
 
-        action_rate = {"func": R.action_rate, "scale": -0.01}
-        action_rate2 = {"func": R.action_rate_2, "scale": -0.01}
+        action_rate = {"func": R.action_rate, "scale": -0.001}
+        action_rate2 = {"func": R.action_rate_2, "scale": -0.001}
 
     class terminations:
         # general params

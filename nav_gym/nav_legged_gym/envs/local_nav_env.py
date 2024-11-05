@@ -85,7 +85,8 @@ class LocalNavEnv:
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
         #5 store flags
         self.flag_enable_reset = True
-        self.flag_enable_resample = True
+        self.flag_enable_resample_vel = True
+        self.flag_enable_resample_pos = True
         self.ll_env.set_flag_enable_reset(True)
         self.ll_env.set_flag_enable_resample(False)#disable resample in low level
 
@@ -165,7 +166,7 @@ class LocalNavEnv:
         self.scaled_action = self.actions * self.action_scale
         self.scaled_action += self.action_offset
         # set the velocity command
-        if self.flag_enable_resample:
+        if self.flag_enable_resample_vel:
             self.ll_env.set_velocity_commands(self.scaled_action[:, 0],self.scaled_action[:, 1],self.scaled_action[:, 2])
         self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
         return actions  
@@ -198,11 +199,9 @@ class LocalNavEnv:
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
-        # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
-        # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        # print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
-        # print("[INFO][rew_goal_dot]{0}".format(self.extras["rew_goal_dot"]))
-        # print("[INFO][rew_goal_position]{0}".format(self.extras["rew_goal_position"]))
+        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        print("[INFO][rew_reach_goal]{0}".format(self.extras["rew_reach_goal"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0 and self.flag_enable_reset:
@@ -284,9 +283,13 @@ class LocalNavEnv:
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset
         print(f"[INFO][Local Nav Env]Reset flag set to {enable_reset}")
-    def set_flag_enable_resample(self, enable_resample: bool):
-        self.flag_enable_resample = enable_resample
-        print(f"[INFO][Local Nav Env]Resample flag set to {enable_resample}")
+    def set_flag_enable_resample_vel(self, enable_resample: bool):
+        self.flag_enable_resample_vel = enable_resample
+        print(f"[INFO][Local Nav Env]Resample vel flag set to {enable_resample}")
+    def set_flag_enable_resample_pos(self, enable_resample: bool):  
+        self.flag_enable_resample_pos = enable_resample
+        print(f"[INFO][Local Nav Env]Resample pos flag set to {enable_resample}")
+
     #-------- 5. Visualization --------
     def _draw_global_memory(self):
         sphere_geom_graph = gymutil.WireframeSphereGeometry(0.1, 8, 8, None, color=(0, 0, 1))
