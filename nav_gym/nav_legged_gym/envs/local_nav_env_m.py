@@ -83,6 +83,8 @@ class LocalNavEnv:
         #4. others
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
+        self.play_mode_ll = False
+        self.play_mode_hl =True
     def _init_buffers(self):
         self.obs_dict = dict()
         self.rew_buf = torch.zeros(self.num_envs, device=self.device)
@@ -154,7 +156,8 @@ class LocalNavEnv:
         self.scaled_action = self.actions * self.action_scale
         self.scaled_action += self.action_offset
         # set the velocity command
-        self.ll_env.set_velocity_commands(self.scaled_action[:, 0],self.scaled_action[:, 1],self.scaled_action[:, 2])
+        if not self.play_mode_ll:
+            self.ll_env.set_velocity_commands(self.scaled_action[:, 0],self.scaled_action[:, 1],self.scaled_action[:, 2])
         # if self.scaled_action.shape[1] > 3:
         #     self.ll_env.set_additional_commands(self.scaled_action[:, 3:])
         self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
@@ -189,6 +192,12 @@ class LocalNavEnv:
         #-----------------------------------------
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
+        #-------print reward info---------
+        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        print("[INFO][rew_goal_dot]{0}".format(self.extras["rew_goal_dot"]))
+        print("[INFO][rew_goal_position]{0}".format(self.extras["rew_goal_position"]))
+
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0:
             time_outs = self.termination_manager.time_out_buf.nonzero(as_tuple=False).flatten()
@@ -260,7 +269,8 @@ class LocalNavEnv:
     def set_observation_buffer(self):
         self.obs_buf = torch.cat([self.obs_dict['prop'].reshape(self.num_envs, -1),self.obs_dict['ext'].reshape(self.num_envs, -1),self.obs_dict['history'].reshape(self.num_envs, -1),self.obs_dict['memory'].reshape(self.num_envs, -1)], dim=1)
         self.extras["observations"] = self.obs_dict
-
+    def set_ll_velocity_commands(self, x_vel, y_vel, yaw_vel):
+        self.ll_env.set_velocity_commands(x_vel, y_vel, yaw_vel)
     #-------- 5. Visualization --------
     def _draw_global_memory(self):
         sphere_geom_graph = gymutil.WireframeSphereGeometry(0.1, 8, 8, None, color=(0, 0, 1))

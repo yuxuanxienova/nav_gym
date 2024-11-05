@@ -18,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/CombinedMesh_v2.obj"
+        terrain_file = "/terrain/CombinedMesh_v4_3.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
