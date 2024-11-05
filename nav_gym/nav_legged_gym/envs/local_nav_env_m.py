@@ -276,7 +276,7 @@ class LocalNavEnv:
     def set_observation_buffer(self):
         self.obs_buf = torch.cat([self.obs_dict['prop'].reshape(self.num_envs, -1),self.obs_dict['ext'].reshape(self.num_envs, -1),self.obs_dict['history'].reshape(self.num_envs, -1),self.obs_dict['memory'].reshape(self.num_envs, -1)], dim=1)
         self.extras["observations"] = self.obs_dict
-    def set_ll_velocity_commands(self, x_vel, y_vel, yaw_vel):
+    def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         self.ll_env.set_velocity_commands(x_vel, y_vel, yaw_vel)
     #-------- 5. Visualization --------
     def _draw_global_memory(self):

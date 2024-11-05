@@ -10,15 +10,12 @@ from nav_gym.nav_legged_gym.envs.local_nav_env_m import LocalNavEnv
 from nav_gym.learning.runners.on_policy_runner_m import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_local_nav_m import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
+from nav_gym.nav_legged_gym.test.interact_module import InteractModule
 import torch
 import os
 import time
 if __name__ == "__main__":
-    # Initialize Pygame
-    pygame.init()
-    # Create a small window to capture keyboard inputs
-    screen = pygame.display.set_mode((200, 200))
-    pygame.display.set_caption("Robot Controller")
+    interact_module = InteractModule()
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
@@ -34,54 +31,16 @@ if __name__ == "__main__":
     policy = runner.get_inference_policy()
     obs, extras = env.reset()
 
-    # Initialize velocities
-    x_vel = 0.0
-    y_vel = 0.0
-    yaw_vel = 0.0
-
-    # Define maximum velocities
-    max_x_vel = 2.0
-    max_y_vel = 1.0
-    max_yaw_vel = 1.0  # Adjust this value based on your environment's limits
-
     # Main loop
     running = True
     while running:
-        # Handle Pygame events
-        for event in pygame.event.get():
-            # Allow exiting the program
-            if event.type == pygame.QUIT:
-                running = False
-                break
-            # Handle key press events
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w:
-                    x_vel = max_x_vel
-                elif event.key == pygame.K_s:
-                    x_vel = -max_x_vel
-                elif event.key == pygame.K_a:
-                    y_vel = -max_y_vel
-                elif event.key == pygame.K_d:
-                    y_vel = max_y_vel
-                elif event.key == pygame.K_q:
-                    yaw_vel = max_yaw_vel
-                elif event.key == pygame.K_e:
-                    yaw_vel = -max_yaw_vel
-            # Handle key release events
-            elif event.type == pygame.KEYUP:
-                if event.key in (pygame.K_w, pygame.K_s):
-                    x_vel = 0.0
-                elif event.key in (pygame.K_a, pygame.K_d):
-                    y_vel = 0.0
-                elif event.key in (pygame.K_q, pygame.K_e):
-                    yaw_vel = 0.0
-
+        interact_module.update()
         # Update the commands in the environment
         # Assuming 'set_velocity_commands' correctly sets the commands for all environments
-        env.set_ll_velocity_commands(x_vel, y_vel, yaw_vel)
+        env.set_velocity_commands(interact_module.x_vel, interact_module.y_vel, interact_module.yaw_vel)
 
         # Print the current commands
-        print(f"Current Commands - X: {x_vel}, Y: {y_vel}, Yaw: {yaw_vel}")
+        print(f"Current Commands - X: {interact_module.x_vel}, Y: {interact_module.y_vel}, Yaw: {interact_module.yaw_vel}")
 
         # Run the policy and step the environment
         action = policy(obs)

@@ -36,7 +36,7 @@ class LocalNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 3
         """Number of environment instances."""
 
         num_actions: int = 3  
@@ -138,14 +138,14 @@ class LocalNavEnvCfg:
         # reward functions
         # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
         # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
-        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 0.2}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 10}
 
         dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
         dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}
         torque_limits = {"func": R.torque_limits, "scale": -1.0e-6, "soft_ratio": 0.95}
 
         action_limits = {"func": R.action_limits_penalty, "scale": -0.1, "soft_ratio": 0.95}
-        near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
+        # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
 
         # Exploration (when explicit memory is used)
         global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
