@@ -163,6 +163,7 @@ def expert_outputs_fuse(env: "LeggedEnvPosFuse", params):
     
 """High Level Observation Functions"""
 def position_target(env: "LocalNavEnv", params):
+    print("[Debug]Observation: position_target{0}".format(env.pos_target - env.robot.root_pos_w))
     return env.pos_target - env.robot.root_pos_w
 
 def llc_obs(env: "LocalNavEnv", params):

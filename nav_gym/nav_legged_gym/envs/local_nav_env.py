@@ -194,6 +194,7 @@ class LocalNavEnv:
         self.update_history()
         self.update_global_memory()
         #-----------------------------------------
+        self.pos_target = self.command_generator.get_goal_position_command()
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
@@ -277,6 +278,8 @@ class LocalNavEnv:
         self.extras["observations"] = self.obs_dict
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         print("[INFO][Local Nav Env]Setting velocity commands")
+        command = (x_vel, y_vel, yaw_vel)
+        self.command_generator.set_velocity_command(command)
         self.ll_env.set_velocity_commands(x_vel, y_vel, yaw_vel)
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset

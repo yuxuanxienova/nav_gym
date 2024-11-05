@@ -40,7 +40,7 @@ class CommandBase:
         # sets command data
         raise NotImplementedError()
 
-    def set_velocity_commands(self, command):
+    def set_velocity_command(self, command):
         # sets command data
         raise NotImplementedError()
 
@@ -124,7 +124,7 @@ class UnifromVelocityCommand(CommandBase):
 
         # update standing envs
         self.is_standing_env[env_ids] = r.uniform_(0.0, 1.0) <= self.cfg.prob_standing_envs
-    def set_velocity_commands(self, command):
+    def set_velocity_command(self, command):
         """
         Sets the velocity commands for all environments.
 

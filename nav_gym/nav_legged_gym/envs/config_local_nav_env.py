@@ -36,7 +36,7 @@ class LocalNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 3
+        num_envs: int = 1
         """Number of environment instances."""
 
         num_actions: int = 3  
@@ -101,6 +101,7 @@ class LocalNavEnvCfg:
             add_noise: bool = True  # turns off the noise in all observations
 
             llc_prop: dict = {"func": O.llc_obs, "name": "prop"}  
+            position_target: dict = {"func": O.position_target}
         class ext:
             # add this to every group
             add_noise: bool = True

@@ -401,7 +401,7 @@ class LocomotionEnv:
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         command = (x_vel, y_vel, yaw_vel)
-        self.command_generator.set_velocity_commands(command)
+        self.command_generator.set_velocity_command(command)
     def _push_robots(self):
         """Random pushes the robots. Emulates an impulse by setting a randomized base velocity."""
         self.robot.root_states[:, 7:13] += torch.empty(self.num_envs, 6, device=self.device).uniform_(*self.cfg.randomization.push_vel)
