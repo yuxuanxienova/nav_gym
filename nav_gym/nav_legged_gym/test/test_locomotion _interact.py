@@ -27,7 +27,8 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env = LocomotionEnv(LocomotionEnvCfg())
-    env.play_mode = True
+    env.set_flag_enable_reset(False)
+    env.set_flag_enable_resample(False)
     runner = OnPolicyRunner(env, train_cfg_dict, log_dir=log_dir, device="cuda:0")
     runner.load(checkpoint_dir)
     policy = runner.get_inference_policy()

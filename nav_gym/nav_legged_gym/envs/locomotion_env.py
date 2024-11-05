@@ -77,10 +77,12 @@ class LocomotionEnv:
         #10. Perform initial reset of all environments (to fill up buffers)
         self.reset()
         #11. Create debug usage
-        self.play_mode = False
         self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
         self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
         self.sphere_geoms_blue = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 0, 1))
+        #12. Store the flags
+        self.flag_enable_reset = True
+        self.flag_enable_resample = True
         # we are ready now! :)
         self._init_done = True
     def _create_envs(self):
@@ -362,7 +364,7 @@ class LocomotionEnv:
         # -- terminations
         self.reset_buf = self.termination_manager.check_termination(self)
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
-        if len(env_ids) != 0 and self.termination_manager.reset_on_termination and not self.play_mode:
+        if len(env_ids) != 0 and self.termination_manager.reset_on_termination and self.flag_enable_reset:
             # -- update curriculum
             if self._init_done:
                 self.curriculum_manager.update_curriculum(self, env_ids)
@@ -386,11 +388,12 @@ class LocomotionEnv:
          # check if need to resample
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
-        if not self.play_mode:  
+        if self.flag_enable_resample:  
             self.command_generator.resample(env_ids)
         self.command_generator.update()
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
+        print("[INFO][LocomotionEnv]Setting velocity commands")
         command = (x_vel, y_vel, yaw_vel)
         self.command_generator.set_velocity_commands(command)
     def _push_robots(self):
@@ -407,9 +410,15 @@ class LocomotionEnv:
 
     # def get_privileged_observations(self):
     #     return self.obs_manager.get_obs_from_group("privileged")
-    def  set_observation_buffer(self):
+    def set_observation_buffer(self):
         self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
         self.extras["observations"] = self.obs_dict
+    def set_flag_enable_reset(self, enable_reset: bool):
+        self.flag_enable_reset = enable_reset
+        print(f"[INFO][LocomotionEnv]Reset flag set to {enable_reset}")
+    def set_flag_enable_resample(self, enable_resample: bool):
+        self.flag_enable_resample = enable_resample
+        print(f"[INFO][LocomotionEnv]Resample flag set to {enable_resample}")
 #-------- 5. Other functions--------
     def update_learning_curriculum(self):
         pass

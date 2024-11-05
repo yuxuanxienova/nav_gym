@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 import torch
 
 # rsl-rl
-from nav_gym.learning.algorithms.ppo_m import PPO
+from nav_gym.learning.algorithms.ppo import PPO
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization

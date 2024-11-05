@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 import torch
 
 # rsl-rl
-from nav_gym.learning.algorithms.ppo_m import PPO
+from nav_gym.learning.algorithms.ppo import PPO
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
@@ -175,10 +175,9 @@ class OnPolicyRunner:
                     # print(time.time() - self.interact_module.time_last_key_up)
                     if time.time() - self.interact_module.time_last_key_up < 10.0:
                         print("[INFO][OnPlociRunner] Keyboard Intervention")
-                        self.env.play_mode_ll = True
-                        # print("play_mode_ll = True")
-                    else:   
-                        self.env.play_mode_ll = False
+                        self.env.set_flag_enable_resample(False)
+                    elif self.env.flag_enable_resample == False:
+                        self.env.set_flag_enable_resample(True)
                     self.interact_module.update()
                     self.env.set_velocity_commands(self.interact_module.x_vel, self.interact_module.y_vel, self.interact_module.yaw_vel)
                     #--------------------------

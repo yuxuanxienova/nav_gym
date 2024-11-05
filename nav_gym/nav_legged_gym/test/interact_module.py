@@ -20,6 +20,7 @@ class InteractModule:
 
         # 
         self.time_last_key_up = time.time()
+
     def update(self):
         # Handle Pygame events
         for event in pygame.event.get():

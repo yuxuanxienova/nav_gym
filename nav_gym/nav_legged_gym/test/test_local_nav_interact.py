@@ -25,7 +25,10 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
-    env.play_mode_ll = True
+    env.set_flag_enable_resample(False)
+    env.set_flag_enable_reset(False)
+    env.ll_env.set_flag_enable_resample(False)
+    env.ll_env.set_flag_enable_reset(False)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
     # runner.load(checkpoint_dir)
     policy = runner.get_inference_policy()
@@ -37,6 +40,7 @@ if __name__ == "__main__":
         interact_module.update()
         # Update the commands in the environment
         # Assuming 'set_velocity_commands' correctly sets the commands for all environments
+        print("[INFO][test_local_nav_interact]Setting velocity commands")
         env.set_velocity_commands(interact_module.x_vel, interact_module.y_vel, interact_module.yaw_vel)
 
         # Print the current commands
