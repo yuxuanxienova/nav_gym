@@ -1,10 +1,10 @@
 #isaac
-from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+
 #python
 import torch
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 class ObsManager:
-    def __init__(self, env:LocomotionEnvCfg):
+    def __init__(self, env):
         #1. Initializing Attributes
         self.obs_per_group = {}
         self.obs_dims_per_group = {}

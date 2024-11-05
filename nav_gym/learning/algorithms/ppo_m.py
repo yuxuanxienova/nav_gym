@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 # rsl-rl
-from nav_gym.learning.modules.actor_critic_module import ActorCritic
+from nav_gym.learning.modules.actor_critic import ActorCritic
 from nav_gym.learning.storage.rollout_storage_m import RolloutStorage
 
 import math

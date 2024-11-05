@@ -14,7 +14,7 @@ import torch
 
 # rsl-rl
 from nav_gym.learning.algorithms.ppo_m import PPO
-from nav_gym.learning.modules.actor_critic_module import ActorCritic, ActorCriticSeparate
+from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
 from nav_gym.learning.env import VecEnv
@@ -23,6 +23,7 @@ from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
+from nav_gym.nav_legged_gym.test.interact_module import InteractModule
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}
@@ -115,6 +116,10 @@ class OnPolicyRunner:
         self.current_learning_iteration = 0
         # self.git_status_repos = [nav_gym.learning.__file__]
 
+        #Interactive Module
+        self.interact_module = InteractModule()
+
+
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
         if self.log_dir is not None and self.writer is None:
@@ -166,6 +171,17 @@ class OnPolicyRunner:
             # Rollout
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
+                    #----interactive module----
+                    # print(time.time() - self.interact_module.time_last_key_up)
+                    if time.time() - self.interact_module.time_last_key_up < 10.0:
+                        print("[INFO][OnPlociRunner] Keyboard Intervention")
+                        self.env.play_mode_ll = True
+                        # print("play_mode_ll = True")
+                    else:   
+                        self.env.play_mode_ll = False
+                    self.interact_module.update()
+                    self.env.set_velocity_commands(self.interact_module.x_vel, self.interact_module.y_vel, self.interact_module.yaw_vel)
+                    #--------------------------
                     actions = self.alg.act(obs, critic_obs)
                     obs, rewards, dones, infos = self.env.step(actions)
                     # obs = self.obs_normalizer(obs)

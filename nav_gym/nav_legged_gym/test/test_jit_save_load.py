@@ -11,7 +11,7 @@ from nav_gym import NAV_GYM_ROOT_DIR
 
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241029-120802/" + "model_4200.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241103-092555/" + "model_26099.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     
     # Load the checkpoint
     runner.load(checkpoint_dir)
-    runner.alg.actor_critic.actor[0]._is_training = False
+    # runner.alg.actor_critic.actor[0]._is_training = False
     policy = runner.get_inference_policy(device=env.device)
 
     
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # Script the policy model
     try:
         scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/" )
-        file_name = "ll_jit_model.pt"
+        file_name = "ll_jit_model2.pt"
         export_policy_as_jit(runner.alg.actor_critic, None, scripted_model_path, filename=file_name)
         print(f"Scripted model saved to {scripted_model_path}")
     except Exception as e:
@@ -71,5 +71,5 @@ if __name__ == "__main__":
     
     while True:
         action = loaded_policy(obs)
-        obs, _,_, _, extras = env.step(action)
+        obs, _,_, extras = env.step(action)
         env.render()

@@ -10,16 +10,36 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+from nav_gym.nav_legged_gym.utils.config_utils import configclass
+from nav_gym.nav_legged_gym.envs.modules.utils import distance_compare
+#---Local Navigation Module Config Parameters---
+DIS_THRE = 2.0
+FOV_RANGE = 2.0
+GOAL_RADIUS = 2.0
+
+NUM_HISTORY = 50
+NUM_NODES = 20
+SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
+#-------------------------------------------------
 class LocalNavEnvCfg:
     ll_env_cfg = LocomotionEnvCfg()
-    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 24 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    max_x_vel = 1.0
+    max_y_vel = 0.5
+    max_yaw_rate = 1.25
+
+    # for beta distribution
+    vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
+    vel_cmd_scale: Tuple[float, float, float] = (2.0 * max_x_vel, 2.0 * max_y_vel, 2.0 * max_yaw_rate)  # x, y, yaw
+    vel_cmd_offset: Tuple[float, float, float] = (-max_x_vel, -max_y_vel, -max_yaw_rate)
+
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 3
         """Number of environment instances."""
 
-        num_actions: int = 12  # joint positions, velocities or torques
+        num_actions: int = 3  
         """The size of action space for the defined environment MDP."""
 
         episode_length_s: float = 10.0
@@ -28,7 +48,7 @@ class LocalNavEnvCfg:
         send_timeouts: bool = True  # send time out information to the algorithm
         """Whether to send episode time-out information (added as part of infos)."""
 
-        enable_debug_vis: bool = False
+        enable_debug_vis: bool = True
 
 
     gym = GymInterfaceCfg()
@@ -50,13 +70,13 @@ class LocalNavEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                         "omni_scanner1": OmniScanRaycasterCfg(),
+                        #  "omni_scanner1": OmniScanRaycasterCfg(),
                         # "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
-                        #   "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True), 
-                        #  "foot_scanner_lf": FootScanCfg(body_attachement_name="LF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_rf": FootScanCfg(body_attachement_name="RF_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_lh": FootScanCfg(body_attachement_name="LH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
-                        #  "foot_scanner_rh": FootScanCfg(body_attachement_name="RH_FOOT",attachement_pos=(0.0, 0.0, 0.0)),
+                        "height_scanner" : RaycasterCfg(
+                            attachement_pos=(0.0, 0.0, SENSOR_HEIGHT),
+                            attach_yaw_only=True,
+                            pattern_cfg=GridPatternCfg(resolution=0.25, width=FOV_RANGE * 2, length=FOV_RANGE * 2),
+                        ),
                           }
     class randomization:
         # randomize_friction: bool = True
@@ -72,67 +92,78 @@ class LocalNavEnvCfg:
         external_force: Tuple = (-0.0, 0.0)  # wind force applied at base, constant over episode [N]
         external_torque: Tuple = (-0.0, 0.0)  # wind torque applied at base, constant over episode [Nm]
         external_foot_force: Tuple = (-0.0, 0.0)  # wind force applied at feet, constant over episode [N]
+        #---local navigation---
+        keep_memory_prob: float = 0.3
 
     class observations:
-
-        class policy:
-            # optinal parameters: scale, clip([min, max]), noise
-            # --add this to every group--
+        class prop:
+            # add this to every group
             add_noise: bool = True  # turns off the noise in all observations
-            #---------------------------
-            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
-            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
-            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05}
-            velocity_commands: dict = {"func": O.velocity_commands}
-            position_target: dict = {"func": O.position_target, "noise": 0.1}
-            # dof_pos: dict = {"func": O.dof_pos, "noise": 0.01}
-            # dof_vel: dict = {"func": O.dof_vel, "noise": 1.5}
-            # actions: dict = {"func": O.actions}
-            # height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
-            # bpearl: dict = {"func_name": O.ray_cast, "noise": 0.1, "sensor": "bpearl_front"}
-            # bpearl2: dict = {"func_name": O.ray_cast, "noise": 0.1, "sensor": "bpearl_rear"}
-            omni_scan: dict = {"func": O.point_cloud, "noise": 0.1, "sensor": "omni_scanner1"}
-            # foot_scan_lf: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_lf", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_rf: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_rf", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_lh: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_lh", "mean" : 0.05, "scale" : 10.0}
-            # foot_scan_rh: dict = {"func": O.height_scan, "noise": 0.1, "sensor": "foot_scanner_rh", "mean" : 0.05, "scale" : 10.0}
-        # class point_cloud:
-        #     # --add this to every group--
-        #     add_noise: bool = True  # turns off the noise in all observations
-        #     #---------------------------
-        #     omni_scan: dict = {"func": O.point_cloud, "noise": 0.1, "sensor": "omni_scanner1", "noise": 0.1}
 
+            llc_prop: dict = {"func": O.llc_obs, "name": "prop"}  
+        class ext:
+            # add this to every group
+            add_noise: bool = True
+            height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
+            # height_scan: dict = {
+            # "func": O.height_trav_map,
+            # "occlusion_fill_height": 0.0,
+            # "occlusion_fill_travers": -1.0,  # 0.0: not traversable, 1.0: traversable
+            # # "func": OE.ray_cast_exp,
+            # "noise": 0.05,
+            # "sensor": "height_scanner",
+            # "max_height": 0.5,  # from base. Occluded if higher
+            # "min_height": -1.5,  #  from base. Occluded if lower
+            # }
+        class history:
+            add_noise: bool = True
+            wp_pos_history: dict = {
+                "func": O.wp_pos_history,
+                "clip_range": 10.0,
+                "num_points": 5,
+                "decimation": 5,
+                "noise": 0.1,
+            }
+        class memory:
+            add_noise: bool = True
+            graph_poses: dict = {
+                "func": O.node_positions_times,
+                "num_points": NUM_NODES,
+                "counter_limit": 10,
+                "pose_noise": 0.1,
+            }
     class rewards:
         # general params
         only_positive_rewards: bool = False
         # reward functions
-        termination = {"func": R.termination, "scale": -0.25}
-        # termination_hl = {"func": R.termination_hl, "scale": -0.25}
-        tracking_pos_hl_final: Dict = {"func": R.tracking_pos_hl_final, "scale": 0.15}
-        tracking_pos_hl: Dict = {"func": R.tracking_pos_hl, "scale": 0.5}
-        # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 10.0, "std": 0.25}
-        # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 5.0, "std": 0.25}
-        # lin_vel_z = {"func": R.lin_vel_z, "scale": -0.04}
-        # ang_vel_xy = {"func": R.ang_vel_xy, "scale": -0.01}
-        # torques = {"func": R.torques, "scale": -0.00002}
-        # dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        # feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
-        # collision_THIGHSHANK = {"func": R.collision, "scale": -1, "bodies": ".*(THIGH|SHANK)"}
-        # collision_base = {"func": R.collision, "scale": -1, "bodies": "base"}
-        # action_rate = {"func": R.action_rate, "scale": -0.0001}
-        # dof_vel = {"func": R.dof_vel, "scale": -0.0}
-        # stand_still = {"func": R.stand_still, "scale": -0.0}
-        # base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
-        # flat_orientation = {"func": R.flat_orientation, "scale": -0.0}
-        survival = {"func": R.survival, "scale": 0.01}
-        # stumble = {"func": "stumble", "scale": -1.0, "hv_ratio": 2.0}
-        # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
-        
+        # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
+        # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 10}
+
+        dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
+        dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}
+        torque_limits = {"func": R.torque_limits, "scale": -1.0e-6, "soft_ratio": 0.95}
+
+        action_limits = {"func": R.action_limits_penalty, "scale": -0.1, "soft_ratio": 0.95}
+        # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
+
+        # Exploration (when explicit memory is used)
+        global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
+        exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
+        face_front = {
+            "func": R.face_front,
+            "angle_limit": 0.78,
+            "min_vel": 0.2,
+            "scale": 0.025,
+        }  # To account for the camera FOV. Vel direction in baseframe < 45 degrees
+
+        action_rate = {"func": R.action_rate, "scale": -0.01}
+        action_rate2 = {"func": R.action_rate_2, "scale": -0.01}
 
     class terminations:
         # general params
         reset_on_termination: bool = True
-        time_out = None#{"func": T.time_out}
+        time_out = {"func": T.time_out}
         illegal_contact ={"func": T.illegal_contact, "bodies": "base"}
         bad_orientation = None
         dof_torque_limit = None
@@ -154,6 +185,17 @@ class LocalNavEnvCfg:
     #         ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
     #         heading: List = [-3.14, 3.14]  # [rad]
     commands = UnifromVelocityCommandCfg()
+#-----------------------------Local Navigation Module Config--------------------------------
+
+
+    class memory:
+        use_local_map = False
+        max_node_cnt = NUM_NODES + 1
+        history_len = NUM_HISTORY + 1
+        wp_history_len = NUM_HISTORY + 1
+        class comparator:
+            func = distance_compare
+            params = {"thre": DIS_THRE}
 
 
 if __name__ == "__main__":

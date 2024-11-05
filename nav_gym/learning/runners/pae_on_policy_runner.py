@@ -13,8 +13,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 # learning
-from nav_gym.learning.algorithms import PPO
-from nav_gym.learning.modules import ActorCritic, ActorCriticRecurrent
+from nav_gym.learning.algorithms.ppo_m import PPO
+from nav_gym.learning.modules.actor_critic import ActorCritic
 from nav_gym.learning.modules.discriminator import Discriminator
 from nav_gym.learning.modules.fld.plotter import Plotter
 from nav_gym.learning.samplers import OfflineSampler, RandomSampler, GMMSampler, ALPGMMSampler, OfflineSamplerPAE

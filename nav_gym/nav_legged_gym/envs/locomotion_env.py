@@ -136,6 +136,13 @@ class LocomotionEnv:
         # assets buffers
         # -- robot
         self.robot.init_buffers()
+        #----history
+        self.dof_pos_history = torch.zeros(
+            self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
+        ).to(self.device)
+        self.dof_vel_history = torch.zeros(
+            self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
+        ).to(self.device)
     def _init_external_forces(self):
         self.external_forces = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
         self.external_torques = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
@@ -145,8 +152,7 @@ class LocomotionEnv:
         # reset environments
         self.reset_idx(torch.arange(self.num_envs, device=self.device))
         self.obs_dict = self.obs_manager.compute_obs(self)
-        self.obs_buf = self.obs_dict["policy"]
-        self.extras["observations"] = self.obs_dict
+        self.set_observation_buffer()
         # return obs
         return self.obs_buf, self.extras
     def reset_idx(self, env_ids):
@@ -164,8 +170,12 @@ class LocomotionEnv:
         self.robot.reset_buffers(env_ids)
         # -- reset env buffers
         self.last_actions[env_ids] = 0.0
+        self.last_last_actions[env_ids] = 0.0
         self.episode_length_buf[env_ids] = 0
         self.reset_buf[env_ids] = 1
+        #----reset hsitory
+        self.dof_pos_history[env_ids] = 0
+        self.dof_vel_history[env_ids] = 0
         # self.push_robots_buf[env_ids] = torch.randint(
         #     0, self._push_interval, (len(env_ids), 1), device=self.device
         # ).squeeze()
@@ -248,6 +258,8 @@ class LocomotionEnv:
             )
             #sensors update
             self.sensor_manager.update()
+            # update substep history
+            self.update_substep_history()
 
         self.robot.net_contact_forces[:] = contact_forces
         # render viewer
@@ -258,12 +270,11 @@ class LocomotionEnv:
         self._post_physics_step()
         # return clipped obs, rewards, dones and infos
         # return policy obs as the main and rest of observations into extras.
-        self.obs_buf = self.obs_dict["policy"]
-        self.extras["observations"] = self.obs_dict
+        self.set_observation_buffer()
         # Story memory
         self.update_history()
         # return mdp tuples
-        return (self.obs_buf, self.obs_manager.get_obs_from_group("privileged") ,self.rew_buf, self.reset_buf, self.extras)
+        return (self.obs_buf,self.rew_buf, self.reset_buf, self.extras)
     def _preprocess_actions(self, actions: torch.Tensor) -> torch.Tensor:
         """Pre-process actions from the environment into actor's commands.
         The step call (by default) performs the following operations:
@@ -290,6 +301,19 @@ class LocomotionEnv:
             gymtorch.unwrap_tensor(self.external_torques),
             gymapi.ENV_SPACE,
         )
+
+    def update_substep_history(self):
+        if self.num_envs > 1:
+            self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :]
+            self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :]
+            self.dof_pos_history[:, -1, :] = self.robot.dof_pos
+            self.dof_vel_history[:, -1, :] = self.robot.dof_vel
+        else:
+            self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :].clone()
+            self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :].clone()
+            self.dof_pos_history[:, -1, :] = self.robot.dof_pos
+            self.dof_vel_history[:, -1, :] = self.robot.dof_vel
+
     def render(self, sync_frame_time=True):
         """Render the viewer."""
         # render the GUI
@@ -379,12 +403,16 @@ class LocomotionEnv:
         self.last_actions[:] = self.actions[:]
 #-------- 4. Get/Set functions--------
     def get_observations(self):
-        return self.obs_manager.get_obs_from_group("policy")
+        return self.obs_buf, self.extras
 
-    def get_privileged_observations(self):
-        return self.obs_manager.get_obs_from_group("privileged")
-
-
+    # def get_privileged_observations(self):
+    #     return self.obs_manager.get_obs_from_group("privileged")
+    def  set_observation_buffer(self):
+        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        self.extras["observations"] = self.obs_dict
+#-------- 5. Other functions--------
+    def update_learning_curriculum(self):
+        pass
 
 
 

@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241029-120802/" + "model_4200.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241103-092555/" + "model_26099.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
         # Run the policy and step the environment
         action = policy(obs)
-        obs, _, _, _, extras = env.step(action)
+        obs, _, _, extras = env.step(action)
         env.render()
 
         # Update the Pygame display (not strictly necessary unless you're drawing something)

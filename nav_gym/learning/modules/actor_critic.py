@@ -5,8 +5,6 @@
 import torch
 import torch.nn as nn
 from torch.distributions import Normal
-from nav_gym.learning.modules.normalizer import EmpiricalNormalization
-from nav_gym.learning.modules.mlp import MLP
 
 
 class ActorCritic(nn.Module):
@@ -21,11 +19,6 @@ class ActorCritic(nn.Module):
         critic_hidden_dims=[256, 256, 256],
         activation="elu",
         init_noise_std=1.0,
-        update_obs_norm=True,
-        ext_cfg=None,
-        num_prop_obs_first=57,
-        num_priv=0,
-        num_exte=0,
         **kwargs,
     ):
         if kwargs:
@@ -36,32 +29,10 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         activation = get_activation(activation)
 
-        self.num_priv = num_priv
-        if ext_cfg is not None and ext_cfg.use_ext_encoder:
-            self.num_ext_obs = ext_cfg.num_ext_obs
-            self.num_prop_obs_first = num_prop_obs_first
-            self.num_prop_obs_second = num_actor_obs - num_prop_obs_first - self.num_priv - self.num_ext_obs
-            self.num_ext_obs_per_channel = ext_cfg.num_ext_obs // ext_cfg.ext_num_channels
-            self.num_ext_channels = ext_cfg.ext_num_channels
-            self.ext_latent_dim = ext_cfg.ext_latent_dim
-            ext_hidden_dims = ext_cfg.ext_hidden_dims
-            self.ext_encoder = MLP(
-                    self.num_ext_obs_per_channel, self.ext_latent_dim, ext_hidden_dims, "elu", last_activation="elu"
-                )
-        else:
-            self.ext_encoder = None
-            self.num_ext_obs = num_exte
-            self.num_prop_obs_first = num_prop_obs_first
-            self.num_prop_obs_second = num_actor_obs - num_prop_obs_first - self.num_priv - self.num_ext_obs
-
-        mlp_input_dim_a = num_actor_obs if self.ext_encoder is None else num_actor_obs - self.num_ext_obs + self.num_ext_channels * self.ext_latent_dim
-        mlp_input_dim_c = num_critic_obs if self.ext_encoder is None else num_actor_obs - self.num_ext_obs + self.num_ext_channels * self.ext_latent_dim
-
+        mlp_input_dim_a = num_actor_obs
+        mlp_input_dim_c = num_critic_obs
         # Policy
         actor_layers = []
-        actor_layers.append(
-            EmpiricalNormalization(shape=[mlp_input_dim_a], update_obs_norm=update_obs_norm, until=1.0e8)
-        )
         actor_layers.append(nn.Linear(mlp_input_dim_a, actor_hidden_dims[0]))
         actor_layers.append(activation)
         for layer_index in range(len(actor_hidden_dims)):
@@ -74,9 +45,6 @@ class ActorCritic(nn.Module):
 
         # Value function
         critic_layers = []
-        critic_layers.append(
-            EmpiricalNormalization(shape=[mlp_input_dim_c], update_obs_norm=update_obs_norm, until=1.0e8)
-        )
         critic_layers.append(nn.Linear(mlp_input_dim_c, critic_hidden_dims[0]))
         critic_layers.append(activation)
         for layer_index in range(len(critic_hidden_dims)):
@@ -89,7 +57,6 @@ class ActorCritic(nn.Module):
 
         print(f"Actor MLP: {self.actor}")
         print(f"Critic MLP: {self.critic}")
-        print(f"Exteroception Encoder: {self.ext_encoder}")
 
         # Action noise
         self.std = nn.Parameter(init_noise_std * torch.ones(num_actions))
@@ -107,16 +74,6 @@ class ActorCritic(nn.Module):
         [
             torch.nn.init.orthogonal_(module.weight, gain=scales[idx])
             for idx, module in enumerate(mod for mod in sequential if isinstance(mod, nn.Linear))
-        ]
-        
-    def init_weights_uniform_(self, scales):
-        [
-            module.weight.data.uniform_(-scales, scales)
-            for idx, module in enumerate(mod for mod in self.actor if isinstance(mod, nn.Linear))
-        ]
-        [
-            module.bias.data.uniform_(-scales, scales)
-            for idx, module in enumerate(mod for mod in self.actor if isinstance(mod, nn.Linear))
         ]
 
     def reset(self, dones=None):
@@ -139,58 +96,85 @@ class ActorCritic(nn.Module):
 
     def update_distribution(self, observations):
         mean = self.actor(observations)
-        self.distribution = Normal(mean, mean * 0.0 + self.std.clip(min=0.05, max=1.0))
+        self.distribution = Normal(mean, mean * 0.0 + self.std)
 
     def act(self, observations, **kwargs):
-        if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
-            ext = ext.view(
-                -1, self.num_ext_channels, self.num_ext_obs_per_channel
-            )
-            ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
-            observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         self.update_distribution(observations)
-        return self.distribution.sample()
+        samples = self.distribution.sample()
+        log_prob = self.distribution.log_prob(samples).sum(dim=-1)
+        return samples, log_prob
 
     def get_actions_log_prob(self, actions):
         return self.distribution.log_prob(actions).sum(dim=-1)
 
     def act_inference(self, observations):
-        if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
-            ext = ext.view(-1, self.num_ext_channels, self.num_ext_obs_per_channel)
-            ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
-            observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         actions_mean = self.actor(observations)
         return actions_mean
 
     def evaluate(self, critic_observations, **kwargs):
-        if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(critic_observations)
-            ext = ext.view(
-                -1, self.num_ext_channels, self.num_ext_obs_per_channel
-            )
-            ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
-            critic_observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         value = self.critic(critic_observations)
         return value
-    
-    def _split_obs(self, observations: torch.Tensor):
-        """Split the observations into prop and ext components
 
-        Args:
-            observations (torch.Tensor): tensor of observations
+    def log_info(self):
+        mean_std = self.std.mean().item()
+        info_dict = {"mean_noise_std": mean_std}
 
-        Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: prop and ext observations
-        """
-        prop_first, priv, ext, prop_second = torch.split(observations, [self.num_prop_obs_first, self.num_priv, self.num_ext_obs, self.num_prop_obs_second], dim=-1)
-        return prop_first, priv, ext, prop_second
-    
-    def split_obs(self, observations: torch.Tensor):
-        """Same as _split_obs but public method which returns a dictionary, to avoid return signature issues"""
-        prop_first, priv, ext, prop_second = self._split_obs(observations)
-        return {"prop": (prop_first, prop_second), "ext": ext, "priv": priv}
+        return info_dict
+
+
+class ActorCriticSeparate(nn.Module):
+    is_recurrent = False
+
+    def __init__(
+        self,
+        actor_model,
+        critic_model,
+        actor_distribution,
+        **kwargs,
+    ):
+        if kwargs:
+            print(
+                "ActorCritic.__init__ got unexpected arguments, which will be ignored: "
+                + str([key for key in kwargs.keys()])
+            )
+        super(ActorCriticSeparate, self).__init__()
+
+        # Policy
+        self.actor = actor_model
+        self.distribution = actor_distribution
+        # Value function
+        self.critic = critic_model
+
+    def reset(self, dones=None):
+        pass
+
+    def forward(self):
+        raise NotImplementedError
+
+    @property
+    def entropy(self):
+        return self.distribution.entropy()
+
+    def act(self, observations, **kwargs):
+        logits = self.actor(observations)
+        actions, log_prob = self.distribution.sample(logits)
+        return actions, log_prob
+
+    def get_actions_log_prob(self, actions):
+        return self.distribution.log_prob(actions)
+
+    def act_inference(self, observations):
+        logits = self.actor(observations)
+        return self.distribution.mean(logits)
+
+    def evaluate(self, critic_observations, **kwargs):
+        if self.critic is None:
+            return None
+        value = self.critic(critic_observations)
+        return value
+
+    def log_info(self):
+        return self.distribution.log_info()
 
 
 def get_activation(act_name):

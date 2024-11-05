@@ -1,7 +1,7 @@
-from nav_gym.nav_legged_gym.envs.config_locomotion_env_m import LocomotionEnvCfg
-from nav_gym.nav_legged_gym.envs.locomotion_env_m import LocomotionEnv
-from nav_gym.learning.runners.on_policy_runner_m import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.config_train_locomotion_m import TrainConfig
+from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
+from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
+from nav_gym.nav_legged_gym.train.config_train_locomotion import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 import torch
 import os

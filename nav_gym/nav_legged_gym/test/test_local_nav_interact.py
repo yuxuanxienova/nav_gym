@@ -5,10 +5,10 @@ import pygame
 # Your existing imports
 # from legged_gym import LeggedNavEnv, LeggedNavEnvCfg, OnPolicyRunner, TrainConfig, class_to_dict
 from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
-from nav_gym.nav_legged_gym.envs.config_local_nav_env_m import LocalNavEnvCfg
-from nav_gym.nav_legged_gym.envs.local_nav_env_m import LocalNavEnv
-from nav_gym.learning.runners.on_policy_runner_m import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.config_train_local_nav_m import TrainConfig
+from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
+from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
+from nav_gym.nav_legged_gym.train.config_train_local_nav import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.test.interact_module import InteractModule
 import torch
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241103-205557/" + "model_600.pt")
+    # checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241103-205557/" + "model_600.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
     env.play_mode_ll = True
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
-    runner.load(checkpoint_dir)
+    # runner.load(checkpoint_dir)
     policy = runner.get_inference_policy()
     obs, extras = env.reset()
 
