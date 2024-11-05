@@ -88,8 +88,8 @@ class TerrainUnity:
         self.custom_origins = False
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)  # Dim:(num_envs, 3)
         # set origin and goal positions
-        self.x_goal = 1.0
-        self.y_goal =-4.0
+        # self.x_goal = 1.0
+        # self.y_goal =-4.0
         self.x_origin=0.0
         self.y_origin=0.0
         self.env_origins[:, 0] = torch.tensor([self.x_origin] * self.num_envs, device=self.device)

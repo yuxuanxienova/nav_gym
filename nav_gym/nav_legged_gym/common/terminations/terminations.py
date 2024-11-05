@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.legged_env import LeggedEnv
+    from nav_gym.nav_legged_gym.envs.local_nav_env_m import LocalNavEnv
 
     ANY_ENV = Union[LeggedEnv]
 
@@ -10,7 +10,7 @@ import torch
 """
 Common termitation checking functions
 """
-def time_out(env: "ANY_ENV", params):
+def time_out(env: "LocalNavEnv", params):
     return env.episode_length_buf >= env.max_episode_length
 
 def command_resample(env: "ANY_ENV", params):

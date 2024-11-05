@@ -136,8 +136,9 @@ class LocalNavEnvCfg:
         # general params
         only_positive_rewards: bool = False
         # reward functions
-        goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
-        goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
+        # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
+        # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 0.2}
 
         dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
         dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}
@@ -162,7 +163,7 @@ class LocalNavEnvCfg:
     class terminations:
         # general params
         reset_on_termination: bool = True
-        time_out = None#{"func": T.time_out}
+        time_out = {"func": T.time_out}
         illegal_contact ={"func": T.illegal_contact, "bodies": "base"}
         bad_orientation = None
         dof_torque_limit = None

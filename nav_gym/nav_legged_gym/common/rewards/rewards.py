@@ -382,6 +382,16 @@ def goal_dot_prod_decay(env: "LeggedEnv", params):
     reward = goal_dot_prod(env, params)
     return reward 
 
+def goal_tracking_dense_dot(env: "ANY_ENV", params):
+    goal_vector = env.command_generator.get_goal_position_command() - env.robot.root_pos_w
+    goal_vector_normalized = goal_vector / torch.norm(goal_vector, dim=1, keepdim=True)
+    dot_product = torch.sum(goal_vector_normalized * env.robot.root_lin_vel_w, dim=1)
+    # clip such that the maximum magnitude of the dot product is 1
+    max_magnitude = params["max_magnitude"]
+    dot_product = torch.clamp(dot_product, min=-max_magnitude, max=max_magnitude)
+
+    return dot_product
+
 def action_limits_penalty(env: "LeggedEnv", params):
     soft_ratio = params["soft_ratio"]
     vel_limit = env.scaled_action_max * soft_ratio

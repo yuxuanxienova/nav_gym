@@ -22,7 +22,7 @@ from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsMa
 from nav_gym.nav_legged_gym.common.terminations.termination_manager import TerminationManager
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
-from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
+from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
@@ -52,7 +52,6 @@ class LocalNavEnv:
         self.max_episode_length_s = self.cfg.env.episode_length_s # TODO 
         self.dt = self.ll_env.dt * self.cfg.hl_decimation
         self.max_episode_length = np.ceil(self.max_episode_length_s / self.dt)
-        self.command_generator = self.ll_env.command_generator
         #1.3 Load the low-level policy
         scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/" )
         file_name = "ll_jit_model.pt"
@@ -67,6 +66,7 @@ class LocalNavEnv:
         
         #2. Prepare mdp helper managers
         #2.1---Initialize the Local Navigation Modules---
+        self.command_generator = WaypointCommand(WaypointCommandCfg(),env=self.ll_env)
         self.global_memory = ExplicitMemory(cfg.memory)
         self.wp_history = PoseHistoryData(cfg.memory)
         self.pose_history_exp = PoseHistoryData(cfg.memory)
@@ -96,9 +96,12 @@ class LocalNavEnv:
         self.pos_target = torch.zeros(self.num_envs, 3, device=self.device)
         self.command_time_left = torch.zeros(self.num_envs, device=self.device)
         #Set the target position
-        self.pos_target[:, 0] = self.ll_env.terrain.x_goal
-        self.pos_target[:, 1] = self.ll_env.terrain.y_goal
-        self.pos_target[:, 2] = 0.5
+        # self.pos_target[:, 0] = self.ll_env.terrain.x_goal
+        # self.pos_target[:, 1] = self.ll_env.terrain.y_goal
+        # self.pos_target[:, 2] = 0.5
+        env_ids = torch.arange(self.num_envs).to(self.device)
+        self.command_generator.resample(env_ids)
+        self.pos_target = self.command_generator.get_goal_position_command()
 
         # targets given to ll by hl x_vel, y_vel, yaw_vel
         self.command_x_vel = torch.zeros(self.num_envs, device=self.device)
@@ -147,6 +150,8 @@ class LocalNavEnv:
         self.sensor_manager.update()
         self._post_ll_step()
         self.set_observation_buffer()
+        self.episode_length_buf += 1
+        # print("[INFO][episode_length_buf]{0}".format(self.episode_length_buf))
         # print(self.ll_env.reward_manager.episode_sums["contact_forces"])
         return (self.obs_buf,self.rew_buf, self.reset_buf, self.extras)
     
@@ -193,10 +198,11 @@ class LocalNavEnv:
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
-        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
-        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        print("[INFO][rew_goal_dot]{0}".format(self.extras["rew_goal_dot"]))
-        print("[INFO][rew_goal_position]{0}".format(self.extras["rew_goal_position"]))
+        # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        # print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
+        # print("[INFO][rew_goal_dot]{0}".format(self.extras["rew_goal_dot"]))
+        # print("[INFO][rew_goal_position]{0}".format(self.extras["rew_goal_position"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0:
@@ -242,6 +248,7 @@ class LocalNavEnv:
     def reset_idx(self,env_ids):
         self.ll_env.reset_idx(env_ids)
         self.sensor_manager.update()
+        self.command_generator.resample(env_ids)
         #---Reset the Local Navigation Module Buffers---
 
         #3.1 Reset the Global Memory
