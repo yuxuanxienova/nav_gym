@@ -13,7 +13,7 @@ class LocomotionEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 3
+        num_envs: int = 1
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
