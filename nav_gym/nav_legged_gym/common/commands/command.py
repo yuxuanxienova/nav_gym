@@ -93,7 +93,7 @@ class UnifromVelocityCommand(CommandBase):
         """Randomly select commands of some environments."""
         if len(env_ids) == 0:
             return
-        print("[INFO]CommandGenerator: Resampling commands for envs: ", env_ids)
+        # print("[INFO]CommandGenerator: Resampling commands for envs: ", env_ids)
         # set tracking error to zero
         self.tracking_error_sum[env_ids] = 0.0
         self.log_step_counter[env_ids] = 0.0
@@ -133,7 +133,7 @@ class UnifromVelocityCommand(CommandBase):
             y_vel (float or torch.Tensor): Desired y-axis linear velocity.
             yaw_vel (float or torch.Tensor): Desired yaw angular velocity.
         """
-        print("[INFO]CommandGenerator: Set Velocity Commands")
+        # print("[INFO]CommandGenerator: Set Velocity Commands")
         x_vel, y_vel, yaw_vel = command
         # Ensure inputs are tensors
         if not isinstance(x_vel, torch.Tensor):
