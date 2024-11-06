@@ -116,7 +116,7 @@ class OnPolicyRunner:
         self.current_learning_iteration = 0
         # self.git_status_repos = [nav_gym.learning.__file__]
         #--------------------------
-        self.trajectory_storage = TrajectoryStorage(self.env.num_envs,self.num_steps_per_env, actor_model.num_obs,self.env.num_actions,capacity=10,device=self.device)
+        self.trajectory_storage = TrajectoryStorage(self.env.num_envs,self.num_steps_per_env, actor_model.num_obs,self.env.num_actions,capacity=30,device=self.device)
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
@@ -212,11 +212,12 @@ class OnPolicyRunner:
                 
                 # --------------Learning step---------------------------------
                 if self.trajectory_storage.is_ready():
-                    mean_value_loss, mean_surrogate_loss, mean_entropy_bonus = self.alg.update(self.trajectory_storage)
-                    # Update learning curriculum in envs
-                    # self.env.update_learning_curriculum()
+                    if i % 4 == 0:
+                        mean_value_loss, mean_surrogate_loss, mean_entropy_bonus = self.alg.update(self.trajectory_storage)
+                        # Update learning curriculum in envs
+                        # self.env.update_learning_curriculum()
 
-                    self.current_learning_iteration +=1
+                        self.current_learning_iteration +=1
                 #-----------------------------------------------------
             with torch.no_grad():
                 self.alg.compute_returns(critic_obs)

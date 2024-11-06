@@ -183,7 +183,7 @@ class PPO:
             # Gradient step
             self.optimizer.zero_grad()
             loss.backward()
-            print("loss",loss)
+            # print("loss",loss)
 
             nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
             self.optimizer.step()

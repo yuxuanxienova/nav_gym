@@ -9,7 +9,7 @@ import torch
 
 from nav_gym import NAV_GYM_ROOT_DIR
 class TerrainUnity:
-    def __init__(self,gym,sim,device,num_envs,env_spacing=2.0):
+    def __init__(self,gym,sim,device,num_envs,env_spacing=0.1):
 
         self.gym = gym
         self.sim = sim
@@ -77,8 +77,8 @@ class TerrainUnity:
         self.tm_params.restitution = 0.0
 
         # Get the environment origins
-        # self._calcu_env_origins_grid()
-        self._calcu_env_origins_custom()
+        self._calcu_env_origins_grid()
+        # self._calcu_env_origins_custom()
 
     def add_to_sim(self):
         # Add the terrain mesh to the simulation

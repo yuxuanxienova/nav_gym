@@ -223,23 +223,23 @@ class RolloutStorage:
 
 
 class TrajectoryStorage:
-    def __init__(self, num_envs, num_transitions_per_env, obs_shape, actions_shape, capacity=10, device="cpu"):
+    def __init__(self, num_envs, num_transitions_per_env, obs_shape, actions_shape, capacity=30, device="cpu"):
         self.device = device
 
         self.obs_shape = obs_shape
         self.actions_shape = actions_shape
 
         # Core
-        self.observations = torch.zeros(capacity,num_transitions_per_env, num_envs, obs_shape, device=self.device)
-        self.rewards = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device)
-        self.actions = torch.zeros(capacity,num_transitions_per_env, num_envs, actions_shape, device=self.device)
-        self.dones = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device).byte()
+        self.observations = torch.zeros(capacity, num_transitions_per_env, num_envs, obs_shape, device=self.device)
+        self.rewards = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device)
+        self.actions = torch.zeros(capacity, num_transitions_per_env, num_envs, actions_shape, device=self.device)
+        self.dones = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device).byte()
 
         # For PPO
-        self.actions_log_prob = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device)
-        self.values = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device)
-        self.returns = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device)
-        self.advantages = torch.zeros(capacity,num_transitions_per_env, num_envs, 1, device=self.device)
+        self.actions_log_prob = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device)
+        self.values = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device)
+        self.returns = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device)
+        self.advantages = torch.zeros(capacity, num_transitions_per_env, num_envs, 1, device=self.device)
 
         self.num_transitions_per_env = num_transitions_per_env
         self.capacity = capacity
@@ -247,16 +247,14 @@ class TrajectoryStorage:
 
         self.count = 0
         self.length = 0
+
     def is_ready(self):
-        return self.length > 5
+        return self.length > 10
 
     def add_trajectory(self, rollout_storage: RolloutStorage):
         if self.count >= self.capacity:
             self.count = 0
             self.length = self.capacity
-            # raise AssertionError("Rollout buffer overflow")
-        #rollout_storage.observations: (num_transitions_per_env, num_envs, obs_shape)
-        #self.observations: (capacity,num_transitions_per_env, num_envs, obs_shape)
         self.observations[self.count].copy_(rollout_storage.observations)
         self.actions[self.count].copy_(rollout_storage.actions)
         self.rewards[self.count].copy_(rollout_storage.rewards)
@@ -266,32 +264,43 @@ class TrajectoryStorage:
         self.returns[self.count].copy_(rollout_storage.returns)
         self.advantages[self.count].copy_(rollout_storage.advantages)
         self.count += 1
-        self.length += 1
-        print("[INFO][TrajectoryStorage]self.count: ", self.count)
-        print("[INFO][TrajectoryStorage]self.length: ", self.length)
+        self.length = min(self.length + 1, self.capacity)
+        print("[INFO][TrajectoryStorage] self.count: ", self.count)
+        print("[INFO][TrajectoryStorage] self.length: ", self.length)
 
     def mini_batch_generator(self, num_mini_batches, num_epochs=8):
-        batch_size = self.num_envs * self.num_transitions_per_env * self.capacity
+        # Adjusted to use self.length instead of self.capacity
+        batch_size = self.length * self.num_transitions_per_env * self.num_envs
         mini_batch_size = batch_size // num_mini_batches
-        indices = torch.randperm(num_mini_batches * mini_batch_size, requires_grad=False, device=self.device)
-        #self.observations: (capacity,num_transitions_per_env, num_envs, obs_shape) 
-        #observations: (capacity*num_transitions_per_env*num_envs, obs_shape)
-        observations = self.observations.flatten(0, 2)
 
+        # Flatten tensors up to the stored length
+        observations = self.observations[:self.length].flatten(0, 2)
         critic_observations = observations
+        actions = self.actions[:self.length].flatten(0, 2)
+        values = self.values[:self.length].flatten(0, 2)
+        returns = self.returns[:self.length].flatten(0, 2)
+        old_actions_log_prob = self.actions_log_prob[:self.length].flatten(0, 2)
+        advantages = self.advantages[:self.length].flatten(0, 2)
 
-        actions = self.actions.flatten(0, 2)
-        values = self.values.flatten(0, 2)
-        returns = self.returns.flatten(0, 2)
-        old_actions_log_prob = self.actions_log_prob.flatten(0, 2)
-        advantages = self.advantages.flatten(0, 2)
+        # Generate indices
+        indices = torch.arange(batch_size, device=self.device)
+
+        # Compute weights to favor recent transitions
+        # The most recent transitions have higher weights
+        decay_rate = 5.0  # Adjust this value to control the bias towards recent transitions
+        weights = torch.exp(-decay_rate * (batch_size - 1 - indices).float() / batch_size)
+        weights = weights / weights.sum()  # Normalize weights
+
+        # Total number of samples needed
+        total_samples = num_epochs * num_mini_batches * mini_batch_size
+
+        # Sample indices according to weights
+        sampled_indices = torch.multinomial(weights, num_samples=total_samples, replacement=True)
+        sampled_indices = sampled_indices.view(num_epochs, num_mini_batches, mini_batch_size)
 
         for epoch in range(num_epochs):
             for i in range(num_mini_batches):
-                start = i * mini_batch_size
-                end = (i + 1) * mini_batch_size
-                batch_idx = indices[start:end]
-
+                batch_idx = sampled_indices[epoch, i]
                 obs_batch = observations[batch_idx]
                 critic_observations_batch = critic_observations[batch_idx]
                 actions_batch = actions[batch_idx]
@@ -299,10 +308,17 @@ class TrajectoryStorage:
                 returns_batch = returns[batch_idx]
                 old_actions_log_prob_batch = old_actions_log_prob[batch_idx]
                 advantages_batch = advantages[batch_idx]
-                yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, (
+                yield (
+                    obs_batch,
+                    critic_observations_batch,
+                    actions_batch,
+                    target_values_batch,
+                    advantages_batch,
+                    returns_batch,
+                    old_actions_log_prob_batch,
+                    (None, None),
                     None,
-                    None,
-                ), None
+                )
 
 # Keep other buffers considering RL
 class RolloutStorageStudentTraining(RolloutStorage):
