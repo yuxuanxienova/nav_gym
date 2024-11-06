@@ -1,5 +1,5 @@
 from typing import List, Tuple, Union, Optional
-from legged_gym.utils.config_utils import configclass
+from nav_gym.nav_legged_gym.utils.config_utils import configclass
 #-------------Model Configs----------------
 @configclass
 class ArchitectureCfg:

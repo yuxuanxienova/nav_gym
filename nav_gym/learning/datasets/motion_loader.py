@@ -1,4 +1,5 @@
-from legged_gym import LEGGED_GYM_ROOT_DIR
+
+from nav_gym import NAV_GYM_ROOT_DIR
 from isaacgym.torch_utils import (
     quat_mul,
     quat_conjugate,

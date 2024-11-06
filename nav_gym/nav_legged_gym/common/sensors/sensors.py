@@ -13,8 +13,6 @@ import numpy as np
 import open3d as o3d
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from legged_gym.envs import BaseEnv
 
 
 class SensorBase:
