@@ -199,9 +199,9 @@ class LocalNavEnv:
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
-        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
-        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        print("[INFO][rew_reach_goal]{0}".format(self.extras["rew_reach_goal"]))
+        # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        # print("[INFO][rew_reach_goal]{0}".format(self.extras["rew_reach_goal"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0 and self.flag_enable_reset:
@@ -276,7 +276,7 @@ class LocalNavEnv:
         self.obs_buf = torch.cat([self.obs_dict['prop'].reshape(self.num_envs, -1),self.obs_dict['ext'].reshape(self.num_envs, -1),self.obs_dict['history'].reshape(self.num_envs, -1),self.obs_dict['memory'].reshape(self.num_envs, -1)], dim=1)
         self.extras["observations"] = self.obs_dict
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
-        print("[INFO][Local Nav Env]Setting velocity commands")
+        # print("[INFO][Local Nav Env]Setting velocity commands")
         command = (x_vel, y_vel, yaw_vel)
         self.command_generator.set_velocity_command(command)
         self.ll_env.set_velocity_commands(x_vel, y_vel, yaw_vel)

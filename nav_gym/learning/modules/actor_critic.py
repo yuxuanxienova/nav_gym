@@ -101,6 +101,7 @@ class ActorCritic(nn.Module):
     def act(self, observations, **kwargs):
         self.update_distribution(observations)
         samples = self.distribution.sample()
+        # samples = self.distribution.rsample()
         log_prob = self.distribution.log_prob(samples).sum(dim=-1)
         return samples, log_prob
 

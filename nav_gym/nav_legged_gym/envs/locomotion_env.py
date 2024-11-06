@@ -393,7 +393,7 @@ class LocomotionEnv:
         self.command_generator.update()
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
-        print("[INFO][LocomotionEnv]Setting velocity commands")
+        # print("[INFO][LocomotionEnv]Setting velocity commands")
         command = (x_vel, y_vel, yaw_vel)
         self.command_generator.set_velocity_command(command)
     def _push_robots(self):

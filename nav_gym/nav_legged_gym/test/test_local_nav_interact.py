@@ -40,7 +40,7 @@ if __name__ == "__main__":
         interact_module.update()
         # Update the commands in the environment
         # Assuming 'set_velocity_commands' correctly sets the commands for all environments
-        print("[INFO][test_local_nav_interact]Setting velocity commands")
+        # print("[INFO][test_local_nav_interact]Setting velocity commands")
         env.set_velocity_commands(interact_module.x_vel, interact_module.y_vel, interact_module.yaw_vel)
 
         # Print the current commands
