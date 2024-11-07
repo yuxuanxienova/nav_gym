@@ -91,7 +91,7 @@ class GymInterfaceCfg:
     physics_engine: str = "physx"  # Choose from physx or flex
     sim_device: str = "cuda:0"#"cpu" or "cuda:0"   Device of simulation
     graphics_device_id: int = 0  # Device of visualization
-    headless: bool = True  # Do without visual window
+    headless: bool = False # Do without visual window
 
     sim_params: SimParamsCfg = SimParamsCfg()
     viewer: ViewerCfg = ViewerCfg()

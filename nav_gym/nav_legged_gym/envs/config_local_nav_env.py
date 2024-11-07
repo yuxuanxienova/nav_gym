@@ -36,7 +36,7 @@ class LocalNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 32
+        num_envs: int = 64
         """Number of environment instances."""
 
         num_actions: int = 3  
