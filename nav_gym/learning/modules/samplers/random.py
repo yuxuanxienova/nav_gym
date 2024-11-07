@@ -1,4 +1,4 @@
-from learning.samplers.base import BaseSampler
+from nav_gym.learning.samplers.base import BaseSampler
 import torch
 import torch.nn as nn
 

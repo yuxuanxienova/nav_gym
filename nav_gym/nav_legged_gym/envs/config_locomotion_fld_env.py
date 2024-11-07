@@ -9,11 +9,12 @@ import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
+from nav_gym import NAV_GYM_ROOT_DIR
 class LocomotionEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 3
+        num_envs: int = 1
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -166,8 +167,8 @@ class LocomotionEnvCfg:
             # "feet_pos_fr": [46, 47, 48],
             # "feet_pos_hr": [49, 50, 51],
         }
-        load_root = LEGGED_GYM_ROOT_DIR + "/logs/flat_wild_anymal/fld_animal_motions/misc" # add your fld model here
-        load_model = "model_100.pt" 
+        load_root = NAV_GYM_ROOT_DIR + "/resources/fld"
+        load_model = "model_9950.pt" 
     class task_sampler:
         name = "OfflineSampler"
         collect_samples = True

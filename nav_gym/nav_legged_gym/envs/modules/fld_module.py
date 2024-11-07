@@ -1,13 +1,15 @@
 
+
+import torch
+from nav_gym.learning.modules.samplers.offline import OfflineSampler
+from nav_gym import NAV_GYM_ROOT_DIR
+from nav_gym.learning.modules.fld.fld import FLD
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionEnv
     ANY_ENV = Union[LocomotionEnv]
-
-import torch
-from nav_gym.learning.modules.samplers.offline import OfflineSampler
 class FLDModule:
-    def __init__(self,env:LocomotionEnv):
+    def __init__(self,env:"ANY_ENV"):
         #1. Parse environment arguments
         self.env_cfg = env.cfg
         self.fld_cfg = env.cfg.fld
@@ -53,7 +55,13 @@ class FLDModule:
         if self.task_sampler_cfg.name == "OfflineSampler":
             self.task_sampler =  OfflineSampler(self.device)
             self.task_sampler.load_data(self.fld_cfg.load_root+"/latent_params.pt")
-        #5 load statistics
+        #5 load fld model
+        self.fld = FLD(self.fld_observation_dim, self.fld_observation_horizon, self.fld_latent_channel, self.device, encoder_shape=self.cfg.fld.encoder_shape, decoder_shape=self.cfg.fld.decoder_shape).eval()
+        fld_load_root = self.fld_cfg.load_root
+        fld_load_model = self.fld_cfg.load_model
+        loaded_dict = torch.load(fld_load_root + "/" + fld_load_model)
+        self.fld.load_state_dict(loaded_dict["fld_state_dict"])
+        self.fld.eval()
         statistics_dict = torch.load(fld_load_root + "/statistics.pt")
         self.state_transitions_mean, self.state_transitions_std = statistics_dict["state_transitions_mean"], statistics_dict["state_transitions_std"]
         self.latent_param_max, self.latent_param_min, self.latent_param_mean, self.latent_param_std = statistics_dict["latent_param_max"], statistics_dict["latent_param_min"], statistics_dict["latent_param_mean"], statistics_dict["latent_param_std"]
@@ -119,3 +127,5 @@ class FLDModule:
         # if self.fld_cfg.with_stand:
         #     # 20% chance of standing
         #     self.standing_latent[env_ids, :] = (torch.randint(0, 5, (len(env_ids), 1), device=self.device, dtype=torch.float, requires_grad=False) == 0).float()
+if __name__ == "__main__":
+    pass
