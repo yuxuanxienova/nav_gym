@@ -5,7 +5,7 @@
 import torch
 
 # rsl-rl
-from rsl_rl.utils import split_and_pad_trajectories
+from nav_gym.learning.utils import split_and_pad_trajectories
 
 
 class RolloutStorage:

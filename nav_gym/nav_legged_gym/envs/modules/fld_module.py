@@ -2,6 +2,7 @@
 
 import torch
 from nav_gym.learning.modules.samplers.offline import OfflineSampler
+from nav_gym.learning.modules.samplers.gmm import GMMSampler
 from nav_gym import NAV_GYM_ROOT_DIR
 from nav_gym.learning.modules.fld.fld import FLD
 from typing import TYPE_CHECKING, Union
@@ -55,6 +56,14 @@ class FLDModule:
         if self.task_sampler_cfg.name == "OfflineSampler":
             self.task_sampler =  OfflineSampler(self.device)
             self.task_sampler.load_data(self.fld_cfg.load_root+"/latent_params.pt")
+        elif self.task_sampler_cfg.name == "GMMSampler":
+            task_sampler = GMMSampler(
+                self.fld_cfg.task_sampler.gmm.num_components,
+                self.fld_cfg.fld_latent_channel * 3,
+                device=self.device,
+                curriculum_scale=self.env.cfg.task_sampler.curriculum_scale,
+                )
+            task_sampler.load_gmm(self.env.cfg.fld.load_root+"/gmm.pt")
         #5 load fld model
         self.fld = FLD(self.fld_observation_dim, self.fld_observation_horizon, self.fld_latent_channel, self.device, encoder_shape=self.cfg.fld.encoder_shape, decoder_shape=self.cfg.fld.decoder_shape).eval()
         fld_load_root = self.fld_cfg.load_root

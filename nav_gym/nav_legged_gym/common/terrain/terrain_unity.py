@@ -18,7 +18,7 @@ class TerrainUnity:
         self.env_spacing = env_spacing
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/NavMap_v5_2.obj"
+        terrain_file = "/terrain/CombinedMesh_v4_3.obj"
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
@@ -138,7 +138,7 @@ class TerrainUnity:
         self.env_origins[:, 2] = torch.tensor(highest_intersections[:, 2], device=self.device)
 
     def _calcu_env_origins_grid(self):
-        x_offset = -30.0
+        x_offset = 30.0
         y_offset = -20.0
         self.custom_origins = False
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)  # Dim:(num_envs, 3)
@@ -171,6 +171,7 @@ class TerrainUnity:
         highest_intersections = np.zeros((num_rays, 3))
 
         # Loop through each ray to find the intersection with the largest z-value
+        z_offset=0.0
         for ray_idx in range(num_rays):
             # Get the indices of intersections for the current ray
             indices = np.where(index_ray == ray_idx)[0]

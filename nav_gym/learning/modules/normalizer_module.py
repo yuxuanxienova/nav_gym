@@ -55,6 +55,7 @@ class EmpiricalNormalization(nn.Module):
 
         if self.until is not None and self.count >= self.until:
             return
+        x = torch.clamp(x, min=-1e6, max=1e6)
 
         count_x = x.shape[0]
         self.count += count_x
@@ -63,8 +64,9 @@ class EmpiricalNormalization(nn.Module):
         var_x = torch.var(x, dim=0, unbiased=False, keepdim=True)
         mean_x = torch.mean(x, dim=0, keepdim=True)
         delta_mean = mean_x - self._mean
-        self._mean += rate * delta_mean
-        self._var += rate * (var_x - self._var + delta_mean * (mean_x - self._mean))
+        self._mean = self._mean + rate * delta_mean
+        self._var = self._var + rate * (var_x - self._var + delta_mean * (mean_x - self._mean))
+        self._var = torch.clamp(self._var, min=self.eps)
         self._std = torch.sqrt(self._var)
 
     @torch.jit.unused

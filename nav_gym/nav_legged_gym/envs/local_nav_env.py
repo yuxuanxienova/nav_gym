@@ -29,6 +29,7 @@ from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
 from nav_gym.nav_legged_gym.envs.modules.pose_history import PoseHistoryData
 import os
 from nav_gym import NAV_GYM_ROOT_DIR
+
 class LocalNavEnv:
     #-------- 1. Initialization -----------
     def __init__(self, cfg:LocalNavEnvCfg, ll_env_cls:LocomotionEnv) -> None:

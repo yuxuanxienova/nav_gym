@@ -4,3 +4,4 @@
 *logs
 *.sif
 *.tar
+events.out.tfevents.*

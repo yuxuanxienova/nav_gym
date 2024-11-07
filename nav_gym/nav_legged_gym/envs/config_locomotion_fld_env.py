@@ -170,7 +170,7 @@ class LocomotionEnvCfg:
         load_root = NAV_GYM_ROOT_DIR + "/resources/fld"
         load_model = "model_9950.pt" 
     class task_sampler:
-        name = "OfflineSampler"
+        name = "GMMSampler"#"OfflineSampler"
         collect_samples = True
         collect_sample_step_interval = 5
         collect_elite_performance_threshold = 1.0

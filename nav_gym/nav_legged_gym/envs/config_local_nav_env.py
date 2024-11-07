@@ -24,9 +24,9 @@ SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 class LocalNavEnvCfg:
     ll_env_cfg = LocomotionEnvCfg()
     hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
-    max_x_vel = 1.0
-    max_y_vel = 0.5
-    max_yaw_rate = 1.25
+    max_x_vel = 2.0
+    max_y_vel = 1.0
+    max_yaw_rate = 1.5
 
     # for beta distribution
     vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
@@ -36,7 +36,7 @@ class LocalNavEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 64
+        num_envs: int = 1
         """Number of environment instances."""
 
         num_actions: int = 3  
@@ -138,7 +138,7 @@ class LocalNavEnvCfg:
         only_positive_rewards: bool = False
         # reward functions
         # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
-        goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
+        # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
         goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 10}
         # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
 

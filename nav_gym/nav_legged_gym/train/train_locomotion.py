@@ -8,7 +8,7 @@ import os
 import time
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    # checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241029-120802/" + "model_4200.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241107-214542/" + "model_0.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -16,5 +16,5 @@ if __name__ == "__main__":
 
     env = LocomotionEnv(LocomotionEnvCfg())
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
-    # runner.load(checkpoint_dir)
+    runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

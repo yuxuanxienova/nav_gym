@@ -11,11 +11,12 @@ if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
     # log_dir = None
     # checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241103-205557/" + "model_600.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241107-201846/" + "model_900.pt")
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
 
     env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
-    # runner.load(checkpoint_dir)
+    runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

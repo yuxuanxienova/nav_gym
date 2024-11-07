@@ -6,14 +6,14 @@ import os
 import time
 import statistics
 from collections import deque
-
+from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
 from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 
 # torch
 import torch
 
 # rsl-rl
-from nav_gym.learning.algorithms.ppo import PPO
+from nav_gym.learning.algorithms.ppo_interact import PPO
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
@@ -24,7 +24,7 @@ from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
 from nav_gym.nav_legged_gym.test.interact_module import InteractModule
-from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+import numpy as np
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}
@@ -118,7 +118,16 @@ class OnPolicyRunner:
         # self.git_status_repos = [nav_gym.learning.__file__]
 
         #Interactive Module
-        self.interact_module = InteractModule()
+        if type(self.env) == LocalNavEnv:
+            self.interact_module = InteractModule(self.env.cfg)
+        else:
+            self.interact_module = InteractModule()
+        vel_cmd_scale = np.array(self.interact_module.vel_cmd_scale)
+        vel_cmd_offset = np.array(self.interact_module.vel_cmd_offset)
+        vel_cmd_max = np.array(self.interact_module.vel_cmd_max)
+        self.action_scale = torch.tensor(vel_cmd_scale, device=self.device, dtype=torch.float)
+        self.action_offset = torch.tensor(vel_cmd_offset, device=self.device, dtype=torch.float)
+        self.scaled_action_max = torch.tensor(vel_cmd_max, device=self.device, dtype=torch.float)
 
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
@@ -180,9 +189,19 @@ class OnPolicyRunner:
                     elif self.env.flag_enable_resample_vel == False:
                         self.env.set_flag_enable_resample_vel(True)
                     self.interact_module.update()
-                    self.env.set_velocity_commands(self.interact_module.x_vel, self.interact_module.y_vel, self.interact_module.yaw_vel)
+
+                    _ = self.alg.act(obs, critic_obs)
+
+                    if self.env.flag_enable_resample_vel == False:
+                        self.env.set_velocity_commands(self.interact_module.x_vel, self.interact_module.y_vel, self.interact_module.yaw_vel)
+                        raw_actions = torch.tensor([self.interact_module.x_vel,self.interact_module.y_vel,self.interact_module.yaw_vel]).reshape(1,-1).repeat(self.env.num_envs,1).to(self.device)
+                        actions = (raw_actions - self.action_offset)/self.action_scale
+                        print(actions)
+                    else:
+                        actions = self.alg.act(obs, critic_obs)
                     #--------------------------
-                    actions = self.alg.act(obs, critic_obs)
+                    log_prob = self.alg.get_log_prob(actions)
+                    self.alg.store_transition(actions, log_prob, obs, critic_obs)
                     obs, rewards, dones, infos = self.env.step(actions)
                     # obs = self.obs_normalizer(obs)
                     # if self.asymmetric_critic:
