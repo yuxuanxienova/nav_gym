@@ -10,7 +10,7 @@ import math
 import torch
 import abc
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -24,12 +24,12 @@ from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.envs.modules.fld_module import FLDModule
-class LocomotionEnv:
+class LocomotionFLDEnv:
     robot: LeggedRobot
-    cfg: LocomotionEnvCfg
+    cfg: LocomotionFLDEnvCfg
     """Environment for locomotion tasks using a legged robot."""
 #-------- 1. Initialize the environment--------
-    def __init__(self, cfg: LocomotionEnvCfg):
+    def __init__(self, cfg: LocomotionFLDEnvCfg):
         #1. Store the environment information from config
         self._init_done = False
         self.cfg = cfg
@@ -184,10 +184,10 @@ class LocomotionEnv:
         # self.push_robots_buf[env_ids] = torch.randint(
         #     0, self._push_interval, (len(env_ids), 1), device=self.device
         # ).squeeze()
-        # -- resample commands
-        # self._resample_commands(env_ids)
-        # self._update_commands()
 
+        #--------reset other modules-------
+        self.fld_module.on_env_reset_idx(env_ids)
+        #----------------------------------
         self.extras["episode"] = dict()
         self.reward_manager.log_info(self, env_ids, self.extras["episode"])
         self.curriculum_manager.log_info(self, env_ids, self.extras["episode"])
@@ -362,7 +362,7 @@ class LocomotionEnv:
         # update robot
         self.robot.update_buffers(dt=self.dt)
         #----update other modules-----
-        self.fld_module.update()
+        self.fld_module.on_env_post_physics_step()
         #-----------------------------
         # rewards, resets, ...
         # -- rewards
@@ -396,8 +396,12 @@ class LocomotionEnv:
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
         if self.flag_enable_resample :  
             self.command_generator.resample(env_ids)
+            #--------Other modules--------
+            self.fld_module.on_env_resample_commands(env_ids)
+
         self.command_generator.update()
-        self.fld_module.sample_latent_encoding(env_ids)
+        
+
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         command = (x_vel, y_vel, yaw_vel)

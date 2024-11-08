@@ -67,7 +67,7 @@ class LocalNavEnv:
         
         #2. Prepare mdp helper managers
         #2.1---Initialize the Local Navigation Modules---
-        self.command_generator = WaypointCommand(WaypointCommandCfg(),env=self.ll_env)
+        self.command_generator = WaypointCommand(cfg.commands,env=self.ll_env)
         self.global_memory = ExplicitMemory(cfg.memory)
         self.wp_history = PoseHistoryData(cfg.memory)
         self.pose_history_exp = PoseHistoryData(cfg.memory)

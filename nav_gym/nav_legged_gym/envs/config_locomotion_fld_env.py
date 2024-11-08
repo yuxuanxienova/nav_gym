@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionEnvCfg:
+class LocomotionFLDEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -100,8 +100,8 @@ class LocomotionEnvCfg:
         only_positive_rewards: bool = True
         # reward functions
         # termination = {"func": R.termination, "scale": -7}
-        tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
-        tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
+        # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
+        # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
         base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 1.0, "std_angvel": 2.0}
         base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
         torques = {"func": R.torques, "scale": -1e-6}
@@ -113,6 +113,18 @@ class LocomotionEnvCfg:
         dof_vel = {"func": R.dof_vel, "scale": -0.0}
         survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
+        #-----fld rewards-----
+        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_dof_pos_leg_fl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fl, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_dof_pos_leg_hl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hl, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_dof_pos_leg_fr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fr, "scale": 1.0, "std": 0.25}
+        reward_tracking_reconstructed_dof_pos_leg_hr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hr, "scale": 1.0, "std": 0.25}
+        # reward_tracking_reconstructed_feet_pos_fl = {"func": R.reward_tracking_reconstructed_feet_pos_fl, "scale": 1.0, "std": 0.25}
+        # reward_tracking_reconstructed_feet_pos_fr = {"func": R.reward_tracking_reconstructed_feet_pos_fr, "scale": 1.0, "std": 0.25}
+        # reward_tracking_reconstructed_feet_pos_hl = {"func": R.reward_tracking_reconstructed_feet_pos_hl, "scale": 1.0, "std": 0.25}
+        # reward_tracking_reconstructed_feet_pos_hr = {"func": R.reward_tracking_reconstructed_feet_pos_hr, "scale": 1.0, "std": 0.25}
         
 
     class terminations:
@@ -170,7 +182,7 @@ class LocomotionEnvCfg:
         load_root = NAV_GYM_ROOT_DIR + "/resources/fld"
         load_model = "model_9950.pt" 
     class task_sampler:
-        name = "GMMSampler"#"OfflineSampler"
+        name = "OfflineSampler"
         collect_samples = True
         collect_sample_step_interval = 5
         collect_elite_performance_threshold = 1.0
@@ -198,7 +210,7 @@ class LocomotionEnvCfg:
             enabled = False
             num_classes = 9
 if __name__ == "__main__":
-    cfg = LocomotionEnvCfg()
+    cfg = LocomotionFLDEnvCfg()
     cfg_dict = class_to_dict(cfg)
     print(cfg.env.num_envs)
     print(cfg.gym.viewer.eye)

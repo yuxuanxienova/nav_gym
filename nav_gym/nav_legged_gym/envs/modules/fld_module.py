@@ -7,8 +7,21 @@ from nav_gym import NAV_GYM_ROOT_DIR
 from nav_gym.learning.modules.fld.fld import FLD
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionEnv
-    ANY_ENV = Union[LocomotionEnv]
+    from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
+    ANY_ENV = Union[LocomotionFLDEnv]
+from collections import OrderedDict
+
+def remove_module_prefix(state_dict):
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        if k.startswith('module.'):
+            # Remove 'module.' prefix
+            name = k[len('module.'):]
+        else:
+            name = k
+        new_state_dict[name] = v
+    return new_state_dict
+
 class FLDModule:
     def __init__(self,env:"ANY_ENV"):
         #1. Parse environment arguments
@@ -34,7 +47,7 @@ class FLDModule:
         self.num_envs = env.num_envs
         self.device = env.device
 
-
+        self.dt = env.dt
         #2. other arguments
         self.decoded_obs_state_idx_dict = {}
         current_length = 0
@@ -56,26 +69,27 @@ class FLDModule:
         if self.task_sampler_cfg.name == "OfflineSampler":
             self.task_sampler =  OfflineSampler(self.device)
             self.task_sampler.load_data(self.fld_cfg.load_root+"/latent_params.pt")
-        elif self.task_sampler_cfg.name == "GMMSampler":
-            task_sampler = GMMSampler(
-                self.fld_cfg.task_sampler.gmm.num_components,
-                self.fld_cfg.fld_latent_channel * 3,
-                device=self.device,
-                curriculum_scale=self.env.cfg.task_sampler.curriculum_scale,
-                )
-            task_sampler.load_gmm(self.env.cfg.fld.load_root+"/gmm.pt")
         #5 load fld model
-        self.fld = FLD(self.fld_observation_dim, self.fld_observation_horizon, self.fld_latent_channel, self.device, encoder_shape=self.cfg.fld.encoder_shape, decoder_shape=self.cfg.fld.decoder_shape).eval()
+        self.fld = FLD(self.fld_observation_dim, self.fld_observation_horizon, self.fld_latent_channel, self.device, encoder_shape=self.fld_cfg.encoder_shape, decoder_shape=self.fld_cfg.decoder_shape).eval()
         fld_load_root = self.fld_cfg.load_root
         fld_load_model = self.fld_cfg.load_model
         loaded_dict = torch.load(fld_load_root + "/" + fld_load_model)
-        self.fld.load_state_dict(loaded_dict["fld_state_dict"])
+        #If the model was saved with DataParallel, you need to remove the 'module.' prefix
+        # Assuming state dict is under 'fld_state_dict' key
+        original_state_dict = loaded_dict['fld_state_dict']
+        clean_state_dict = remove_module_prefix(original_state_dict)
+        # Remove 'args' and 'freqs' keys
+        keys_to_remove = ['args', 'freqs']
+        for key in keys_to_remove:
+            if key in clean_state_dict:
+                del clean_state_dict[key]
+        self.fld.load_state_dict(clean_state_dict)
         self.fld.eval()
         statistics_dict = torch.load(fld_load_root + "/statistics.pt")
         self.state_transitions_mean, self.state_transitions_std = statistics_dict["state_transitions_mean"], statistics_dict["state_transitions_std"]
         self.latent_param_max, self.latent_param_min, self.latent_param_mean, self.latent_param_std = statistics_dict["latent_param_max"], statistics_dict["latent_param_min"], statistics_dict["latent_param_mean"], statistics_dict["latent_param_std"]
  
-    def update(self):
+    def on_env_post_physics_step(self):
         self._update_fld_observation_buf()
         self._update_latent_phase()
         pass
@@ -102,8 +116,8 @@ class FLDModule:
         frequency_t = self.latent_encoding[:, :, 1]#Dim(num_envs,latent_channel)
         amplitude_t = self.latent_encoding[:, :, 2]#Dim(num_envs,latent_channel)
         offset_t = self.latent_encoding[:, :, 3]#Dim(num_envs,latent_channel)
-
-        plase_t = (frequency_t * self.dt + 0.5) % 1.0 - 0.5 #TODO: check if this is correct
+        #one step forward in phase
+        phase_tplus1 = (phase_t + frequency_t * self.dt + 0.5) % 1.0 - 0.5 #TODO: check if this is correct
         #---Add noise---
         # noise_level = self.fld_cfg.latent_encoding_update_noise_level
         # latent_param = self.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2)
@@ -111,7 +125,7 @@ class FLDModule:
         # self.latent_encoding[:, :, 1:] = latent_param.view(self.num_envs, 3, self.fld_latent_channel).swapaxes(1, 2)
         #----------------
         #amplitude_t.unsqueeze(-1): Dim(num_envs,latent_channel,1)
-        reconstructed_z_tplus1 = amplitude_t.unsqueeze(-1) * torch.sin(2 * torch.pi * (frequency_t.unsqueeze(-1) * self.fld.args + phase_t.unsqueeze(-1))) + offset_t.unsqueeze(-1)#TODO: what is self.fld.args???
+        reconstructed_z_tplus1 = amplitude_t.unsqueeze(-1) * torch.sin(2 * torch.pi * (frequency_t.unsqueeze(-1) * self.fld.args + phase_tplus1.unsqueeze(-1))) + offset_t.unsqueeze(-1)#TODO: what is self.fld.args???
         #reconstructed_z_tplus1: Dim(num_envs,latent_channel,horizon_length)
         with torch.no_grad():
             #reconstructed_z_tplus1: Dim(num_envs,latent_channel,horizon_length)
@@ -127,8 +141,11 @@ class FLDModule:
                 amplitude_t * torch.cos(2.0 * torch.pi * phase_t) + offset_t,
                 )
             )
-    
-    def sample_latent_encoding(self,env_ids):
+    def on_env_reset_idx(self,env_ids):
+        self._sample_latent_encoding(env_ids)
+    def on_env_resample_commands(self,env_ids):
+        self._sample_latent_encoding(env_ids)
+    def _sample_latent_encoding(self,env_ids):
         if len(env_ids) == 0:
             return
         self.latent_encoding[env_ids, :, 0] = torch.rand((len(env_ids), self.fld_latent_channel),device=self.device) * 1.0 - 0.5  # Scaling to range [-0.5, 0.5]

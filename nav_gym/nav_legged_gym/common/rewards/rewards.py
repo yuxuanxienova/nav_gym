@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
     from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
 
     ANY_ENV = Union[LocomotionEnv]
 
@@ -473,3 +474,48 @@ def face_front(env: "ANY_ENV", params):
     facing_reward[lin_vel_norm < min_vel] = 1.0
 
     return facing_reward
+""" FLD specific reward Functions"""
+
+def reward_tracking_reconstructed_lin_vel(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_ang_vel(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_projected_gravity(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_dof_pos_leg_fl(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_dof_pos_leg_hl(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_dof_pos_leg_fr(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_dof_pos_leg_hr(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_feet_pos_fl(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["feet_pos_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_feet_pos_fr(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["feet_pos_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_feet_pos_hl(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["feet_pos_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
+
+def reward_tracking_reconstructed_feet_pos_hr(env: "LocomotionFLDEnv", params):
+    error = torch.sum(torch.square((env.fld_module.decoded_obs - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.decoded_obs_state_idx_dict["feet_pos_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
+    return torch.exp(-error)
