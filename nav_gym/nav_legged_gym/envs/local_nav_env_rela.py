@@ -205,9 +205,9 @@ class LocalNavEnv:
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
-        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
-        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
+        # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        # print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0 and self.flag_enable_reset:

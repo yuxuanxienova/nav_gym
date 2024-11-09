@@ -57,6 +57,8 @@ class BetaDistribution(nn.Module):
         return samples, log_prob
 
     def log_prob(self, samples):
+        epsilon = 1e-6
+        samples = torch.clamp(samples, min=epsilon, max=1 - epsilon)
         return self.distribution.log_prob(samples).sum(dim=-1)
 
     def entropy(self):

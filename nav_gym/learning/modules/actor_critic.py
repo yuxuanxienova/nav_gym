@@ -161,9 +161,8 @@ class ActorCriticSeparate(nn.Module):
         actions, log_prob = self.distribution.sample(logits)
         return actions, log_prob
 
-    def get_actions_log_prob(self, actions):
-        eps=1e-6
-        return self.distribution.log_prob(actions+eps)
+    def get_actions_log_prob(self, actions):        
+        return self.distribution.log_prob(actions)
 
     def act_inference(self, observations):
         logits = self.actor(observations)
