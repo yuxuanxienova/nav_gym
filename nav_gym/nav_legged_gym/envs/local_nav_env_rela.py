@@ -22,7 +22,7 @@ from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsMa
 from nav_gym.nav_legged_gym.common.terminations.termination_manager import TerminationManager
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
-from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg
+from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg,WaypointCommandRela
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
@@ -68,7 +68,7 @@ class LocalNavEnv:
         
         #2. Prepare mdp helper managers
         #2.1---Initialize the Local Navigation Modules---
-        self.command_generator = WaypointCommand(cfg.commands,env=self.ll_env)
+        self.command_generator = WaypointCommandRela(cfg.commands,env=self.ll_env)
         self.global_memory = ExplicitMemory(cfg.memory)
         self.wp_history = PoseHistoryData(cfg.memory)
         self.pose_history_exp = PoseHistoryData(cfg.memory)
@@ -79,6 +79,7 @@ class LocalNavEnv:
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
+
         #3. others
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
@@ -123,7 +124,7 @@ class LocalNavEnv:
 
         #---Initialize the Local Navigation Module Buffers---
         self.first_pos = torch.zeros(self.num_envs, 3, device=self.device)
-        # self.pos_traget = torch.zeros(self.num_envs, 3, device=self.device)
+        # self.pos_target = torch.zeros(self.num_envs, 3, device=self.device)
         self.goal_error_z_check = torch.zeros(self.num_envs, device=self.device)
         self.previous_pos = self.robot.root_pos_w.clone()
 
@@ -188,13 +189,14 @@ class LocalNavEnv:
         self.command_time_left -= self.dt
         self.total_distance += torch.linalg.norm(self.robot.root_pos_w - self.previous_pos, dim=-1)
         self.previous_pos[:] = self.robot.root_pos_w
+
+
         #---Update the Local Navigation Module ---
-        
         #Update the goal_error_z_check
-        self.goal_error_z_check = torch.norm(self.pos_traget[:, :2] - self.robot.root_pos_w[:, :2], dim=1)
-        z_diff = torch.abs(self.pos_traget[:, 2] - self.robot.root_pos_w[:, 2])
+        self.goal_error_z_check = torch.norm(self.pos_target[:, :2] - self.robot.root_pos_w[:, :2], dim=1)
+        z_diff = torch.abs(self.pos_target[:, 2] - self.robot.root_pos_w[:, 2])
         self.goal_error_z_check[z_diff > 3.0] = torch.inf
-        #d
+        #Local Navigation Update
         self.update_history()
         self.update_global_memory()
         #-----------------------------------------
@@ -203,9 +205,9 @@ class LocalNavEnv:
         self.reset_buf[:] = self.termination_manager.check_termination(self)
         self.rew_buf[:] = self.reward_manager.compute_reward(self)
         #-------print reward info---------
-        # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
-        # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        # print("[INFO][rew_reach_goal]{0}".format(self.extras["rew_reach_goal"]))
+        self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
+        print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
+        print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0 and self.flag_enable_reset:
@@ -218,11 +220,13 @@ class LocalNavEnv:
             self.reset_idx(env_ids)
 
         self.obs_dict = self.obs_manager.compute_obs(self)
+
     #--------------2.1 Local Navigation Update ---------------
+    
     def update_history(self):
         # Update Stored Poses to be relative to the agent's current position and orientation
         env_ids = torch.arange(self.num_envs).to(self.device)
-        goal_pose = self.pos_traget.clone()
+        goal_pose = self.pos_target.clone()
         frame_quats = self.robot.root_quat_w
         self.wp_history.update_buffers(self, quats=frame_quats)
         self.pose_history_exp.update_buffers(self, quats=frame_quats)

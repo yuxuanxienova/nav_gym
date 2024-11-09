@@ -23,7 +23,7 @@ from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
-from nav_gym.nav_legged_gym.test.interact_module import InteractModule
+from nav_gym.nav_legged_gym.test.interact_module import InteractModuleVelocity
 import numpy as np
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
@@ -119,9 +119,9 @@ class OnPolicyRunner:
 
         #Interactive Module
         if type(self.env) == LocalNavEnv:
-            self.interact_module = InteractModule(self.env.cfg)
+            self.interact_module = InteractModuleVelocity(self.env.cfg)
         else:
-            self.interact_module = InteractModule()
+            self.interact_module = InteractModuleVelocity()
         vel_cmd_scale = np.array(self.interact_module.vel_cmd_scale)
         vel_cmd_offset = np.array(self.interact_module.vel_cmd_offset)
         vel_cmd_max = np.array(self.interact_module.vel_cmd_max)

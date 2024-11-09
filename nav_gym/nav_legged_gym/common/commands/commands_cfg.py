@@ -28,7 +28,7 @@ class UnifromVelocityCommandCfg:
 class WaypointCommandCfg:
     class_name: str = "WaypointCommand"
     robot_name: str = "robot"
-    resampling_time: float = 100.0  # time before commands are changed [s]
+    resampling_time: float = 10.0  # time before commands are changed [s]
     resampling_prob: float = 0.1  # probability of resampling a new waypoint
     num_goal_commands = 3  # default: x, y, z position
     num_velocity_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw

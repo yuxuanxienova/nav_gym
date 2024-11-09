@@ -14,7 +14,7 @@ class LocomotionFLDEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 512
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -26,7 +26,7 @@ class LocomotionFLDEnvCfg:
         send_timeouts: bool = True  # send time out information to the algorithm
         """Whether to send episode time-out information (added as part of infos)."""
 
-        enable_debug_vis: bool = True
+        enable_debug_vis: bool = False
 
 
     gym = GymInterfaceCfg()
@@ -102,7 +102,7 @@ class LocomotionFLDEnvCfg:
         # termination = {"func": R.termination, "scale": -7}
         # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
-        base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 1.0, "std_angvel": 2.0}
+        base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 0.5, "std_angvel": 2.0}
         base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
         torques = {"func": R.torques, "scale": -1e-6}
         dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}

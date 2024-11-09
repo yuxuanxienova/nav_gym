@@ -1,0 +1,17 @@
+Stage1: 2024/11/08-2024/12/07
+Plan:
+1. Minimal Realization of Navigation and Locomotion Module
+2. Merge Seg_Nav Navigation
+3. Merge FLD locomoton
+Result：
+
+Stage2.1: 2024/11/08-2024/11/15
+Plan:
+1.[Locomotion][Training] do the fld task Training
+1.[Locomotion][Training] train a locomotion policy that can go upstaris
+1.[Locomotion][Analysis] analyse the fld locomotion policy 
+2.[Navigation][Test] Test current navigation policy in diverse terrain
+2.[Navigation][Training] train the navigation policy without added module to see if it is necessary
+3.[Navigation][Training] train the navigation jointly with fld locomotion if (1) looks good
+4.[Navigation][Analysis] Try to investigate why navigation policy with range 7-10m doesn't work
+5.[Runner][Test] detailed test for ppo with human feedback for navigation task with range 4-7m

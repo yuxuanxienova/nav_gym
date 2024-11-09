@@ -97,7 +97,7 @@ class LocomotionEnvCfg:
         # general params
         only_positive_rewards: bool = True
         # reward functions
-        # termination = {"func": R.termination, "scale": -7}
+        termination = {"func": R.termination, "scale": -5}
         tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
         base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 1.0, "std_angvel": 2.0}
