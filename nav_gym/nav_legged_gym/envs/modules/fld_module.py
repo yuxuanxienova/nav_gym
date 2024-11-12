@@ -120,11 +120,13 @@ class FLDModule:
         #one step forward in phase
         phase_tplus1 = (phase_t + frequency_t * self.dt + 0.5) % 1.0 - 0.5 #TODO: check if this is correct
         #---Add noise---
-        # noise_level = self.fld_cfg.latent_encoding_update_noise_level
-        # latent_param = self.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2)
-        # latent_param += torch.randn_like(latent_param, device=self.device, dtype=torch.float, requires_grad=False) * self.latent_param_std * noise_level
-        # self.latent_encoding[:, :, 1:] = latent_param.view(self.num_envs, 3, self.fld_latent_channel).swapaxes(1, 2)
+        noise_level = self.fld_cfg.latent_encoding_update_noise_level
+        latent_param = self.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2)
+        latent_param = latent_param + torch.randn_like(latent_param, device=self.device, dtype=torch.float, requires_grad=False) * self.latent_param_std * noise_level
         #----------------
+        #Update latent encoding
+        self.latent_encoding[:, :, 0] = phase_tplus1
+        self.latent_encoding[:, :, 1:] = latent_param.view(self.num_envs, 3, self.fld_latent_channel).swapaxes(1, 2)
         #amplitude_t.unsqueeze(-1): Dim(num_envs,latent_channel,1)
         reconstructed_z_tplus1 = amplitude_t.unsqueeze(-1) * torch.sin(2 * torch.pi * (frequency_t.unsqueeze(-1) * self.fld.args + phase_tplus1.unsqueeze(-1))) + offset_t.unsqueeze(-1)#TODO: what is self.fld.args???
         #reconstructed_z_tplus1: Dim(num_envs,latent_channel,horizon_length)
