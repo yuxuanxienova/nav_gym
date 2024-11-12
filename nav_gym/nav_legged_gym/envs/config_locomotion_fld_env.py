@@ -190,7 +190,7 @@ class LocomotionFLDEnvCfg:
             # "feet_pos_fr": [46, 47, 48],
             # "feet_pos_hr": [49, 50, 51],
         }
-        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/pretrain/fld"
+        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain"
         load_fld_model = "model_9950.pt" 
     class task_sampler:
         name = "OfflineSampler"

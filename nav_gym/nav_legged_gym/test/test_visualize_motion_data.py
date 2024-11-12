@@ -48,7 +48,7 @@ if __name__ == "__main__":
     env_cfg.robot.randomization.randomize_friction = False
     env_cfg.randomization.push_robots = False
     env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
-    env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
+    env_cfg.terrain_unity.translation = [0.0, 0.0, -0.2]
     env_cfg.terrain_unity.env_origin_pattern = "point"
 
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
@@ -103,8 +103,7 @@ if __name__ == "__main__":
                 step = 1
             # step = i
             env.robot.dof_pos[:] = motion_loader.get_dof_pos()[:, step, :].repeat(env.num_envs, 1) + env.robot.default_dof_pos[:]
-            # env.dof_pos[:] = motion_loader.get_dof_pos()[:, step, :].repeat(env.num_envs, 1) + wrong_default_dof_pos[:]
-            env.robot.dof_vel[:] = motion_loader.get_dof_vel()[:, step, :].repeat(env.num_envs, 1)
+            # env.robot.dof_vel[:] = motion_loader.get_dof_vel()[:, step, :].repeat(env.num_envs, 1)
             root_pos = motion_loader.get_base_pos()[:, step, :].repeat(env.num_envs, 1)
             root_pos[:, :2] = root_pos[:, :2] + env.terrain.env_origins[:, :2]
             env.robot.root_states[:, :3] = root_pos
@@ -112,8 +111,8 @@ if __name__ == "__main__":
             env.robot.root_states[:, 3:7] = root_ori
             base_lin_vel = motion_loader.get_base_lin_vel()[:, step, :].repeat(env.num_envs, 1)
             base_ang_vel = motion_loader.get_base_ang_vel()[:, step, :].repeat(env.num_envs, 1)
-            # env.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel()[:, step, :].repeat(env.num_envs, 1))
-            # env.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel()[:, step, :].repeat(env.num_envs, 1))
+            env.robot.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel()[:, step, :].repeat(env.num_envs, 1))
+            env.robot.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel()[:, step, :].repeat(env.num_envs, 1))
 
             env_ids_int32 = torch.arange(env.num_envs, device=env.device).to(dtype=torch.int32)        
             env.gym.set_dof_state_tensor_indexed(env.sim,
@@ -124,20 +123,5 @@ if __name__ == "__main__":
                                                         gymtorch.unwrap_tensor(env.robot.root_states),
                                                         gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
             env.gym.refresh_rigid_body_state_tensor(env.sim)
-            # if i % env.cfg.control.decimation == 0:
-            #     env.robot.rigid_body_states = env.gym_iface.rigid_body_state.view(env.num_envs, env.robot.num_bodies, 13)
-            #     env.robot.feet_positions = env.robot.rigid_body_states[:, env.robot.feet_indices, :3] - env.robot.root_pos_w.unsqueeze(1)
-            #     feet_pos_local = torch.zeros_like(env.robot.feet_positions)
-            #     for k in range(len(env.robot.feet_indices)):
-            #         feet_pos_local[:, k] = quat_rotate_inverse(
-            #             env.robot.root_quat_w,
-            #             env.robot.feet_positions[:, k]
-            #         )
-            #         env.robot.feet_positions = feet_pos_local.flatten(1, 2)
-            #         feet_pos_data[:, step, :] = env.robot.feet_positions
-            # if VIS:
-            #     env.gym.clear_lines(env.viewer)
-            #     for j in range(4):
-            #         generate_target(env.robot.feet_positions[:, env.robot.feet_indices[j], :3], env)
             
 
