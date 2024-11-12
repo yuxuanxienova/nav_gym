@@ -102,16 +102,16 @@ class LocomotionFLDEnvCfg:
         # termination = {"func": R.termination, "scale": -7}
         # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
-        base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 0.5, "std_angvel": 2.0}
-        base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
+        # base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 0.5, "std_angvel": 2.0}
+        # base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
         torques = {"func": R.torques, "scale": -1e-6}
-        dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
+        dof_acc = {"func": R.dof_acc, "scale": -5e-7}
+        # feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
         collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
         collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
-        action_rate = {"func": R.action_rate, "scale": -0.0001}
-        dof_vel = {"func": R.dof_vel, "scale": -0.0}
-        survival = {"func": R.survival, "scale": 1.0}
+        action_rate = {"func": R.action_rate, "scale": -0.005}
+        # dof_vel = {"func": R.dof_vel, "scale": -0.0}
+        # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----fld rewards-----
         reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 1.0, "std": 0.25}
