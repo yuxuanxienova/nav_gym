@@ -19,12 +19,15 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/local_nav/" + "model_11100.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/local_nav/20241111-224107_ni/" + "model_300.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
-    env = LocalNavEnv(LocalNavEnvCfg(), LocomotionEnv)
+    env_cfg = LocalNavEnvCfg()
+    env_cfg.env.num_envs = 1
+
+    env = LocalNavEnv(env_cfg, LocomotionEnv)
     env.set_flag_enable_resample_pos(False)
     env.set_flag_enable_resample_vel(True)
     env.set_flag_enable_reset(False)
@@ -42,7 +45,7 @@ if __name__ == "__main__":
         # Update the commands in the environment
         # Assuming 'set_velocity_commands' correctly sets the commands for all environments
         # print("[INFO][test_local_nav_interact]Setting velocity commands")
-        env.set_goal_position_command(env.robot.root_pos_w[0,0] + interact_module.x_goal,env.robot.root_pos_w[0,1] + interact_module.y_goal,env.robot.root_pos_w[0,2])
+        env.set_goal_position_command(interact_module.x_goal,interact_module.y_goal,env.robot.root_pos_w[0,2])
 
         # Print the current commands
         print(f"Current Commands - X: {interact_module.x_goal}, Y: {interact_module.y_goal}, Z: {interact_module.z_goal}")
