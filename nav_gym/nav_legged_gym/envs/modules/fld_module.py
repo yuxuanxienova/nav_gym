@@ -68,11 +68,11 @@ class FLDModule:
         #4. Initialize Task Sampler
         if self.task_sampler_cfg.name == "OfflineSampler":
             self.task_sampler =  OfflineSampler(self.device)
-            self.task_sampler.load_data(self.fld_cfg.load_root+"/latent_params.pt")
+            self.task_sampler.load_data(self.fld_cfg.load_root_pretrain+"/latent_params.pt")
         #5 load fld model
         self.fld = FLD(self.fld_observation_dim, self.fld_observation_horizon, self.fld_latent_channel, self.device, encoder_shape=self.fld_cfg.encoder_shape, decoder_shape=self.fld_cfg.decoder_shape).eval()
-        fld_load_root = self.fld_cfg.load_root
-        fld_load_model = self.fld_cfg.load_model
+        fld_load_root = self.fld_cfg.load_root_pretrain
+        fld_load_model = self.fld_cfg.load_fld_model
         loaded_dict = torch.load(fld_load_root + "/" + fld_load_model)
         #If the model was saved with DataParallel, you need to remove the 'module.' prefix
         # Assuming state dict is under 'fld_state_dict' key

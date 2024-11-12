@@ -153,6 +153,17 @@ class LocomotionFLDEnvCfg:
     #         heading: List = [-3.14, 3.14]  # [rad]
     commands = UnifromVelocityCommandCfg()
 
+    class terrain_unity:
+        terrain_file:str = "/terrain/NavMap_v5_1.obj"
+        translation: Tuple = (0.0, 0.0, 0.0)
+
+        env_origin_pattern:str = "grid" # "point" or "grid"
+        class grid_pattern:
+            env_spacing:float = 5.0
+            x_offset:float = -20.0
+            y_offset:float = -20.0
+        class point_pattern:
+            env_origins:List = [(0.0, 0.0, 0.0)]
 #-----------------FLD Module--------------------
     class fld:
         latent_encoding_update_noise_level = 0.0
@@ -179,8 +190,8 @@ class LocomotionFLDEnvCfg:
             # "feet_pos_fr": [46, 47, 48],
             # "feet_pos_hr": [49, 50, 51],
         }
-        load_root = NAV_GYM_ROOT_DIR + "/resources/fld"
-        load_model = "model_9950.pt" 
+        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/pretrain/fld"
+        load_fld_model = "model_9950.pt" 
     class task_sampler:
         name = "OfflineSampler"
         collect_samples = True

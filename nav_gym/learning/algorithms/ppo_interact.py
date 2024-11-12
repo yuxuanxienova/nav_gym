@@ -80,11 +80,6 @@ class PPO:
         action, _ = self.actor_critic.act(obs)
         #action: (num_envs, action_shape)
         return action
-    # def update_distribution(self,obs):
-    #     self.actor_critic.update_distribution(obs)
-    def init_distribution(self,obs):
-        action, _ = self.actor_critic.act(obs)
-
     def get_log_prob(self, action):
         log_prob=self.actor_critic.get_actions_log_prob(action)
         return log_prob
@@ -96,7 +91,6 @@ class PPO:
         # need to record obs and critic_obs before env.step()
         self.transition.observations = obs
         self.transition.critic_observations = critic_obs
-
     def process_env_step(self, rewards, dones, infos):
         self.transition.rewards = rewards.clone()
         self.transition.dones = dones
@@ -105,7 +99,6 @@ class PPO:
             self.transition.rewards += self.gamma * torch.squeeze(
                 self.transition.values * infos["time_outs"].unsqueeze(1).to(self.device), 1
             )
-
         # Record the transition
         self.storage.add_transitions(self.transition)
         self.transition.clear()

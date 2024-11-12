@@ -139,6 +139,19 @@ class LocomotionEnvCfg:
     #         heading: List = [-3.14, 3.14]  # [rad]
     commands = UnifromVelocityCommandCfg()
 
+    class terrain_unity:
+        terrain_file:str = "/terrain/NavMap_v5_1.obj"
+        translation: Tuple = (0.0, 0.0, 0.0)
+
+        env_origin_pattern:str = "grid" # "point" or "grid"
+        class grid_pattern:
+            env_spacing:float = 5.0
+            x_offset:float = -20.0
+            y_offset:float = -20.0
+        class point_pattern:
+            env_origins:List = [(0.0, 0.0, 0.0)]
+
+
 
 if __name__ == "__main__":
     cfg = LocomotionEnvCfg()

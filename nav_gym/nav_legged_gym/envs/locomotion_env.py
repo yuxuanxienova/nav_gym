@@ -88,7 +88,7 @@ class LocomotionEnv:
     def _create_envs(self):
         """Design the environment instances."""
         # add terrain instance
-        self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs)
+        self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
         #----------------------------------------------------------
         # terrain_generator = TerrainGenerator(self.cfg.terrain)
         # self.terrain = Terrain(self.cfg.terrain, self.num_envs, self.gym_iface)

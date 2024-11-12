@@ -22,17 +22,41 @@ from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsMa
 from nav_gym.nav_legged_gym.common.terminations.termination_manager import TerminationManager
 from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import CurriculumManager
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
-from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg
+from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg,WaypointCommandRela
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.envs.config_local_nav_env import LocalNavEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
 from nav_gym.nav_legged_gym.envs.modules.pose_history import PoseHistoryData
+from nav_gym.learning.distribution.gaussian import Gaussian
+from nav_gym.learning.distribution.beta_distribution import BetaDistribution
+from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
+from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
+from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
+from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
+from nav_gym.nav_legged_gym.train.config_train_locomotion import TrainConfig
 import os
 from nav_gym import NAV_GYM_ROOT_DIR
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
+def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
+    # Define observation space
+    obs_shape_dict = {}
+    obs_dim = 0
+    for name in obs_names_list:
+        obs_shape = obs_dict[name].shape
+        obs_shape_single = obs_shape[1:]
+        dim = obs_shape_single.numel()
+
+        obs_dim += dim
+        # save name and dimension
+        obs_shape_dict[name] = obs_shape_single
+
+    # Define model
+    model_cls = eval(arch_cfg["model_class"])
+    return model_cls(obs_shape_dict, num_actions, arch_cfg, empirical_normalization=empirical_normalization)
 
 class LocalNavEnv:
     #-------- 1. Initialization -----------
-    def __init__(self, cfg:LocalNavEnvCfg, ll_env_cls:LocomotionEnv) -> None:
+    def __init__(self, cfg:LocalNavEnvCfg, ll_env_cls:LocomotionEnv, ll_train_cfg:TrainConfig) -> None:
         self.cfg = cfg
         #1. Parse the configuration
         cfg.ll_env_cfg.gym.headless = cfg.gym.headless
@@ -54,21 +78,14 @@ class LocalNavEnv:
         self.dt = self.ll_env.dt * self.cfg.hl_decimation
         self.max_episode_length = np.ceil(self.max_episode_length_s / self.dt)
         print("[INFO][Local Nav Env]Max Episode Length:{0}".format(self.max_episode_length))
-        #1.3 Load the low-level policy
-        scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/" )
-        file_name = "ll_jit_model2.pt"
-        #Load the policy
-        try:
-            self.ll_policy = torch.jit.load(scripted_model_path + file_name).to("cuda:0")
-            self.ll_policy.eval()
-        except Exception as e:
-            print("Loading scripted model failed:", e)
-            exit(1)
+
+        self.ll_train_cfg = ll_train_cfg
+
 
         
         #2. Prepare mdp helper managers
         #2.1---Initialize the Local Navigation Modules---
-        self.command_generator = WaypointCommand(cfg.commands,env=self.ll_env)
+        self.command_generator = WaypointCommandRela(cfg.commands,env=self.ll_env)
         self.global_memory = ExplicitMemory(cfg.memory)
         self.wp_history = PoseHistoryData(cfg.memory)
         self.pose_history_exp = PoseHistoryData(cfg.memory)
@@ -79,6 +96,7 @@ class LocalNavEnv:
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
+
         #3. others
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
@@ -89,7 +107,45 @@ class LocalNavEnv:
         self.ll_env.set_flag_enable_reset(True)
         self.ll_env.set_flag_enable_resample(False)#disable resample in low level
 
-        #5. Initialize the environment
+        #5. Load the low-level policy
+        # scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/" )
+        # file_name = "ll_jit_model2.pt"
+        obs_names = class_to_dict(self.cfg.observations).keys()
+        self.actor_critic_cfg = self.ll_train_cfg["actor_critic"]
+        self.action_dist_cfg = self.actor_critic_cfg["action_distribution"]
+        self.empirical_normalization = self.ll_train_cfg.runner["empirical_normalization"]
+        obs, extras = self.get_observations()
+
+        if "num_logits" in self.action_dist_cfg:
+            num_logits = self.action_dist_cfg["num_logits"]
+        else:
+            num_logits = self.num_actions
+        actor_model = load_model(
+            obs_names,
+            self.actor_critic_cfg["actor_architecture"],
+            extras["observations"],
+            num_logits,
+            self.empirical_normalization,
+        )
+        critic_model = load_model(
+            obs_names,
+            self.actor_critic_cfg["critic_architecture"],
+            extras["observations"],
+            1,
+            self.empirical_normalization,
+        )
+
+        # Define action distribution
+        action_dist_class = eval(self.action_dist_cfg["model_class"])
+        action_dist = action_dist_class(self.num_actions, self.action_dist_cfg)
+
+        # Define actor critic model
+        actor_critic_class = eval(self.actor_critic_cfg["class_name"])  # ActorCritic
+        actor_critic = actor_critic_class(actor_model, critic_model, action_dist).to(self.device)
+
+        self.ll_policy = actor_critic
+
+        #6. Initialize the environment
         self.reset()
         self.obs_dict = self.obs_manager.compute_obs(self)
 
@@ -123,7 +179,7 @@ class LocalNavEnv:
 
         #---Initialize the Local Navigation Module Buffers---
         self.first_pos = torch.zeros(self.num_envs, 3, device=self.device)
-        # self.pos_traget = torch.zeros(self.num_envs, 3, device=self.device)
+        # self.pos_target = torch.zeros(self.num_envs, 3, device=self.device)
         self.goal_error_z_check = torch.zeros(self.num_envs, device=self.device)
         self.previous_pos = self.robot.root_pos_w.clone()
 
@@ -188,13 +244,14 @@ class LocalNavEnv:
         self.command_time_left -= self.dt
         self.total_distance += torch.linalg.norm(self.robot.root_pos_w - self.previous_pos, dim=-1)
         self.previous_pos[:] = self.robot.root_pos_w
+
+
         #---Update the Local Navigation Module ---
-        
         #Update the goal_error_z_check
         self.goal_error_z_check = torch.norm(self.pos_target[:, :2] - self.robot.root_pos_w[:, :2], dim=1)
         z_diff = torch.abs(self.pos_target[:, 2] - self.robot.root_pos_w[:, 2])
         self.goal_error_z_check[z_diff > 3.0] = torch.inf
-        #d
+        #Local Navigation Update
         self.update_history()
         self.update_global_memory()
         #-----------------------------------------
@@ -205,7 +262,7 @@ class LocalNavEnv:
         #-------print reward info---------
         # self.reward_manager.log_info(self, torch.arange(self.num_envs), self.extras)
         # print("[INFO][rew_face_front]{0}".format(self.extras["rew_face_front"]))
-        # print("[INFO][rew_reach_goal]{0}".format(self.extras["rew_reach_goal"]))
+        # print("[INFO][rew_goal_tracking_dense_dot]{0}".format(self.extras["rew_goal_tracking_dense_dot"]))
 
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         if len(env_ids) != 0 and self.flag_enable_reset:
@@ -218,7 +275,9 @@ class LocalNavEnv:
             self.reset_idx(env_ids)
 
         self.obs_dict = self.obs_manager.compute_obs(self)
+
     #--------------2.1 Local Navigation Update ---------------
+    
     def update_history(self):
         # Update Stored Poses to be relative to the agent's current position and orientation
         env_ids = torch.arange(self.num_envs).to(self.device)

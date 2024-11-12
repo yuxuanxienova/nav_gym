@@ -150,8 +150,8 @@ class LocalNavEnvCfg:
         # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
 
         # Exploration (when explicit memory is used)
-        global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
-        exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
+        #global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
+        #exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
         face_front = {
             "func": R.face_front,
             "angle_limit": 0.78,
@@ -187,6 +187,7 @@ class LocalNavEnvCfg:
     #         ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
     #         heading: List = [-3.14, 3.14]  # [rad]
     commands = WaypointCommandCfg()
+
 #-----------------------------Local Navigation Module Config--------------------------------
 
 

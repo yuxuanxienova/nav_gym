@@ -3,22 +3,30 @@ import numpy as np
 import trimesh
 from trimesh.transformations import rotation_matrix
 from isaacgym import gymapi
-
 from nav_gym.nav_legged_gym.utils.warp_utils import convert_to_wp_mesh
 import torch
-
 from nav_gym import NAV_GYM_ROOT_DIR
+
+from typing import TYPE_CHECKING, Union
+if TYPE_CHECKING:
+    from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+    from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
+    ANY_ENV_CFG = Union[LocomotionEnvCfg, LocomotionFLDEnvCfg]
+
 class TerrainUnity:
-    def __init__(self,gym,sim,device,num_envs,env_spacing=5):
+    def __init__(self,gym,sim,device,num_envs,terrain_unity_cfg:"ANY_ENV_CFG.terrain_unity"):
 
         self.gym = gym
         self.sim = sim
         self.device = device
         self.num_envs = num_envs
-        self.env_spacing = env_spacing
+
+        #Pattern
+        self.pattern = terrain_unity_cfg.env_origin_pattern
+        
         # Load your terrain mesh here
         asset_root = os.path.join(NAV_GYM_ROOT_DIR,"resources")
-        terrain_file = "/terrain/NavMap_v5_1.obj"
+        terrain_file = terrain_unity_cfg.terrain_file
         if(os.path.exists(asset_root + terrain_file)):
             print("[INFO]Terrain file found")
         else:
@@ -30,9 +38,9 @@ class TerrainUnity:
 
         # Calculate the center of the mesh
         mesh_center = self.terrain_mesh.centroid
-        x=0.0#-98.0
-        y=0.0#2.0
-        z=0.0
+        x=terrain_unity_cfg.translation[0]
+        y=terrain_unity_cfg.translation[1]
+        z=terrain_unity_cfg.translation[2]
         translation = np.array([-y, z, x])# standard to unity vector conversion: x_u,y_u,z_u->-y,z,x
 
         # Optionally, translate the mesh so that its center is at the origin
@@ -77,21 +85,31 @@ class TerrainUnity:
         self.tm_params.restitution = 0.0
 
         # Get the environment origins
-        self._calcu_env_origins_grid()
-        # self._calcu_env_origins_custom()
+        if self.pattern == "point":
+            self.x_origin = terrain_unity_cfg.point_pattern.env_origins[0][0]
+            self.y_origin = terrain_unity_cfg.point_pattern.env_origins[0][1]
+            self._calcu_env_origins_point()
+        elif self.pattern == "grid":
+            self.x_offset = terrain_unity_cfg.grid_pattern.x_offset
+            self.y_offset = terrain_unity_cfg.grid_pattern.y_offset
+            self.env_spacing = terrain_unity_cfg.grid_pattern.env_spacing
+            self._calcu_env_origins_grid()
+        else:
+            print("[ERROR]Invalid pattern")
+            exit(1)
 
     def add_to_sim(self):
         # Add the terrain mesh to the simulation
         self.gym.add_triangle_mesh(self.sim, self.vertices.flatten(), self.triangles.flatten(), self.tm_params)
 
-    def _calcu_env_origins_custom(self):
+    def _calcu_env_origins_point(self):
         self.custom_origins = False
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)  # Dim:(num_envs, 3)
         # set origin and goal positions
         # self.x_goal = 1.0
         # self.y_goal =-4.0
-        self.x_origin=0.0
-        self.y_origin=0.0
+        self.x_origin=self.x_origin
+        self.y_origin=self.y_origin
         self.env_origins[:, 0] = torch.tensor([self.x_origin] * self.num_envs, device=self.device)
         self.env_origins[:, 1] = torch.tensor([self.y_origin] * self.num_envs, device=self.device)
         # Remove the hardcoded z value
@@ -138,8 +156,8 @@ class TerrainUnity:
         self.env_origins[:, 2] = torch.tensor(highest_intersections[:, 2], device=self.device)
 
     def _calcu_env_origins_grid(self):
-        x_offset = -20.0
-        y_offset = -20.0
+        x_offset = self.x_offset
+        y_offset = self.y_offset
         self.custom_origins = False
         self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)  # Dim:(num_envs, 3)
         # Create a grid of robots

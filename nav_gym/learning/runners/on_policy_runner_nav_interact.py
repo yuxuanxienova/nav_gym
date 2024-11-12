@@ -23,7 +23,7 @@ from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
-from nav_gym.nav_legged_gym.test.interact_module import InteractModuleVelocity
+from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity
 import numpy as np
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
@@ -176,6 +176,8 @@ class OnPolicyRunner:
 
         start_iter = self.current_learning_iteration
         tot_iter = start_iter + num_learning_iterations
+
+        self.interact_module.time_last_key_up = time.time() - 10.0
         for it in range(start_iter, tot_iter):
             start = time.time()
             # Rollout
