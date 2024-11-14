@@ -55,10 +55,34 @@ if __name__ == "__main__":
     # Main loop
     running = True
     while running:
-
-        # Run the policy and step the environment
+        #1. Run the Policy
         action = policy(obs)
+
+        #2. Step the environment
         obs, _, _, extras = env.step(action)
+
+        #3. Aline the shadow env to the main env
+        #action
+        action[idx_shadow_env] = action[idx_main_env]
+        #latent encoding
+        env.fld_module.latent_encoding[idx_shadow_env] = env.fld_module.latent_encoding[idx_main_env]
+        #position
+        env.robot.root_states[idx_shadow_env, :3] = env.robot.root_states[idx_main_env, :3]
+        #orientation
+        env.robot.root_states[idx_shadow_env, 3:7] = env.robot.root_states[idx_main_env, 3:7]
+        #linear velocity
+        env.robot.root_states[idx_shadow_env, 7:10] = env.robot.root_states[idx_main_env, 7:10]
+        #angular velocity
+        env.robot.root_states[idx_shadow_env, 10:13] = env.robot.root_states[idx_main_env, 10:13]
+        #dof pos
+        env.robot.dof_pos[idx_shadow_env] = env.robot.dof_pos[idx_main_env]
+        #update the shadow env fld module
+        env.fld_module._update_fld_observation_buf()
+        # #set the latent encoding manually
+        # env.fld_module.latent_encoding[idx_shadow_env,:,1] = torch.tensor([0.7, 0.1, 0.0, 0.0], device=env.device)
+        # env.fld_module.latent_encoding[idx_shadow_env,:,2] = torch.tensor([0.1, 0.0, 0.0, 0.0], device=env.device)
+        # env.fld_module._update_latent_phase()
+
         #shadow_env
         max_eps = 31
         for step in range(max_eps):
@@ -67,11 +91,7 @@ if __name__ == "__main__":
 
             env.robot.dof_pos[idx_shadow_env] = env.fld_module.get_reconstructed_dof_pos()[idx_shadow_env, step, :] + env.robot.default_dof_pos[idx_shadow_env]
             # env.robot.dof_vel[:] = motion_loader.get_dof_vel()[:, step, :].repeat(env.num_envs, 1)
-            if step == 0:
-                #position
-                env.robot.root_states[idx_shadow_env, :3] = env.robot.root_states[idx_main_env, :3]
-                #orientation
-                env.robot.root_states[idx_shadow_env, 3:7] = env.robot.root_states[idx_main_env, 3:7]
+
 
             root_ori = env.robot.root_states[idx_shadow_env, 3:7]
             #linear velocity
