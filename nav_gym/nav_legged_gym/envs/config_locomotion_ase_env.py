@@ -13,7 +13,7 @@ class LocomotionASEEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 1
+        num_envs: int = 512
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -94,8 +94,8 @@ class LocomotionASEEnvCfg:
             # --add this to every group--
             add_noise: bool = True  # turns off the noise in all observations 
             #--------------------------- 
-            dof_pos_history: dict = {"func": O.dof_pos_history,"noise": 1e-3}  
-            dof_vel_history: dict = {"func": O.dof_vel_history,"noise": 1e-3} 
+            dof_pos: dict = {"func": O.dof_pos, "noise": 0.01}  
+            dof_vel: dict = {"func": O.dof_vel, "noise": 1.5} 
 
 
 
@@ -146,7 +146,7 @@ class LocomotionASEEnvCfg:
     commands = UnifromVelocityCommandCfg()
 
     class terrain_unity:
-        terrain_file:str = "/terrain/NavMap_v5_1.obj"
+        terrain_file:str = "/terrain/Plane1.obj"
         translation: Tuple = (0.0, 0.0, 0.0)
 
         env_origin_pattern:str = "grid" # "point" or "grid"

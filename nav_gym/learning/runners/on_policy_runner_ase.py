@@ -91,14 +91,15 @@ class OnPolicyRunner:
         actor_critic_class = eval(self.actor_critic_cfg["class_name"])  # ActorCritic
         actor_critic = actor_critic_class(actor_model, critic_model, action_dist).to(self.device)
 
-        alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
-        self.alg: PPO_ASE = alg_class(actor_critic, 
+        # alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
+        self.num_steps_per_env = self.cfg["num_steps_per_env"]
+        self.save_interval = self.cfg["save_interval"]
+        self.alg: PPO_ASE = PPO_ASE(actor_critic, 
                                       device=self.device, 
                                       num_envs=self.num_envs,
                                       num_transitions_per_env=self.num_steps_per_env ,
                                       **self.alg_cfg)
-        self.num_steps_per_env = self.cfg["num_steps_per_env"]
-        self.save_interval = self.cfg["save_interval"]
+
 
         # init storage and model
         self.alg.init_storage(
@@ -128,7 +129,6 @@ class OnPolicyRunner:
         self._latent_steps_max = 150
         self.runner_step_count = 0
 
-        self._amp_input_mean_std = RunningMeanStd(self._amp_observation_space.shape).to(self.device)
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
         if self.log_dir is not None and self.writer is None:
@@ -187,8 +187,10 @@ class OnPolicyRunner:
                     #--ASE--
                     amp_obs = infos["observations"]["amp_obs"]
                     self.alg.amp_obs_storage.add_amp_obs_to_buffer(infos["observations"]["amp_obs"], i)
-                    disc_r, enc_r = self._calc_amp_rewards(amp_obs, self.alg.ase_latents)
-                    rewards = rewards + disc_r + enc_r
+                    if self.alg.amp_obs_storage.is_ready(self.alg.history_length):
+                        amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
+                        disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
+                        rewards = rewards + disc_r + enc_r
                     #-------
                     self.alg.process_env_step(rewards, dones, infos)
                     if self.log_dir is not None:
@@ -358,12 +360,12 @@ class OnPolicyRunner:
                                                                                low=self._latent_steps_min, 
                                                                                high=self._latent_steps_max)
         return
-    def _calc_amp_rewards(self, amp_obs, ase_latents):
-        proc_amp_obs = self._amp_input_mean_std(amp_obs)
+    def _calc_amp_rewards(self, amp_obs_traj, ase_latents):
+        #amp_obs_traj: [num_envs, history_length, amp_obs_dim]
         with torch.no_grad():
-            disc_logits,mu_q = self.alg.discriminator_encoder(proc_amp_obs)
-        disc_r = self._calc_disc_rewards(disc_logits)
-        enc_r = self._calc_enc_rewards(mu_q, ase_latents)
+            disc_logits,mu_q = self.alg.discriminator_encoder(amp_obs_traj)
+        disc_r = self._calc_disc_rewards(disc_logits).squeeze()
+        enc_r = self._calc_enc_rewards(mu_q, ase_latents).squeeze()
         return disc_r, enc_r
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
@@ -373,141 +375,3 @@ class OnPolicyRunner:
         enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)
         return enc_r
 
-    
-
-
-
-w
-
-
-
-    # def _update_amp_demos(self):
-    #     new_amp_obs_demo = self._fetch_amp_obs_demo(self._amp_batch_size)
-    #     self._amp_obs_demo_buffer.store({'amp_obs': new_amp_obs_demo})
-    #     return
-    # def _fetch_amp_obs_demo(self, num_samples):
-    #     amp_obs_demo = self.vec_env.env.fetch_amp_obs_demo(num_samples)
-    #     return amp_obs_demo
-    
-    # def fetch_amp_obs_demo(self, num_samples):
-
-    #     if (self._amp_obs_demo_buf is None):
-    #         self._build_amp_obs_demo_buf(num_samples)
-    #     else:
-    #         assert(self._amp_obs_demo_buf.shape[0] == num_samples)
-        
-    #     motion_ids = self._motion_lib.sample_motions(num_samples)
-        
-    #     # since negative times are added to these values in build_amp_obs_demo,
-    #     # we shift them into the range [0 + truncate_time, end of clip]
-    #     truncate_time = self.dt * (self._num_amp_obs_steps - 1)
-    #     motion_times0 = self._motion_lib.sample_time(motion_ids, truncate_time=truncate_time)
-    #     motion_times0 += truncate_time
-
-    #     amp_obs_demo = self.build_amp_obs_demo(motion_ids, motion_times0)
-    #     self._amp_obs_demo_buf[:] = amp_obs_demo.view(self._amp_obs_demo_buf.shape)
-    #     amp_obs_demo_flat = self._amp_obs_demo_buf.view(-1, self.get_num_amp_obs())
-
-    #     return amp_obs_demo_flat
-    # def build_amp_obs_demo(self, motion_ids, motion_times0):
-    #     dt = self.dt
-
-    #     motion_ids = torch.tile(motion_ids.unsqueeze(-1), [1, self._num_amp_obs_steps])
-    #     motion_times = motion_times0.unsqueeze(-1)
-    #     time_steps = -dt * torch.arange(0, self._num_amp_obs_steps, device=self.device)
-    #     motion_times = motion_times + time_steps
-
-    #     motion_ids = motion_ids.view(-1)
-    #     motion_times = motion_times.view(-1)
-    #     root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos \
-    #            = self._motion_lib.get_motion_state(motion_ids, motion_times)
-    #     amp_obs_demo = build_amp_observations(root_pos, root_rot, root_vel, root_ang_vel,
-    #                                           dof_pos, dof_vel, key_pos,
-    #                                           self._local_root_obs, self._root_height_obs,
-    #                                           self._dof_obs_size, self._dof_offsets)
-    #     return amp_obs_demo
-    # def get_motion_state(self, motion_ids, motion_times):
-    #     n = len(motion_ids)
-    #     num_bodies = self._get_num_bodies()
-    #     num_key_bodies = self._key_body_ids.shape[0]
-
-    #     motion_len = self._motion_lengths[motion_ids]
-    #     num_frames = self._motion_num_frames[motion_ids]
-    #     dt = self._motion_dt[motion_ids]
-
-    #     frame_idx0, frame_idx1, blend = self._calc_frame_blend(motion_times, motion_len, num_frames, dt)
-
-    #     f0l = frame_idx0 + self.length_starts[motion_ids]
-    #     f1l = frame_idx1 + self.length_starts[motion_ids]
-
-    #     root_pos0 = self.gts[f0l, 0]
-    #     root_pos1 = self.gts[f1l, 0]
-
-    #     root_rot0 = self.grs[f0l, 0]
-    #     root_rot1 = self.grs[f1l, 0]
-
-    #     local_rot0 = self.lrs[f0l]
-    #     local_rot1 = self.lrs[f1l]
-
-    #     root_vel = self.grvs[f0l]
-
-    #     root_ang_vel = self.gravs[f0l]
-        
-    #     key_pos0 = self.gts[f0l.unsqueeze(-1), self._key_body_ids.unsqueeze(0)]
-    #     key_pos1 = self.gts[f1l.unsqueeze(-1), self._key_body_ids.unsqueeze(0)]
-
-    #     dof_vel = self.dvs[f0l]
-
-    #     vals = [root_pos0, root_pos1, local_rot0, local_rot1, root_vel, root_ang_vel, key_pos0, key_pos1]
-    #     for v in vals:
-    #         assert v.dtype != torch.float64
-
-
-    #     blend = blend.unsqueeze(-1)
-
-    #     root_pos = (1.0 - blend) * root_pos0 + blend * root_pos1
-
-    #     root_rot = torch_utils.slerp(root_rot0, root_rot1, blend)
-
-    #     blend_exp = blend.unsqueeze(-1)
-    #     key_pos = (1.0 - blend_exp) * key_pos0 + blend_exp * key_pos1
-        
-    #     local_rot = torch_utils.slerp(local_rot0, local_rot1, torch.unsqueeze(blend, axis=-1))
-    #     dof_pos = self._local_rotation_to_dof(local_rot)
-
-    #     return root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos
-    
-    # def build_amp_observations(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, 
-    #                         local_root_obs, root_height_obs, dof_obs_size, dof_offsets):
-    #     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, bool, bool, int, List[int]) -> Tensor
-    #     root_h = root_pos[:, 2:3]
-    #     heading_rot = torch_utils.calc_heading_quat_inv(root_rot)
-
-    #     if (local_root_obs):
-    #         root_rot_obs = quat_mul(heading_rot, root_rot)
-    #     else:
-    #         root_rot_obs = root_rot
-    #     root_rot_obs = torch_utils.quat_to_tan_norm(root_rot_obs)
-        
-    #     if (not root_height_obs):
-    #         root_h_obs = torch.zeros_like(root_h)
-    #     else:
-    #         root_h_obs = root_h
-        
-    #     local_root_vel = quat_rotate(heading_rot, root_vel)
-    #     local_root_ang_vel = quat_rotate(heading_rot, root_ang_vel)
-
-    #     root_pos_expand = root_pos.unsqueeze(-2)
-    #     local_key_body_pos = key_body_pos - root_pos_expand
-        
-    #     heading_rot_expand = heading_rot.unsqueeze(-2)
-    #     heading_rot_expand = heading_rot_expand.repeat((1, local_key_body_pos.shape[1], 1))
-    #     flat_end_pos = local_key_body_pos.view(local_key_body_pos.shape[0] * local_key_body_pos.shape[1], local_key_body_pos.shape[2])
-    #     flat_heading_rot = heading_rot_expand.view(heading_rot_expand.shape[0] * heading_rot_expand.shape[1], 
-    #                                             heading_rot_expand.shape[2])
-    #     local_end_pos = quat_rotate(flat_heading_rot, flat_end_pos)
-    #     flat_local_key_pos = local_end_pos.view(local_key_body_pos.shape[0], local_key_body_pos.shape[1] * local_key_body_pos.shape[2])
-        
-    #     dof_obs = dof_to_obs(dof_pos, dof_obs_size, dof_offsets)
-    #     obs = torch.cat((root_h_obs, root_rot_obs, local_root_vel, local_root_ang_vel, dof_obs, dof_vel, flat_local_key_pos), dim=-1)
-    #     return obs

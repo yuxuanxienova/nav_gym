@@ -27,7 +27,7 @@ class AMPDemoStorage:
             if i == 0:
                 amp_demo_obs_batch = amp_demo_obs.unsqueeze(0)# [1, k, amp_obs_dim]
             else:
-                amp_demo_obs_batch = torch.cat([amp_demo_obs_batch, amp_demo_obs], dim=0)
+                amp_demo_obs_batch = torch.cat([amp_demo_obs_batch, amp_demo_obs.unsqueeze(0)], dim=0)
         # amp_demo_obs_batch : [batch_size, k, amp_obs_dim]
         return amp_demo_obs_batch
     def sample_amp_demo_obs_single(self, sample_length):

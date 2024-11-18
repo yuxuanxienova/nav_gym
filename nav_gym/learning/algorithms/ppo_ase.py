@@ -162,11 +162,12 @@ class PPO_ASE:
             )
             entropy_batch = self.actor_critic.entropy
             #------------ASE-------------
-            obs_amp = self.amp_obs_storage.get_current_obs(self.history_length)
+            obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
             # obs_amp: [num_envs, history_length, obs_dim]
-            obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples)
+            obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples).to(self.device)
             # obs_amp_replay: [num_samples*num_envs, history_length, obs_dim]
-            obs_demo = self.amp_demo_storage.sample_amp_demo_obs_batch(self.history_length, self.num_samples)
+            obs_demo = self.amp_demo_storage.sample_amp_demo_obs_batch(self.history_length, self.num_samples).to(self.device)
+            obs_demo.requires_grad = True
             # obs_demo: [num_samples, history_length, obs_dim]
             disc_agent_logit, enc_pred = self.discriminator_encoder(obs_amp)
             # disc_agent_logit: [num_envs, 1]
@@ -302,7 +303,7 @@ class PPO_ASE:
         bce = torch.nn.BCEWithLogitsLoss()
         loss = bce(disc_logits, torch.ones_like(disc_logits))
         return loss
-    def _enc_loss(self, enc_pred, ase_latent, enc_obs, loss_mask):
+    def _enc_loss(self, enc_pred, ase_latent, enc_obs=None, loss_mask=None):
         # enc_pred: [num_envs, latent_dim]
         enc_err = self._calc_enc_error(enc_pred, ase_latent)
         #mask_sum = torch.sum(loss_mask)

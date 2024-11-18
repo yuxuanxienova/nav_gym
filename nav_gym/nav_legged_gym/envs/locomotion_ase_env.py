@@ -23,7 +23,7 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
-class LocomotionEnv:
+class LocomotionASEEnv:
     robot: LeggedRobot
     cfg: LocomotionASEEnvCfg
     """Environment for locomotion tasks using a legged robot."""
@@ -409,10 +409,14 @@ class LocomotionEnv:
     def get_observations(self):
         return self.obs_buf, self.extras
 
-    # def get_privileged_observations(self):
-    #     return self.obs_manager.get_obs_from_group("privileged")
     def set_observation_buffer(self):
-        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        obs_list = []
+        obs_list.append(self.obs_dict["prop"])
+        obs_list.append(self.obs_dict["exte"])
+        obs_list.append(self.obs_dict["priv"])
+        #no amp obs in obs buffer!!
+        self.obs_buf = torch.cat(obs_list, dim=1)
+        #access amp obs using self.obs_dict["amp"] or self.extras["observations"]["amp"]
         self.extras["observations"] = self.obs_dict
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset
