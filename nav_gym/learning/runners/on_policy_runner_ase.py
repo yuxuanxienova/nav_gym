@@ -189,9 +189,10 @@ class OnPolicyRunner:
                     if self.alg.amp_obs_storage.is_ready(self.alg.history_length):
                         amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
                         disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
-                        rewards = rewards + disc_r + enc_r
+                        # rewards = rewards + disc_r + enc_r
+                        rewards = rewards + disc_r 
                         infos['episode']['rew_dis']=disc_r
-                        infos['episode']['rew_enc']=enc_r
+                        # infos['episode']['rew_enc']=enc_r
                     #-------
                     self.alg.process_env_step(rewards, dones, infos)
                     if self.log_dir is not None:
@@ -372,7 +373,7 @@ class OnPolicyRunner:
         return disc_r, enc_r
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
-        print(prob)
+        # print(prob)
         disc_r = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
         return disc_r
     def _calc_enc_rewards(self, mu_q, ase_latents):

@@ -196,7 +196,8 @@ class PPO_ASE:
             enc_loss = enc_info['enc_loss']
 
             #Discriminator Encoder Loss
-            loss_dis_enc = disc_loss + enc_loss
+            # loss_dis_enc = disc_loss + enc_loss
+            loss_dis_enc = disc_loss 
 
             #Gradient Step
             self.optimizer_dis_enc.zero_grad()
