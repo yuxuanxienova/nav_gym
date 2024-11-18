@@ -181,7 +181,8 @@ class PPO_ASE:
             # disc_demo_logit: [num_samples, 1]
             disc_agent_cat_logit = torch.cat([disc_agent_logit, disc_agent_replay_logit], dim=0)
             # disc_agent_cat_logit: [(num_samples+1)*num_envs, 1]
-            disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
+            # disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
+            disc_info = self._disc_loss(disc_agent_logit, disc_demo_logit, obs_demo)
             disc_loss = disc_info['disc_loss']
             
 

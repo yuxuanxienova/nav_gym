@@ -374,7 +374,10 @@ class OnPolicyRunner:
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
         # print(prob)
-        disc_r = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
+        # disc_r = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
+        #------Change to Non Saturating Loss-----
+        disc_r = torch.log(prob)
+        #-----------------------------------------
         return disc_r
     def _calc_enc_rewards(self, mu_q, ase_latents):
         enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)
