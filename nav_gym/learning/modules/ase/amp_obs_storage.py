@@ -42,7 +42,7 @@ class AMPObsStorage:
             exit(1)
         #--------------------
         #self.data[self.count]: [num_envs,num_transitons_per_env,obs_dim]
-        obs_amp = self.data[self.count][:,:sample_length,:]
+        obs_amp = self.data[self.count-1][:,:sample_length,:]
         #obs_amp: [num_envs,sample_length,obs_dim]
         return obs_amp
     def sample_amp_obs_batch(self, sample_length, num_sample=1):

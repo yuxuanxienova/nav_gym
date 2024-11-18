@@ -48,7 +48,7 @@ class PPO_ASE:
         self.actor_critic = actor_critic
         self.actor_critic.to(self.device)
         self.storage = None  # initialized later
-        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=learning_rate)
+        self.optimizer_actor_critic = optim.Adam(self.actor_critic.parameters(), lr=learning_rate)
         self.transition = RolloutStorage.Transition()
 
         # PPO parameters
@@ -74,6 +74,7 @@ class PPO_ASE:
         self.ase_latent_dim = 32
 
         self.discriminator_encoder = DiscriminatorEncoder(self.history_length, self.amp_obs_dim, latent_dim=self.ase_latent_dim).to(self.device)
+        self.optimizer_dis_enc = optim.Adam(self.discriminator_encoder.parameters(), lr=learning_rate)
         self.amp_demo_storage = AMPDemoStorage()
         self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 100)
         self.num_samples = 4
@@ -193,7 +194,19 @@ class PPO_ASE:
 
             enc_info = self._enc_loss(enc_pred, enc_latents)
             enc_loss = enc_info['enc_loss']
+
+            #Discriminator Encoder Loss
+            loss_dis_enc = disc_loss + enc_loss
+
+            #Gradient Step
+            self.optimizer_dis_enc.zero_grad()
+            loss_dis_enc.backward()
+            nn.utils.clip_grad_norm_(self.discriminator_encoder.parameters(), self.max_grad_norm)
+            self.optimizer_dis_enc.step()
+
             #----------------------------------
+
+            #-------------------PPO-------------------
             # KL
             if self.desired_kl is not None and self.schedule == "adaptive":
                 with torch.inference_mode():
@@ -204,7 +217,7 @@ class PPO_ASE:
                     elif kl_mean < self.desired_kl / 2.0 and kl_mean > 0.0:
                         self.learning_rate = min(1e-3, self.learning_rate * 1.5)
 
-                    for param_group in self.optimizer.param_groups:
+                    for param_group in self.optimizer_actor_critic.param_groups:
                         param_group["lr"] = self.learning_rate
 
             # Surrogate loss
@@ -230,15 +243,19 @@ class PPO_ASE:
             # Entropy bonus
             entropy_bonus = entropy_batch.mean()
 
-            # Loss
-            loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_bonus + disc_loss + enc_loss
+            # Actor Critic Loss
+            loss_actor_critic = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_bonus 
 
             # Gradient step
-            self.optimizer.zero_grad()
-            loss.backward()
+            self.optimizer_actor_critic.zero_grad()
+            loss_actor_critic.backward()
             nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
-            self.optimizer.step()
+            self.optimizer_actor_critic.step()
 
+            #-----------------------------------
+
+
+            #Calculate the mean loss
             mean_value_loss += value_loss.item()
             mean_surrogate_loss += surrogate_loss.item()
             mean_entropy_bonus += entropy_bonus.item()

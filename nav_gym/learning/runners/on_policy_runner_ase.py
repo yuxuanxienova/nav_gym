@@ -11,7 +11,6 @@ from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 
 # torch
 import torch
-from rl_games.algos_torch.running_mean_std import RunningMeanStd
 # rsl-rl
 from nav_gym.learning.algorithms.ppo_ase import PPO_ASE
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
@@ -323,7 +322,7 @@ class OnPolicyRunner:
         saved_dict = {
             "actor_critic_model_state_dict": self.alg.actor_critic.state_dict(),
             "discriminator_encoder_model_state_dict": self.alg.discriminator_encoder.state_dict(),
-            "optimizer_state_dict": self.alg.optimizer.state_dict(),
+            "optimizer_state_dict": self.alg.optimizer_actor_critic.state_dict(),
             "iter": self.current_learning_iteration,
             "infos": infos,
         }
@@ -338,7 +337,7 @@ class OnPolicyRunner:
         self.alg.discriminator_encoder.load_state_dict(loaded_dict["discriminator_encoder_model_state_dict"])
 
         if load_optimizer:
-            self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
+            self.alg.optimizer_actor_critic.load_state_dict(loaded_dict["optimizer_state_dict"])
         self.current_learning_iteration = loaded_dict["iter"]
         print(f"Loaded model from {path} at iteration {self.current_learning_iteration}")
         return loaded_dict["infos"]
@@ -373,6 +372,7 @@ class OnPolicyRunner:
         return disc_r, enc_r
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
+        print(prob)
         disc_r = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
         return disc_r
     def _calc_enc_rewards(self, mu_q, ase_latents):
