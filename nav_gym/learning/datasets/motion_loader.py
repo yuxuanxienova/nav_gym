@@ -1,4 +1,4 @@
-
+from typing import List
 from nav_gym import NAV_GYM_ROOT_DIR
 from isaacgym.torch_utils import (
     quat_mul,
@@ -13,53 +13,33 @@ import torch
 
 class MotionLoader:
 
-    def __init__(self, device, motion_file=None, corruption_level=0.0, reference_observation_horizon=2, test_mode=False, test_observation_dim=None):
+    def __init__(self, device="cuda", file_names:List[str]=None,file_root:str=None, corruption_level=0.0, reference_observation_horizon=2, test_mode=False, test_observation_dim=None):
         self.device = device
         self.reference_observation_horizon = reference_observation_horizon
-        if motion_file is None:
-            motion_file = LEGGED_GYM_ROOT_DIR + "/resources/robots/anymal_c/datasets/motion_data.pt"
-        self.reference_state_idx_dict_file = os.path.join(os.path.dirname(motion_file), "reference_state_idx_dict.json")
+        if file_root is None:
+            print("[MotionLoader] No motion file provided. Proceeding without loading any data.")
+            exit(1)
+        self.reference_state_idx_dict_file = os.path.join(file_root, "amp_state_idx_dict.json")
         with open(self.reference_state_idx_dict_file, 'r') as f:
             self.state_idx_dict = json.load(f)
         self.observation_dim = sum([ids[1] - ids[0] for state, ids in self.state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
         self.observation_start_dim = self.state_idx_dict["base_lin_vel"][0]
-        loaded_data = torch.load(motion_file, map_location=self.device)
+        data_list = []
+        for file_name in file_names:
+            file_path = os.path.join(file_root, file_name)
+            loaded_data_i = torch.load(file_path, map_location=self.device)
+            data_list.append(loaded_data_i)
+        for i in range(len(data_list)):
+            # Normalize and standardize quaternions
+            base_quat = normalize(data_list[i][:, :, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]])
+            base_quat[base_quat[:, :, -1] < 0] = -base_quat[base_quat[:, :, -1] < 0]
+            data_list[i][:, :, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]] = base_quat
+            #Data corruption
+            data_list[i] = self._data_corruption(data_list[i], level=corruption_level)
+        #motion_loader.data_list: [num_files]
+        #motion_loader.data_list[i]: [num_motion, num_steps, motion_features_dim]
+        self.data_list = data_list
 
-        # Normalize and standardize quaternions
-        base_quat = normalize(loaded_data[:, :, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]])
-        base_quat[base_quat[:, :, -1] < 0] = -base_quat[base_quat[:, :, -1] < 0]
-        loaded_data[:, :, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]] = base_quat
-
-        # Load data for DTW
-        motion_file_dtw = os.path.join(os.path.dirname(motion_file), "motion_data_original.pt")
-        try:
-            self.dtw_reference = torch.load(motion_file_dtw, map_location=self.device)[:, :, self.observation_start_dim:]
-            print(f"[MotionLoader] Loaded DTW reference motion clips.")
-        except:
-            self.dtw_reference = None
-            print(f"[MotionLoader] No DTW reference motion clips provided.")
-
-        self.data = self._data_corruption(loaded_data, level=corruption_level)
-        self.num_motion_clips, self.num_steps, self.reference_full_dim = self.data.size()
-        print(f"[MotionLoader] Loaded {self.num_motion_clips} motion clips from {motion_file}. Each records {self.num_steps} steps and {self.reference_full_dim} states.")
-
-        # Preload transitions
-        self.num_preload_transitions = 500000
-        motion_clip_sample_ids = torch.randint(0, self.num_motion_clips, (self.num_preload_transitions,), device=self.device)
-        step_sample = torch.rand(self.num_preload_transitions, device=self.device) * (self.num_steps - self.reference_observation_horizon)
-        self.preloaded_states = torch.zeros(
-            self.num_preload_transitions,
-            self.reference_observation_horizon,
-            self.reference_full_dim,
-            dtype=torch.float,
-            device=self.device,
-            requires_grad=False
-        )
-        for i in range(self.reference_observation_horizon):
-            self.preloaded_states[:, i] = self._get_frame_at_step(motion_clip_sample_ids, step_sample + i)
-        
-        if test_mode:
-            self.observation_dim = test_observation_dim
 
     def _data_corruption(self, loaded_data, level=0):
         if level == 0:
@@ -128,26 +108,27 @@ class MotionLoader:
             noise_scale_vec[value[0]:value[1]] = noise_scales_dict[key] * level
         data += (2 * torch.randn_like(data) - 1) * noise_scale_vec
         return data
-
-    def _get_frame_at_step(self, motion_clip_sample_ids, step_sample):
-        step_low, step_high = step_sample.floor().long(), step_sample.ceil().long()
-        blend = (step_sample - step_low).unsqueeze(-1)
-        frame = self.slerp(self.data[motion_clip_sample_ids, step_low], self.data[motion_clip_sample_ids, step_high], blend)
-        frame[:, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]] = self.quaternion_slerp(
-            self.data[motion_clip_sample_ids, step_low, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]], 
-            self.data[motion_clip_sample_ids, step_high, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]], 
-            blend
-            )
-        return frame
-
-    def get_frames(self, num_frames):
-        ids = torch.randint(0, self.num_preload_transitions, (num_frames,), device=self.device)
-        return self.preloaded_states[ids, 0]
     
-    def get_transitions(self, num_transitions):
-        ids = torch.randint(0, self.num_preload_transitions, (num_transitions,), device=self.device)
-        return self.preloaded_states[ids, :]
-    
+    def sample_k_steps_from_motion_clip(self, motion_id, k):
+        num_steps = self.data_list[motion_id].size(1)
+        #----Error handling----
+        # Validate file_idx
+        if motion_id < 0 or motion_id >= len(self.data_list):
+            raise IndexError(f"[sample_k_steps_from_motion_clip] motion_id {motion_id} is out of bounds.")
+        if num_steps < k:
+            raise ValueError(f"[sample_k_steps_from_motion_clip] Motion clip has only {num_steps} steps, which is less than the requested {k} steps.")
+        #--------------------------
+
+        
+        # Randomly select a starting index such that the window of k steps fits within the motion clip
+        max_start_idx = num_steps - k
+        start_idx = torch.randint(0, max_start_idx + 1, (1,)).item()
+        #motion_loader.data_list[i]: [num_motion, num_steps, motion_features_dim]
+        sampled_steps = self.data_list[motion_id][0,start_idx:start_idx + k,:]  # Shape: [k, motion_features_dim]
+        # sampled_steps : [k, motion_features_dim]
+        return sampled_steps
+        
+
     def slerp(self, value_low, value_high, blend):
         return (1.0 - blend) * value_low + blend * value_high
 
@@ -159,68 +140,77 @@ class MotionLoader:
         relative_quat_slerp = quat_from_angle_axis(angle_slerp, axis)        
         return normalize(quat_mul(relative_quat_slerp, quat_low))
 
-    def feed_forward_generator(self, num_mini_batch, mini_batch_size):
-        for _ in range(num_mini_batch):
-            ids = torch.randint(0, self.num_preload_transitions, (mini_batch_size,), device=self.device)
-            states = self.preloaded_states[ids, :, self.observation_start_dim:]
-            yield states
-
-    def get_base_pos(self, frames):
+    def get_base_pos(self, motion_data_i):
         if "base_pos" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["base_pos"][0]:self.state_idx_dict["base_pos"][1]]
+            return motion_data_i[:, self.state_idx_dict["base_pos"][0]:self.state_idx_dict["base_pos"][1]]
         else:
             raise Exception("[MotionLoader] base_pos not specified in the state_idx_dict")
 
-    def get_base_quat(self, frames):
+    def get_base_quat(self, motion_data_i):
         if "base_quat" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]]
+            return motion_data_i[:, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]]
         else:
             raise Exception("[MotionLoader] base_quat not specified in the state_idx_dict")
 
-    def get_base_lin_vel(self, frames):
+    def get_base_lin_vel(self, motion_data_i):
         if "base_lin_vel" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["base_lin_vel"][0]:self.state_idx_dict["base_lin_vel"][1]]
+            return motion_data_i[:, self.state_idx_dict["base_lin_vel"][0]:self.state_idx_dict["base_lin_vel"][1]]
         else:
             raise Exception("[MotionLoader] base_lin_vel not specified in the state_idx_dict")
 
-    def get_base_ang_vel(self, frames):
+    def get_base_ang_vel(self, motion_data_i):
         if "base_ang_vel" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["base_ang_vel"][0]:self.state_idx_dict["base_ang_vel"][1]]
+            return motion_data_i[:, self.state_idx_dict["base_ang_vel"][0]:self.state_idx_dict["base_ang_vel"][1]]
         else:
             raise Exception("[MotionLoader] base_ang_vel not specified in the state_idx_dict")
 
-    def get_projected_gravity(self, frames):
+    def get_projected_gravity(self, motion_data_i):
         if "projected_gravity" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["projected_gravity"][0]:self.state_idx_dict["projected_gravity"][1]]
+            return motion_data_i[:, self.state_idx_dict["projected_gravity"][0]:self.state_idx_dict["projected_gravity"][1]]
         else:
             raise Exception("[MotionLoader] projected_gravity not specified in the state_idx_dict")
 
-    def get_dof_pos(self, frames):
+    def get_dof_pos(self, motion_data_i):
         if "dof_pos" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["dof_pos"][0]:self.state_idx_dict["dof_pos"][1]]
+            return motion_data_i[:, self.state_idx_dict["dof_pos"][0]:self.state_idx_dict["dof_pos"][1]]
         else:
             raise Exception("[MotionLoader] dof_pos not specified in the state_idx_dict")
 
-    def get_dof_vel(self, frames):
+    def get_dof_vel(self, motion_data_i):
         if "dof_vel" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["dof_vel"][0]:self.state_idx_dict["dof_vel"][1]]
+            return motion_data_i[:, self.state_idx_dict["dof_vel"][0]:self.state_idx_dict["dof_vel"][1]]
         else:
             raise Exception("[MotionLoader] dof_vel not specified in the state_idx_dict")
 
-    def get_feet_pos(self, frames):
+    def get_feet_pos(self, motion_data_i):
         if "feet_pos" in self.state_idx_dict:
-            return frames[:, self.state_idx_dict["feet_pos"][0]:self.state_idx_dict["feet_pos"][1]]
+            return motion_data_i[:, self.state_idx_dict["feet_pos"][0]:self.state_idx_dict["feet_pos"][1]]
         else:
             raise Exception("[MotionLoader] feet_pos not specified in the state_idx_dict")
         
-    def compute_base_pos(self, frames, ori, dt):
+    def compute_base_pos(self, motion_data_i, ori, dt):
         """approximate base position from base linear velocity"""
-        base_lin_vel = quat_rotate(ori, self.get_base_lin_vel(frames))
+        base_lin_vel = quat_rotate(ori, self.get_base_lin_vel(motion_data_i))
         pos = base_lin_vel * dt
         return pos
 
-    def compute_ori(self, frames, ori, dt):
+    def compute_ori(self, motion_data_i, ori, dt):
         """approximate base orientation from base angular velocity"""
-        base_ang_vel = quat_rotate(ori, self.get_base_ang_vel(frames))
+        base_ang_vel = quat_rotate(ori, self.get_base_ang_vel(motion_data_i))
         ori = (base_ang_vel * dt).squeeze(0)
         return ori[0], ori[1], ori[2]     
+if __name__ == "__main__":
+    datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
+    motion_name = "motion_data_pace1.0.pt"
+    motion_path = os.path.join(datasets_root, motion_name)
+    if not os.path.exists(motion_path):
+        raise Exception(f"Could not find motion data at {motion_path}")
+    motion_loader = MotionLoader(
+        device="cuda",
+        motion_file=motion_path,
+        corruption_level=0.0,
+        reference_observation_horizon=2,
+        test_mode=False,
+        test_observation_dim=None
+    )
+

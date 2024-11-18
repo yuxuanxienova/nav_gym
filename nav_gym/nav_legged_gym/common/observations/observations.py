@@ -16,6 +16,9 @@ from nav_gym.nav_legged_gym.utils.math_utils import quat_rotate_inverse, yaw_qua
 def dof_pos(env: "ANY_ENV", params):
     return env.robot.dof_pos - env.robot.default_dof_pos
 
+def dof_pos_history(env: "ANY_ENV", params):
+    #(num_envs, history_length, num_dof)
+    return env.dof_pos_history 
 
 def dof_pos_selected(env: "ANY_ENV", params):
     indices = params["dof_indices"]
@@ -25,14 +28,18 @@ def dof_pos_history_selected(env: "ANY_ENV", params):
     indices = params["dof_indices"]
     hist_index = params["hist_index"]
     return env.dof_pos_history[:, hist_index, indices]
+
+def dof_vel(env: "ANY_ENV", params):
+    return env.robot.dof_vel
+
+def dof_vel_history(env: "ANY_ENV", params):
+    #(num_envs, history_length, num_dof)
+    return env.dof_vel_history
 def dof_vel_history_selected(env: "ANY_ENV", params):
     indices = params["dof_indices"]
     hist_index = params["hist_index"]
 
     return env.dof_vel_history[:, hist_index, indices]
-def dof_vel(env: "ANY_ENV", params):
-    return env.robot.dof_vel
-
 
 def dof_torques(env: "ANY_ENV", params):
     return env.robot.des_dof_torques
