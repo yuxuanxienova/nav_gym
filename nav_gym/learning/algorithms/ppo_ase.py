@@ -134,6 +134,8 @@ class PPO_ASE:
         mean_value_loss = 0
         mean_surrogate_loss = 0
         mean_entropy_bonus = 0
+        mean_disc_loss = 0
+        mean_enc_loss = 0
 
         self.entropy_coef = self.adjust_coeff_exp(self.entropy_coef_init, self.num_updates, self.entropy_coef_decay)
         # print("[DEBUG] entropy_coef", self.entropy_coef)
@@ -240,14 +242,18 @@ class PPO_ASE:
             mean_value_loss += value_loss.item()
             mean_surrogate_loss += surrogate_loss.item()
             mean_entropy_bonus += entropy_bonus.item()
+            mean_disc_loss += disc_loss.item()
+            mean_enc_loss += enc_loss.item()
 
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
         mean_entropy_bonus /= num_updates
+        mean_disc_loss /= num_updates
+        mean_enc_loss /= num_updates
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_entropy_bonus
+        return mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss
 
     def adjust_coeff_exp(self, initial_value, iteration, decay_rate):
         r = initial_value * math.pow(decay_rate, iteration)

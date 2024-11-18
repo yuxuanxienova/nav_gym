@@ -191,6 +191,8 @@ class OnPolicyRunner:
                         amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
                         disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
                         rewards = rewards + disc_r + enc_r
+                        infos['episode']['rew_dis']=disc_r
+                        infos['episode']['rew_enc']=enc_r
                     #-------
                     self.alg.process_env_step(rewards, dones, infos)
                     if self.log_dir is not None:
@@ -219,7 +221,7 @@ class OnPolicyRunner:
                 self.alg.amp_obs_storage.clear_buffer()
                 #-------
 
-            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus = self.alg.update()
+            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss = self.alg.update()
 
             stop = time.time()
             learn_time = stop - start
@@ -319,7 +321,8 @@ class OnPolicyRunner:
         print(log_string)
     def save(self, path, infos=None):
         saved_dict = {
-            "model_state_dict": self.alg.actor_critic.state_dict(),
+            "actor_critic_model_state_dict": self.alg.actor_critic.state_dict(),
+            "discriminator_encoder_model_state_dict": self.alg.discriminator_encoder.state_dict(),
             "optimizer_state_dict": self.alg.optimizer.state_dict(),
             "iter": self.current_learning_iteration,
             "infos": infos,
@@ -331,7 +334,8 @@ class OnPolicyRunner:
             self.writer.save_model(path, self.current_learning_iteration)
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
-        self.alg.actor_critic.load_state_dict(loaded_dict["model_state_dict"])
+        self.alg.actor_critic.load_state_dict(loaded_dict["actor_critic_model_state_dict"])
+        self.alg.discriminator_encoder.load_state_dict(loaded_dict["discriminator_encoder_model_state_dict"])
 
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
