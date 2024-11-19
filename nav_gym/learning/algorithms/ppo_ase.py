@@ -8,7 +8,7 @@ import torch.optim as optim
 
 # rsl-rl
 from nav_gym.learning.modules.actor_critic import ActorCriticSeparate
-from nav_gym.learning.storage.rollout_storage import RolloutStorage
+from nav_gym.learning.storage.rollout_storage import RolloutStorageASE as RolloutStorage
 from nav_gym.learning.modules.ase.discriminator_encoder import DiscriminatorEncoder
 from nav_gym.learning.modules.ase.amp_demo_storage import AMPDemoStorage
 from nav_gym.learning.modules.ase.amp_obs_storage import AMPObsStorage
@@ -105,7 +105,7 @@ class PPO_ASE:
     def get_log_prob(self, action):
         log_prob=self.actor_critic.get_actions_log_prob(action)
         return log_prob
-    def store_transition(self, action, log_prob, obs, critic_obs):
+    def store_transition(self, action, log_prob, obs, critic_obs,log_disc_prob):
         #log_prob: (num_envs, 1)
         self.transition.actions = action.detach()
         self.transition.actions_log_prob = log_prob.detach()
@@ -113,6 +113,8 @@ class PPO_ASE:
         # need to record obs and critic_obs before env.step()
         self.transition.observations = obs
         self.transition.critic_observations = critic_obs
+        #ASE
+        self.transition.log_disc_prob = log_disc_prob.detach()
     def process_env_step(self, rewards, dones, infos):
         self.transition.rewards = rewards.clone()
         self.transition.dones = dones
@@ -153,8 +155,10 @@ class PPO_ASE:
             advantages_batch,
             returns_batch,
             old_actions_log_prob_batch,
+            log_disc_probs_batch,#ASE
             hid_states_batch,
             masks_batch,
+            
         ) in generator:
             self.actor_critic.act(obs_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
             actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
@@ -233,6 +237,16 @@ class PPO_ASE:
                 ratio, 1.0 - self.clip_param, 1.0 + self.clip_param
             )
             surrogate_loss = torch.max(surrogate, surrogate_clipped).mean()
+
+            #------ase surrogate loss----
+            # ratio = torch.exp(actions_log_prob_batch - torch.squeeze(old_actions_log_prob_batch))
+            # surrogate_ase = -torch.squeeze(log_disc_probs_batch) * ratio
+            # surrogate_clipped_ase = -torch.squeeze(log_disc_probs_batch) * torch.clamp(
+            #     ratio, 1.0 - self.clip_param, 1.0 + self.clip_param
+            # )
+            # surrogate_loss_ase = torch.max(surrogate_ase, surrogate_clipped_ase).mean()
+
+            #----------------------------
 
             # Value function loss
             if self.use_clipped_value_loss:

@@ -3,6 +3,7 @@ import os
 from nav_gym import NAV_GYM_ROOT_DIR
 import random
 import torch
+from nav_gym import NAV_GYM_ROOT_DIR
 class AMPDemoStorage:
     def __init__(self):
         #Load the Motion Data

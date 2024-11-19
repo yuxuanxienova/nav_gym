@@ -17,6 +17,9 @@ class AMPObsStorage:
         self.count = 0
         self.length = 0
 
+        self.save_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/anymal_d/datasets/record/")
+        self.save_name = 'sampled_amp_observations.pt'
+        self.save_path = os.path.join(self.save_root, self.save_name)
     def add_amp_obs_to_buffer(self, amp_obs,transition_idx):
         #amp_obs: [num_envs,obs_dim]
         self.transition_buffer[:,transition_idx,:] = amp_obs
@@ -55,5 +58,8 @@ class AMPObsStorage:
         #self.data[indices]: [num_sample,num_envs,num_transitons_per_env,obs_dim]
         obs_amp_replay = self.data[indices][:,:,:sample_length,:].flatten(0,1)  
         #obs_amp_replay: [num_sample*num_envs,sample_length,obs_dim]
+
+        #save
+        torch.save(obs_amp_replay, self.save_path)
         return obs_amp_replay
 

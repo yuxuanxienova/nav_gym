@@ -58,46 +58,38 @@ if __name__ == "__main__":
     obs, extras = env.reset()
     
     #Load the Motion Data
-    datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
-    motion_names = ["motion_data_pace1.0.pt","motion_data_walk01_0.5.pt","motion_data_walk03_0.5.pt","motion_data_canter02_1.5.pt"]
+    datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/anymal_d/datasets/record/")
+    motion_names = "sampled_amp_observations.pt"
+    save_path = os.path.join(datasets_root, motion_names)
+    loaded_amp_obs = torch.load(save_path)
+    print(f"Loaded AMP observations from {save_path}")
+    state_index_dict = {
+                            "dof_pos": [0, 12],
+                            "dof_vel": [12, 24]
+                            }
 
-    motion_loader = MotionLoader(
-        device="cuda",
-        file_names=motion_names,
-        file_root=datasets_root,
-        corruption_level=0.0,
-        reference_observation_horizon=2,
-        test_mode=False,
-        test_observation_dim=None
-    )
-    motion_idx = 0
-    num_motion_clips, num_steps, motion_features_dim = motion_loader.data_list[motion_idx].size()
     # Main loop
     running = True
     sample_length = 16
     max_eps = sample_length * env.cfg.control.decimation
     while running:
-        motion_data_clip = motion_loader.sample_k_steps_from_motion_clip(motion_idx, sample_length)# Shape: [k, motion_features_dim]
+        motion_data_clip = loaded_amp_obs[0]# Shape: [sample_length, motion_features_dim]
         for i in range(max_eps):
             step = int(i // env.cfg.control.decimation) % sample_length
             env.render()
             env.gym.simulate(env.sim) 
-            #motion_loader.data_list: (num_files)
-            #motion_loader.data_list[0]: [num_motion, num_steps, motion_features_dim]
-            
-            motion_data_per_step = motion_data_clip[step,:].repeat(env.num_envs, 1)
-            #motion_data_per_step: [num_motion, motion_features_dim]
-            state_idx_dict = motion_loader.state_idx_dict
+            motion_data_per_step = motion_data_clip[step].reshape(1, -1).repeat(env.num_envs, 1)# Shape: [num_envs, motion_features_dim]
 
-            env.robot.dof_pos[:] = motion_loader.get_dof_pos(motion_data_per_step)
-            env.robot.dof_vel[:] = motion_loader.get_dof_vel(motion_data_per_step)
-            root_pos = motion_loader.get_base_pos(motion_data_per_step)
+
+            env.robot.dof_pos[:] = motion_data_per_step[:, state_index_dict["dof_pos"][0]:state_index_dict["dof_pos"][1]]
+            env.robot.dof_vel[:] = motion_data_per_step[:, state_index_dict["dof_vel"][0]:state_index_dict["dof_vel"][1]]
+            root_pos = torch.tensor([0.0, 0.0, 3.0], device=env.device).repeat(env.num_envs, 1)
             root_pos[:, :2] = root_pos[:, :2] + env.terrain.env_origins[:, :2]
             env.robot.root_states[:, :3] = root_pos
-            root_ori = motion_loader.get_base_quat(motion_data_per_step)
+            root_ori = torch.tensor([0.0, 0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
             env.robot.root_states[:, 3:7] = root_ori
-            env.robot.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel(motion_data_per_step))
-            env.robot.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel(motion_data_per_step))
+            # env.robot.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel(motion_data_per_step))
+            # env.robot.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel(motion_data_per_step))
 
             env_ids_int32 = torch.arange(env.num_envs, device=env.device).to(dtype=torch.int32)        
             env.gym.set_dof_state_tensor_indexed(env.sim,

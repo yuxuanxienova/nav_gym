@@ -128,6 +128,7 @@ class OnPolicyRunner:
         self._latent_steps_max = 150
         self.runner_step_count = 0
         self.scale_disc_r = 10000.0
+        self.log_disc_prob = 0.5 * torch.ones(self.num_envs, device=self.device)
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
@@ -175,7 +176,7 @@ class OnPolicyRunner:
                     #-------
                     actions = self.alg.act(obs, critic_obs)
                     log_prob = self.alg.get_log_prob(actions)
-                    self.alg.store_transition(actions, log_prob, obs, critic_obs)
+                    self.alg.store_transition(actions, log_prob, obs, critic_obs, self.log_disc_prob)
                     obs, rewards, dones, infos = self.env.step(actions)
                     critic_obs = obs
                     obs, critic_obs, rewards, dones = (
@@ -187,6 +188,7 @@ class OnPolicyRunner:
                     #--ASE--
                     amp_obs = infos["observations"]["amp_obs"]
                     self.alg.amp_obs_storage.add_amp_obs_to_buffer(infos["observations"]["amp_obs"], i)
+                    
                     if self.alg.amp_obs_storage.is_ready(self.alg.history_length):
                         amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
                         disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
@@ -374,6 +376,7 @@ class OnPolicyRunner:
         return disc_r, enc_r
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
+        self.log_disc_prob = prob
         # print(prob)
         disc_r1 = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
         #------Change to Non Saturating Loss-----
