@@ -233,6 +233,9 @@ class OnPolicyRunner:
                 self.log(locals())
                 if it % self.save_interval == 0:
                     self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
+                    #-----ASE-----
+                    self.alg.discriminator_encoder.save(os.path.join(self.log_dir, "discriminator_encoder_{}.pt".format(it)))
+                    #-------------
                 ep_infos.clear()
 
         self.save(os.path.join(self.log_dir, "model_{}.pt".format(self.current_learning_iteration)))

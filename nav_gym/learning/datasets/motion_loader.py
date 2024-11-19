@@ -200,17 +200,7 @@ class MotionLoader:
         ori = (base_ang_vel * dt).squeeze(0)
         return ori[0], ori[1], ori[2]     
 if __name__ == "__main__":
-    datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
-    motion_name = "motion_data_pace1.0.pt"
-    motion_path = os.path.join(datasets_root, motion_name)
-    if not os.path.exists(motion_path):
-        raise Exception(f"Could not find motion data at {motion_path}")
-    motion_loader = MotionLoader(
-        device="cuda",
-        motion_file=motion_path,
-        corruption_level=0.0,
-        reference_observation_horizon=2,
-        test_mode=False,
-        test_observation_dim=None
-    )
+    motion_loader=MotionLoader()
+    pass
+
 

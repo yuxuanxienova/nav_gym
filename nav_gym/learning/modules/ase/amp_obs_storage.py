@@ -60,6 +60,6 @@ class AMPObsStorage:
         #obs_amp_replay: [num_sample*num_envs,sample_length,obs_dim]
 
         #save
-        torch.save(obs_amp_replay, self.save_path)
+        # torch.save(obs_amp_replay, self.save_path)
         return obs_amp_replay
 

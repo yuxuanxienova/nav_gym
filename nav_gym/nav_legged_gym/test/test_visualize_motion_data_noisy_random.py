@@ -18,22 +18,6 @@ from isaacgym import gymtorch, gymapi, gymutil
 import torch
 import os
 import time
-PLAY_LOADED_DATA = True
-SAVE_DATA = False
-SAVE_CORRECT_VEL_DATA = False
-MOVE_CAMERA = False
-PLOT = False
-VIS = True
-
-def generate_target(target_pos, env):
-    sphere_geom = gymutil.WireframeSphereGeometry(0.05, 4, 4, None, color=(0, 0, 1))
-    local_target_pos = target_pos - env.terrain.env_origins
-    for i in range(env.num_envs):
-        x = local_target_pos[i, 0]
-        y = local_target_pos[i, 1]
-        z = local_target_pos[i, 2]
-        sphere_pose = gymapi.Transform(gymapi.Vec3(x, y, z), r=None)
-        gymutil.draw_lines(sphere_geom, env.gym, env.viewer, env.envs[i], sphere_pose)
 
 
 if __name__ == "__main__":
