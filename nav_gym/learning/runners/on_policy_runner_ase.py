@@ -127,6 +127,7 @@ class OnPolicyRunner:
         self._latent_steps_min = 1
         self._latent_steps_max = 150
         self.runner_step_count = 0
+        self.scale_disc_r = 10000.0
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
@@ -378,6 +379,7 @@ class OnPolicyRunner:
         #------Change to Non Saturating Loss-----
         disc_r = torch.log(prob)
         #-----------------------------------------
+        disc_r = disc_r * self.scale_disc_r
         return disc_r
     def _calc_enc_rewards(self, mu_q, ase_latents):
         enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)

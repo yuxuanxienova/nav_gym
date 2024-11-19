@@ -165,46 +165,47 @@ class PPO_ASE:
             )
             entropy_batch = self.actor_critic.entropy
             #------------ASE-------------
-            obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
-            # obs_amp: [num_envs, history_length, obs_dim]
-            obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples).to(self.device)
-            # obs_amp_replay: [num_samples*num_envs, history_length, obs_dim]
-            obs_demo = self.amp_demo_storage.sample_amp_demo_obs_batch(self.history_length, self.num_samples).to(self.device)
-            obs_demo.requires_grad = True
-            # obs_demo: [num_samples, history_length, obs_dim]
-            disc_agent_logit, enc_pred = self.discriminator_encoder(obs_amp)
-            # disc_agent_logit: [num_envs, 1]
-            # enc_pred: [num_envs, latent_dim]
-            disc_agent_replay_logit,_ = self.discriminator_encoder(obs_amp_replay)
-            # disc_agent_replay_logit: [num_samples*num_envs, 1]
-            disc_demo_logit,_ = self.discriminator_encoder(obs_demo) 
-            # disc_demo_logit: [num_samples, 1]
-            disc_agent_cat_logit = torch.cat([disc_agent_logit, disc_agent_replay_logit], dim=0)
-            # disc_agent_cat_logit: [(num_samples+1)*num_envs, 1]
-            # disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
-            disc_info = self._disc_loss(disc_agent_logit, disc_demo_logit, obs_demo)
-            disc_loss = disc_info['disc_loss']
-            
+            if self.amp_obs_storage.is_ready(self.history_length):
+                obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
+                # obs_amp: [num_envs, history_length, obs_dim]
+                obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples).to(self.device)
+                # obs_amp_replay: [num_samples*num_envs, history_length, obs_dim]
+                obs_demo = self.amp_demo_storage.sample_amp_demo_obs_batch(self.history_length, self.num_samples).to(self.device)
+                obs_demo.requires_grad = True
+                # obs_demo: [num_samples, history_length, obs_dim]
+                disc_agent_logit, enc_pred = self.discriminator_encoder(obs_amp)
+                # disc_agent_logit: [num_envs, 1]
+                # enc_pred: [num_envs, latent_dim]
+                disc_agent_replay_logit,_ = self.discriminator_encoder(obs_amp_replay)
+                # disc_agent_replay_logit: [num_samples*num_envs, 1]
+                disc_demo_logit,_ = self.discriminator_encoder(obs_demo) 
+                # disc_demo_logit: [num_samples, 1]
+                disc_agent_cat_logit = torch.cat([disc_agent_logit, disc_agent_replay_logit], dim=0)
+                # disc_agent_cat_logit: [(num_samples+1)*num_envs, 1]
+                # disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
+                disc_info = self._disc_loss(disc_agent_logit, disc_demo_logit, obs_demo)
+                disc_loss = disc_info['disc_loss']
+                
 
-            enc_latents = self.ase_latents
-            # enc_latents: [num_envs, latent_dim]
+                enc_latents = self.ase_latents
+                # enc_latents: [num_envs, latent_dim]
 
-            # rand_action_mask = torch.bernoulli(rand_action_probs)
-            # enc_loss_mask = rand_action_mask[0:self._amp_minibatch_size]
-            # enc_info = self._enc_loss(enc_pred, enc_latents, batch_dict['amp_obs'], enc_loss_mask)
+                # rand_action_mask = torch.bernoulli(rand_action_probs)
+                # enc_loss_mask = rand_action_mask[0:self._amp_minibatch_size]
+                # enc_info = self._enc_loss(enc_pred, enc_latents, batch_dict['amp_obs'], enc_loss_mask)
 
-            enc_info = self._enc_loss(enc_pred, enc_latents)
-            enc_loss = enc_info['enc_loss']
+                enc_info = self._enc_loss(enc_pred, enc_latents)
+                enc_loss = enc_info['enc_loss']
 
-            #Discriminator Encoder Loss
-            # loss_dis_enc = disc_loss + enc_loss
-            loss_dis_enc = disc_loss 
+                #Discriminator Encoder Loss
+                # loss_dis_enc = disc_loss + enc_loss
+                loss_dis_enc = disc_loss 
 
-            #Gradient Step
-            self.optimizer_dis_enc.zero_grad()
-            loss_dis_enc.backward()
-            nn.utils.clip_grad_norm_(self.discriminator_encoder.parameters(), self.max_grad_norm)
-            self.optimizer_dis_enc.step()
+                #Gradient Step
+                self.optimizer_dis_enc.zero_grad()
+                loss_dis_enc.backward()
+                nn.utils.clip_grad_norm_(self.discriminator_encoder.parameters(), self.max_grad_norm)
+                self.optimizer_dis_enc.step()
 
             #----------------------------------
 
