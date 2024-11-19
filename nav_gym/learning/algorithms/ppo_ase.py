@@ -165,8 +165,8 @@ class PPO_ASE:
             )
             entropy_batch = self.actor_critic.entropy
             #------------ASE-------------
-            disc_loss = 0
-            enc_loss = 0
+            disc_loss = torch.zeros(1).to(self.device)
+            enc_loss = torch.zeros(1).to(self.device)
             if self.amp_obs_storage.is_ready(self.history_length):
                 obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
                 # obs_amp: [num_envs, history_length, obs_dim]
