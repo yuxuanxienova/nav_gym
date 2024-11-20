@@ -76,13 +76,15 @@ class PPO_ASE:
         self.discriminator_encoder = DiscriminatorEncoder(self.history_length, self.amp_obs_dim, latent_dim=self.ase_latent_dim).to(self.device)
         self.optimizer_dis_enc = optim.Adam(self.discriminator_encoder.parameters(), lr=learning_rate)
         self.amp_demo_storage = AMPDemoStorage()
-        self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 100)
+        self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 20)
         self.num_samples = 4
 
         
         self.ase_latents = torch.zeros((self.num_envs, self.ase_latent_dim), dtype=torch.float32,device=self.device)
 
-        self.scale_disc_grad_penalty = 1.0
+        self.scale_disc_grad_penalty = 10.0
+        self._dibsc_logit_reg = 0.01
+        self._disc_weight_decay = 0.0001
     def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape):
         self.storage = RolloutStorage(
             num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, self.device
@@ -306,9 +308,9 @@ class PPO_ASE:
         disc_loss = 0.5 * (disc_loss_agent + disc_loss_demo)
 
         # logit reg
-        # logit_weights = self.model.a2c_network.get_disc_logit_weights()
-        # disc_logit_loss = torch.sum(torch.square(logit_weights))
-        # disc_loss += self._dibsc_logit_reg * disc_logit_loss
+        logit_weights = self.discriminator_encoder.get_disc_logit_weights()
+        disc_logit_loss = torch.sum(torch.square(logit_weights))
+        disc_loss = disc_loss + self._dibsc_logit_reg * disc_logit_loss
 
         # grad penalty
         disc_demo_grad = torch.autograd.grad(disc_demo_logit, obs_demo, grad_outputs=torch.ones_like(disc_demo_logit),
@@ -319,11 +321,9 @@ class PPO_ASE:
         disc_loss = disc_loss + self.scale_disc_grad_penalty * disc_grad_penalty
 
         # weight decay
-        # if (self._disc_weight_decay != 0):
-        #     disc_weights = self.model.a2c_network.get_disc_weights()
-        #     disc_weights = torch.cat(disc_weights, dim=-1)
-        #     disc_weight_decay = torch.sum(torch.square(disc_weights))
-        #     disc_loss += self._disc_weight_decay * disc_weight_decay
+        disc_weights = self.discriminator_encoder.get_disc_weights()
+        disc_weight_decay = torch.sum(torch.square(disc_weights))
+        disc_loss = disc_loss + self._disc_weight_decay * disc_weight_decay
 
         # disc_agent_acc, disc_demo_acc = self._compute_disc_acc(disc_agent_logit, disc_demo_logit)
 

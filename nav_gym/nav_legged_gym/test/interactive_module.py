@@ -144,3 +144,67 @@ class InteractModulePosition:
         self.screen.blit(text_surface, (10, 10))
 
         # Note: The main loop will handle pygame.display.flip()
+
+
+class InteractModuleSpaceKey:
+    def __init__(self):
+        # Initialize Pygame
+        pygame.init()
+        
+        # Create a window (you can adjust the size as needed)
+        self.screen = pygame.display.set_mode((400, 400))
+        pygame.display.set_caption('Interact Module')
+        
+        # Running flag
+        self.space_pressed = False
+        
+    def update(self):
+        """
+        Handles Pygame events and checks for space key presses.
+        
+        Returns:
+            bool: True if the space key was pressed during this update, False otherwise.
+        """
+        # Initialize the flag for space key press
+        
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.space_pressed = False
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    print("Space key pressed")
+                    self.space_pressed = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    print("Space key released")
+                    self.space_pressed = False
+        
+        # Clear the screen (fill with black)
+        self.screen.fill((0, 0, 0))
+        
+        # Update the display
+        pygame.display.flip()
+        
+
+    
+    def quit(self):
+        """Properly quits Pygame."""
+        pygame.quit()
+
+if __name__ == "__main__":
+    # Initialize the interactive module
+    interact_module = InteractModuleSpaceKey()
+    
+    # Main loop
+    while   True:
+        # Update the interactive module
+        interact_module.update()
+        print("{0}".format(interact_module.space_pressed))
+        
+        # Update the display
+        pygame.display.flip()
+    
+    # Quit Pygame
+    pygame.quit()

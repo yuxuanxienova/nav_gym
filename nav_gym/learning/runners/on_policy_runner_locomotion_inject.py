@@ -6,23 +6,25 @@ import os
 import time
 import statistics
 from collections import deque
-from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
 from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 
 # torch
 import torch
 # rsl-rl
-from nav_gym.learning.algorithms.ppo_ase import PPO_ASE
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
-from nav_gym.learning.env import VecEnv
-from nav_gym.learning.utils import store_code_state
-from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity
+from nav_gym.learning.algorithms.ppo_interact import PPO
+from nav_gym.learning.env import VecEnv
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
+from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleSpaceKey
+from nav_gym.learning.datasets.motion_loader import MotionLoader
+from nav_gym import NAV_GYM_ROOT_DIR
 import numpy as np
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
@@ -51,7 +53,7 @@ class OnPolicyRunner:
         self.actor_critic_cfg = train_cfg["actor_critic"]
         self.action_dist_cfg = self.actor_critic_cfg["action_distribution"]
         self.device = device
-        self.env:LocalNavEnv = env
+        self.env:LocomotionEnv = env
         self.num_envs = self.env.num_envs
         self.empirical_normalization = self.cfg["empirical_normalization"]
 
@@ -93,10 +95,8 @@ class OnPolicyRunner:
         # alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.num_steps_per_env = self.cfg["num_steps_per_env"]
         self.save_interval = self.cfg["save_interval"]
-        self.alg: PPO_ASE = PPO_ASE(actor_critic, 
+        self.alg: PPO = PPO(actor_critic, 
                                       device=self.device, 
-                                      num_envs=self.num_envs,
-                                      num_transitions_per_env=self.num_steps_per_env ,
                                       **self.alg_cfg)
 
 
@@ -122,13 +122,28 @@ class OnPolicyRunner:
         self.current_learning_iteration = 0
         # self.git_status_repos = [nav_gym.learning.__file__]
 
-        #ASE
-        self._latent_reset_steps = torch.zeros(self.num_envs, dtype=torch.int32, device=self.device)
-        self._latent_steps_min = 1
-        self._latent_steps_max = 150
-        self.runner_step_count = 0
-        self.scale_disc_r =20.0
-        self.log_disc_prob = 0.5 * torch.ones(self.num_envs, device=self.device)
+        #interact module
+        self.interact_module = InteractModuleSpaceKey()
+
+        #Load the Motion Data
+        datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
+        motion_names = ["motion_data_pace1.0.pt","motion_data_walk01_0.5.pt","motion_data_walk03_0.5.pt","motion_data_canter02_1.5.pt"]
+
+        self.motion_loader = MotionLoader(
+            device="cuda",
+            file_names=motion_names,
+            file_root=datasets_root,
+            corruption_level=0.0,
+            reference_observation_horizon=2,
+            test_mode=False,
+            test_observation_dim=None
+        )
+        self.motion_idx = 0
+        num_motion_clips, num_steps, motion_features_dim = self.motion_loader.data_list[self.motion_idx].size()
+        self.sample_length = 200
+        self.motion_data_clip = self.motion_loader.sample_k_steps_from_motion_clip(self.motion_idx, self.sample_length)# Shape: [k, motion_features_dim]
+        
+
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
@@ -170,13 +185,22 @@ class OnPolicyRunner:
             # Rollout
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
-                    #--ASE--
-                    self.runner_step_count += 1
-                    self._update_latents()
-                    #-------
-                    actions = self.alg.act(obs, critic_obs)
+                    
+                    #----------interact module----------------
+                    self.interact_module.update()
+                    if self.interact_module.space_pressed:
+                        motion_data_per_step = self.motion_data_clip[i,:].repeat(self.env.num_envs, 1)
+                        raw_actions = self.motion_loader.get_dof_pos(motion_data_per_step)# Shape: [num_envs, 12]
+                        actions = raw_actions/self.env.cfg.control.action_scale
+                        self.alg.act(obs, critic_obs)#update the distribution 
+                    else:
+                        actions = self.alg.act(obs, critic_obs)
+
+                    #----------------------------------------
                     log_prob = self.alg.get_log_prob(actions)
-                    self.alg.store_transition(actions, log_prob, obs, critic_obs, self.log_disc_prob)
+                    if log_prob.shape[0] > 1:
+                        print("log_prob shape: ", log_prob.shape)
+                    self.alg.store_transition(actions, log_prob, obs, critic_obs)
                     obs, rewards, dones, infos = self.env.step(actions)
                     critic_obs = obs
                     obs, critic_obs, rewards, dones = (
@@ -185,18 +209,6 @@ class OnPolicyRunner:
                         rewards.to(self.device),
                         dones.to(self.device),
                     )
-                    #--ASE--
-                    amp_obs = infos["observations"]["amp_obs"]
-                    self.alg.amp_obs_storage.add_amp_obs_to_buffer(infos["observations"]["amp_obs"], i)
-                    
-                    if self.alg.amp_obs_storage.is_ready(self.alg.history_length):
-                        amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
-                        disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
-                        # rewards = rewards + disc_r + enc_r
-                        rewards = rewards + disc_r 
-                        infos['episode']['rew_dis']=disc_r
-                        # infos['episode']['rew_enc']=enc_r
-                    #-------
                     self.alg.process_env_step(rewards, dones, infos)
                     if self.log_dir is not None:
                         # Book keeping
@@ -219,12 +231,8 @@ class OnPolicyRunner:
                 # Learning step
                 start = stop
                 self.alg.compute_returns(critic_obs)
-                #--ASE--
-                self.alg.amp_obs_storage.add_transition_to_data()
-                self.alg.amp_obs_storage.clear_buffer()
-                #-------
 
-            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss = self.alg.update()
+            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus = self.alg.update()
 
             stop = time.time()
             learn_time = stop - start
@@ -233,9 +241,6 @@ class OnPolicyRunner:
                 self.log(locals())
                 if it % self.save_interval == 0:
                     self.save(os.path.join(self.log_dir, "model_{}.pt".format(it)))
-                    #-----ASE-----
-                    self.alg.discriminator_encoder.save(os.path.join(self.log_dir, "discriminator_encoder_{}.pt".format(it)))
-                    #-------------
                 ep_infos.clear()
 
         self.save(os.path.join(self.log_dir, "model_{}.pt".format(self.current_learning_iteration)))
@@ -328,8 +333,6 @@ class OnPolicyRunner:
     def save(self, path, infos=None):
         saved_dict = {
             "actor_critic_model_state_dict": self.alg.actor_critic.state_dict(),
-            "discriminator_encoder_model_state_dict": self.alg.discriminator_encoder.state_dict(),
-            "optimizer_state_dict": self.alg.optimizer_actor_critic.state_dict(),
             "iter": self.current_learning_iteration,
             "infos": infos,
         }
@@ -341,10 +344,8 @@ class OnPolicyRunner:
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
         self.alg.actor_critic.load_state_dict(loaded_dict["actor_critic_model_state_dict"])
-        self.alg.discriminator_encoder.load_state_dict(loaded_dict["discriminator_encoder_model_state_dict"])
-
         if load_optimizer:
-            self.alg.optimizer_actor_critic.load_state_dict(loaded_dict["optimizer_state_dict"])
+            self.alg.optimizer.load_state_dict(loaded_dict["optimizer_state_dict"])
         self.current_learning_iteration = loaded_dict["iter"]
         print(f"Loaded model from {path} at iteration {self.current_learning_iteration}")
         return loaded_dict["infos"]
@@ -358,37 +359,5 @@ class OnPolicyRunner:
         self.alg.actor_critic.train()
     def eval_mode(self):
         self.alg.actor_critic.eval()
-    def _update_latents(self):
-        new_latent_envs = self._latent_reset_steps <= self.runner_step_count
-        need_update = torch.any(new_latent_envs)
-        if (need_update):
-            new_latent_env_ids = new_latent_envs.nonzero(as_tuple=False).flatten()
-            n = len(new_latent_env_ids)
-            z = self.alg.sample_latents(n)
-            self.alg.set_ase_latents(z,new_latent_env_ids)
-            self._latent_reset_steps[new_latent_env_ids] += torch.randint_like(self._latent_reset_steps[new_latent_env_ids],
-                                                                               low=self._latent_steps_min, 
-                                                                               high=self._latent_steps_max)
-        return
-    def _calc_amp_rewards(self, amp_obs_traj, ase_latents):
-        #amp_obs_traj: [num_envs, history_length, amp_obs_dim]
-        with torch.no_grad():
-            disc_logits,mu_q = self.alg.discriminator_encoder(amp_obs_traj)
-        disc_r = self._calc_disc_rewards(disc_logits).squeeze()
-        enc_r = self._calc_enc_rewards(mu_q, ase_latents).squeeze()
-        return disc_r, enc_r
-    def _calc_disc_rewards(self, disc_logits):
-        prob = 1 / (1 + torch.exp(-disc_logits)) 
-        self.log_disc_prob = prob
-        # print(prob)
-        disc_r1 = -torch.log(torch.maximum(1 - prob, torch.tensor(0.0001, device=self.device)))
-        #------Change to Non Saturating Loss-----
-        disc_r2 = torch.log(prob)
-        #-----------------------------------------
-        disc_r = disc_r1 + disc_r2
-        disc_r = torch.clamp(disc_r * self.scale_disc_r,min=0.0,max=30.0)
-        return disc_r
-    def _calc_enc_rewards(self, mu_q, ase_latents):
-        enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)
-        return enc_r
+
 

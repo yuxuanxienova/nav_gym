@@ -1,44 +1,6 @@
 import torch
 import torch.nn as nn
 
-
-# class DiscriminatorEncoder(nn.Module):
-#     def __init__(self, history_length, num_dof, latent_dim):
-#         super().__init__()
-#         #store the parameters
-#         self.history_length = history_length
-#         self.num_dof = num_dof
-#         self.latent_dim = latent_dim
-#         #define the layers
-#         self.layer1 = nn.Linear(history_length*num_dof, 1024)
-#         self.activation1 = nn.LeakyReLU()
-#         self.layer2 = nn.Linear(1024, 1024)
-#         self.activation2 = nn.LeakyReLU()
-#         self.layer3 = nn.Linear(1024, 512)
-#         self.activation3 = nn.LeakyReLU()
-#         self.head_logits = nn.Linear(512, 1)
-#         self.activation_logits = nn.Sigmoid()
-#         self.head_mu = nn.Linear(512, latent_dim)
-
-
-    
-#     def forward(self, amp_obs):
-#         #amp_obs: (num_envs, history_length, num_dof)
-#         #flatten the input
-#         x = amp_obs.view(-1, self.history_length*self.num_dof)
-#         x = self.layer1(x)
-#         x = self.activation1(x)
-#         x = self.layer2(x)
-#         x = self.activation2(x)
-#         x = self.layer3(x)
-#         x = self.activation3(x)
-#         logits = self.activation_logits(self.head_logits(x))
-#         mu = self.head_mu(x)
-
-#         #logits: (num_envs, 1)
-#         #mu: (num_envs, latent_dim
-#         return logits, mu
-
 class DiscriminatorEncoder(nn.Module):
     def __init__(self, history_length, num_dof, latent_dim):
         super().__init__()
@@ -60,7 +22,7 @@ class DiscriminatorEncoder(nn.Module):
         self.layernorm3 = nn.LayerNorm(512)
         self.activation3 = nn.LeakyReLU()
         
-        self.head_logits = nn.Linear(512, 1)
+        self.head_logits = nn.Linear(512, 1, bias=False)
         
         self.head_mu = nn.Linear(512, latent_dim)
 
@@ -91,6 +53,30 @@ class DiscriminatorEncoder(nn.Module):
         # logits: (num_envs, 1)
         # mu: (num_envs, latent_dim)
         return logits, mu
+
+    def get_disc_logit_weights(self):
+        """Return the weights of the discriminator logits head, flattened."""
+        return self.head_logits.weight.flatten()
+
+    def get_disc_weights(self):
+        """Return the parameters of the discriminator head, including all linear layers, flattened."""
+        params = (
+            list(self.layer1.parameters()) +
+            list(self.layer2.parameters()) +
+            list(self.layer3.parameters()) +
+            list(self.head_logits.parameters())
+        )
+        # Flatten each parameter tensor and concatenate them into a single 1D tensor
+        flattened_params = [p.flatten() for p in params]
+        return torch.cat(flattened_params)
+
+    def get_enc_weights(self):
+        """Return the parameters of the encoder head, flattened."""
+        params = list(self.head_mu.parameters())
+        # Flatten each parameter tensor and concatenate them into a single 1D tensor
+        flattened_params = [p.flatten() for p in params]
+        return torch.cat(flattened_params)
+
     
     def save(self, file_path, optimizer=None):
         """

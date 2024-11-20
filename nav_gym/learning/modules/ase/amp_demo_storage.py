@@ -32,7 +32,8 @@ class AMPDemoStorage:
         # amp_demo_obs_batch : [batch_size, k, amp_obs_dim]
         return amp_demo_obs_batch
     def sample_amp_demo_obs_single(self, sample_length):
-        motion_idx = random.randint(0, self.num_files - 1)
+        # motion_idx = random.randint(0, self.num_files - 1)
+        motion_idx = 0#-----------------For Testing Purposes!!
         sampled_steps = self.motion_loader.sample_k_steps_from_motion_clip(motion_idx, sample_length)
         # sampled_steps : [k, motion_features_dim]
         sampled_dof_pos = sampled_steps[:, self.state_idx_dict["dof_pos"][0]:self.state_idx_dict["dof_pos"][1]]# Shape: [k, 12]

@@ -140,7 +140,7 @@ class LocomotionEnvCfg:
     commands = UnifromVelocityCommandCfg()
 
     class terrain_unity:
-        terrain_file:str = "/terrain/NavMap_v5_1.obj"
+        terrain_file:str = "/terrain/Plane1.obj"
         translation: Tuple = (0.0, 0.0, 0.0)
 
         env_origin_pattern:str = "grid" # "point" or "grid"
