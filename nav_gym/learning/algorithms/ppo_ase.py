@@ -141,6 +141,8 @@ class PPO_ASE:
         mean_entropy_bonus = 0
         mean_disc_loss = 0
         mean_enc_loss = 0
+        mean_disc_agent_acc = 0
+        mean_disc_demo_acc = 0
 
         self.entropy_coef = self.adjust_coeff_exp(self.entropy_coef_init, self.num_updates, self.entropy_coef_decay)
         # print("[DEBUG] entropy_coef", self.entropy_coef)
@@ -173,6 +175,8 @@ class PPO_ASE:
             #------------ASE-------------
             disc_loss = torch.zeros(1).to(self.device)
             enc_loss = torch.zeros(1).to(self.device)
+            disc_agent_acc = torch.zeros(1).to(self.device)
+            disc_demo_acc = torch.zeros(1).to(self.device)
             if self.amp_obs_storage.is_ready(self.history_length):
                 obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
                 # obs_amp: [num_envs, history_length, obs_dim]
@@ -193,6 +197,12 @@ class PPO_ASE:
                 # disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
                 disc_info = self._disc_loss(disc_agent_logit, disc_demo_logit, obs_demo)
                 disc_loss = disc_info['disc_loss']
+
+                #other info
+                disc_grad_penalty = disc_info['disc_grad_penalty']
+                disc_logit_loss = disc_info['disc_logit_loss']
+                disc_agent_acc = disc_info['disc_agent_acc']
+                disc_demo_acc = disc_info['disc_demo_acc']
                 
 
                 enc_latents = self.ase_latents
@@ -282,6 +292,8 @@ class PPO_ASE:
             mean_entropy_bonus += entropy_bonus.item()
             mean_disc_loss += disc_loss.item()
             mean_enc_loss += enc_loss.item()
+            mean_disc_agent_acc += disc_agent_acc.item()
+            mean_disc_demo_acc += disc_demo_acc.item()
 
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
@@ -289,9 +301,11 @@ class PPO_ASE:
         mean_entropy_bonus /= num_updates
         mean_disc_loss /= num_updates
         mean_enc_loss /= num_updates
+        mean_disc_agent_acc /= num_updates
+        mean_disc_demo_acc /= num_updates   
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss
+        return mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss, mean_disc_agent_acc, mean_disc_demo_acc
 
     def adjust_coeff_exp(self, initial_value, iteration, decay_rate):
         r = initial_value * math.pow(decay_rate, iteration)
@@ -325,14 +339,14 @@ class PPO_ASE:
         disc_weight_decay = torch.sum(torch.square(disc_weights))
         disc_loss = disc_loss + self._disc_weight_decay * disc_weight_decay
 
-        # disc_agent_acc, disc_demo_acc = self._compute_disc_acc(disc_agent_logit, disc_demo_logit)
+        disc_agent_acc, disc_demo_acc = self._compute_disc_acc(disc_agent_logit, disc_demo_logit)
 
         disc_info = {
             'disc_loss': disc_loss,
             'disc_grad_penalty': disc_grad_penalty.detach(),
-            # 'disc_logit_loss': disc_logit_loss.detach(),
-            # 'disc_agent_acc': disc_agent_acc.detach(),
-            # 'disc_demo_acc': disc_demo_acc.detach(),
+            'disc_logit_loss': disc_logit_loss.detach(),
+            'disc_agent_acc': disc_agent_acc.detach(),
+            'disc_demo_acc': disc_demo_acc.detach(),
             'disc_agent_logit': disc_agent_logit.detach(),
             'disc_demo_logit': disc_demo_logit.detach()
         }
@@ -382,6 +396,47 @@ class PPO_ASE:
         err = enc_pred * ase_latent
         err = -torch.sum(err, dim=-1, keepdim=True)
         return err
+
+    def _compute_disc_acc(self, disc_agent_logit, disc_demo_logit):
+        """
+        Computes the discriminator accuracy for agent and demonstration logits.
+
+        Args:
+            disc_agent_logit (torch.Tensor): Logits for agent samples, shape [N_agent, 1]
+            disc_demo_logit (torch.Tensor): Logits for demo samples, shape [N_demo, 1]
+
+        Returns:
+            tuple: (disc_agent_acc, disc_demo_acc)
+                - disc_agent_acc (torch.Tensor): Accuracy for agent samples (scalar tensor)
+                - disc_demo_acc (torch.Tensor): Accuracy for demo samples (scalar tensor)
+        """
+        # Ensure logits are of shape [batch_size, 1]
+        assert disc_agent_logit.dim() == 2 and disc_agent_logit.size(1) == 1, \
+            "disc_agent_logit should have shape [N_agent, 1]"
+        assert disc_demo_logit.dim() == 2 and disc_demo_logit.size(1) == 1, \
+            "disc_demo_logit should have shape [N_demo, 1]"
+
+        # Apply sigmoid to convert logits to probabilities
+        agent_probs = torch.sigmoid(disc_agent_logit)  # Shape: [N_agent, 1]
+        demo_probs = torch.sigmoid(disc_demo_logit)    # Shape: [N_demo, 1]
+
+        # Predicted labels based on probability threshold of 0.5
+        agent_preds = (agent_probs >= 0.5).float()  # Shape: [N_agent, 1]
+        demo_preds = (demo_probs >= 0.5).float()    # Shape: [N_demo, 1]
+
+        # True labels: 0 for agent, 1 for demo
+        agent_labels = torch.zeros_like(agent_preds)  # Shape: [N_agent, 1]
+        demo_labels = torch.ones_like(demo_preds)     # Shape: [N_demo, 1]
+
+        # Calculate correct predictions
+        agent_correct = (agent_preds == agent_labels).float()  # Shape: [N_agent, 1]
+        demo_correct = (demo_preds == demo_labels).float()     # Shape: [N_demo, 1]
+
+        # Compute mean accuracy
+        disc_agent_acc = agent_correct.mean()  # Scalar tensor
+        disc_demo_acc = demo_correct.mean()    # Scalar tensor
+
+        return disc_agent_acc, disc_demo_acc
     def sample_latents(self, n):
         z = torch.normal(torch.zeros([n, self.ase_latent_dim], device=self.device))
         z = torch.nn.functional.normalize(z, dim=-1)

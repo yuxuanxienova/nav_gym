@@ -224,7 +224,7 @@ class OnPolicyRunner:
                 self.alg.amp_obs_storage.clear_buffer()
                 #-------
 
-            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss = self.alg.update()
+            mean_value_loss, mean_surrogate_loss, mean_entropy_bonus, mean_disc_loss, mean_enc_loss,mean_disc_agent_acc, mean_disc_demo_acc = self.alg.update()
 
             stop = time.time()
             learn_time = stop - start
@@ -269,6 +269,8 @@ class OnPolicyRunner:
         self.writer.add_scalar("Loss/value_function", locs["mean_value_loss"], locs["it"])
         self.writer.add_scalar("Loss/surrogate", locs["mean_surrogate_loss"], locs["it"])
         self.writer.add_scalar("Loss/entropy", locs["mean_entropy_bonus"], locs["it"])
+        self.writer.add_scalar("Loss/disc", locs["mean_disc_loss"], locs["it"])
+        self.writer.add_scalar("Loss/enc", locs["mean_enc_loss"], locs["it"])
         self.writer.add_scalar("Loss/learning_rate", self.alg.learning_rate, locs["it"])
         self.writer.add_scalar("Perf/total_fps", fps, locs["it"])
         self.writer.add_scalar("Perf/collection time", locs["collection_time"], locs["it"])
@@ -296,6 +298,10 @@ class OnPolicyRunner:
                 f"""{'Value function loss:':>{pad}} {locs['mean_value_loss']:.4f}\n"""
                 f"""{'Surrogate loss:':>{pad}} {locs['mean_surrogate_loss']:.4f}\n"""
                 f"""{'Entropy bonus:':>{pad}} {locs['mean_entropy_bonus']:.4f}\n"""
+                f"""{'Disc Loss:':>{pad}} {locs['mean_disc_loss']:.4f}\n"""
+                f"""{'Enc Loss:':>{pad}} {locs['mean_enc_loss']:.4f}\n"""
+                f"""{'Disc Agent Acc:':>{pad}} {locs['mean_disc_agent_acc']:.4f}\n"""
+                f"""{'Disc Demo Acc:':>{pad}} {locs['mean_disc_demo_acc']:.4f}\n"""
                 f"""{'Mean reward:':>{pad}} {statistics.mean(locs['rewbuffer']):.2f}\n"""
                 f"""{'Mean episode length:':>{pad}} {statistics.mean(locs['lenbuffer']):.2f}\n"""
             )
