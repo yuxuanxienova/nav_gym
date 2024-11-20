@@ -180,7 +180,8 @@ class AMPObsStorage:
 
         # Get the last sample_length transitions
         obs_amp = all_transitions[:, -sample_length:, :]  # [num_envs, sample_length, obs_dim]
-
+        #save
+        # torch.save(obs_amp, self.save_root + "sampled_amp_observations{0}.pt".format(random.randint(0, 1000)))
         return obs_amp
 
     def sample_amp_obs_batch(self, sample_length, num_sample=1):

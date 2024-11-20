@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
     #Load the Motion Data
     datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/anymal_d/datasets/record/")
-    motion_names = "sampled_amp_observations.pt"
+    motion_names = "sampled_amp_observations309.pt"
     save_path = os.path.join(datasets_root, motion_names)
     loaded_amp_obs = torch.load(save_path)
     print(f"Loaded AMP observations from {save_path}")

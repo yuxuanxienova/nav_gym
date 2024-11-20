@@ -69,7 +69,7 @@ class PPO_ASE:
         self.num_envs = num_envs
         self.num_transitions_per_env = num_transitions_per_env
         
-        self.history_length = 16
+        self.history_length = 2
         self.amp_obs_dim = 24
         self.ase_latent_dim = 32
 
@@ -77,7 +77,7 @@ class PPO_ASE:
         self.optimizer_dis_enc = optim.Adam(self.discriminator_encoder.parameters(), lr=learning_rate)
         self.amp_demo_storage = AMPDemoStorage()
         self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 20)
-        self.num_samples = 4
+        self.num_samples = self.num_envs
 
         
         self.ase_latents = torch.zeros((self.num_envs, self.ase_latent_dim), dtype=torch.float32,device=self.device)
@@ -180,7 +180,7 @@ class PPO_ASE:
             if self.amp_obs_storage.is_ready(self.history_length):
                 obs_amp = self.amp_obs_storage.get_current_obs(self.history_length).to(self.device)
                 # obs_amp: [num_envs, history_length, obs_dim]
-                obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples).to(self.device)
+                # obs_amp_replay = self.amp_obs_storage.sample_amp_obs_batch(self.history_length, self.num_samples).to(self.device)
                 # obs_amp_replay: [num_samples*num_envs, history_length, obs_dim]
                 obs_demo = self.amp_demo_storage.sample_amp_demo_obs_batch(self.history_length, self.num_samples).to(self.device)
                 obs_demo.requires_grad = True
@@ -188,11 +188,11 @@ class PPO_ASE:
                 disc_agent_logit, enc_pred = self.discriminator_encoder(obs_amp)
                 # disc_agent_logit: [num_envs, 1]
                 # enc_pred: [num_envs, latent_dim]
-                disc_agent_replay_logit,_ = self.discriminator_encoder(obs_amp_replay)
+                # disc_agent_replay_logit,_ = self.discriminator_encoder(obs_amp_replay)
                 # disc_agent_replay_logit: [num_samples*num_envs, 1]
                 disc_demo_logit,_ = self.discriminator_encoder(obs_demo) 
                 # disc_demo_logit: [num_samples, 1]
-                disc_agent_cat_logit = torch.cat([disc_agent_logit, disc_agent_replay_logit], dim=0)
+                # disc_agent_cat_logit = torch.cat([disc_agent_logit, disc_agent_replay_logit], dim=0)
                 # disc_agent_cat_logit: [(num_samples+1)*num_envs, 1]
                 # disc_info = self._disc_loss(disc_agent_cat_logit, disc_demo_logit, obs_demo)
                 disc_info = self._disc_loss(disc_agent_logit, disc_demo_logit, obs_demo)
@@ -317,8 +317,13 @@ class PPO_ASE:
         # disc_demo_logit: [num_samples, 1]
         # obs_demo: [num_samples, history_length, obs_dim]
         # prediction loss
-        disc_loss_agent = self._disc_loss_neg(disc_agent_logit)
-        disc_loss_demo = self._disc_loss_pos(disc_demo_logit)
+        #--------------------loss1----------------------
+        # disc_loss_agent = self._disc_loss_neg(disc_agent_logit)
+        # disc_loss_demo = self._disc_loss_pos(disc_demo_logit)
+        # disc_loss = 0.5 * (disc_loss_agent + disc_loss_demo)
+        #--------------------loss2---------------------
+        disc_loss_agent = torch.sum(torch.square(disc_agent_logit + 1.0))
+        disc_loss_demo = torch.sum(torch.square(disc_demo_logit - 1.0))
         disc_loss = 0.5 * (disc_loss_agent + disc_loss_demo)
 
         # logit reg
