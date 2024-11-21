@@ -13,13 +13,13 @@ class LocomotionASEEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 256
+        num_envs: int = 128
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
         """The size of action space for the defined environment MDP."""
 
-        episode_length_s: float = 10.0
+        episode_length_s: float = 15.0
         """Episode length in seconds."""
 
         send_timeouts: bool = True  # send time out information to the algorithm
@@ -52,9 +52,9 @@ class LocomotionASEEnvCfg:
                           }
     class randomization:
         # randomize_friction: bool = True
-        # friction_range: Tuple = (0.5, 1.25)
-        # randomize_base_mass: bool = False
-        # added_mass_range: Tuple = (-1.0, 1.0)
+        friction_range: Tuple = (0.25, 1.75)
+        randomize_base_mass: bool = True
+        added_mass_range: Tuple = (-1.0, 1.0)
         push_robots: bool = True
         push_interval_s: float = 15  # push applied each time interval [s]
         init_pos: Tuple = (-1.0, 1.0)  # max xy position added to default position [m]
@@ -103,19 +103,19 @@ class LocomotionASEEnvCfg:
         # general params
         only_positive_rewards: bool = True
         # reward functions
-        termination = {"func": R.termination, "scale": -10}
-        tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 8.0, "std": 0.25}
-        tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 4.0, "std": 0.25}
-        base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 1.0, "std_angvel": 2.0}
+        termination = {"func": R.termination, "scale": 0.0}
+        tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 1.5 * 1. / (.005 * 6), "std": 0.25}
+        tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 0.5 * 1. / (.005 * 6), "std": 0.25}
+        base_motion = {"func": R.base_motion, "scale": 0.0, "std_z": 1.0, "std_angvel": 2.0}
         base_height = {"func": R.base_height, "scale": -0.0, "height_target": 0.5, "sensor": "ray_caster"}
-        torques = {"func": R.torques, "scale": -1e-6}
-        dof_acc = {"func": R.dof_acc, "scale": -2.5e-7}
-        feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
-        collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
-        collision_base = {"func": R.collision, "scale": -2.0, "bodies": "base"}
-        action_rate = {"func": R.action_rate, "scale": -0.0001}
+        torques = {"func": R.torques, "scale": -0.0}
+        dof_acc = {"func": R.dof_acc, "scale": -0.0}
+        feet_air_time = {"func": R.feet_air_time, "scale": 0.0, "time_threshold": 0.5}
+        collision_THIGHSHANK = {"func": R.collision, "scale": -0.0, "bodies": ".*(THIGH|SHANK)"}
+        collision_base = {"func": R.collision, "scale": -0.0, "bodies": "base"}
+        action_rate = {"func": R.action_rate, "scale": -0.0}
         dof_vel = {"func": R.dof_vel, "scale": -0.0}
-        survival = {"func": R.survival, "scale": 1.0}
+        # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         
 

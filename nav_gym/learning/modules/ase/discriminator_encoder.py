@@ -11,16 +11,16 @@ class DiscriminatorEncoder(nn.Module):
         
         # Define the layers
         self.layer1 = nn.Linear(history_length * num_dof, 1024)
-        self.layernorm1 = nn.LayerNorm(1024)
-        self.activation1 = nn.LeakyReLU()
+        # self.layernorm1 = nn.LayerNorm(1024)
+        self.activation1 = nn.ReLU()
         
-        self.layer2 = nn.Linear(1024, 1024)
-        self.layernorm2 = nn.LayerNorm(1024)
-        self.activation2 = nn.LeakyReLU()
+        # self.layer2 = nn.Linear(1024, 1024)
+        # self.layernorm2 = nn.LayerNorm(1024)
+        # self.activation2 = nn.ReLU()
         
         self.layer3 = nn.Linear(1024, 512)
-        self.layernorm3 = nn.LayerNorm(512)
-        self.activation3 = nn.LeakyReLU()
+        # self.layernorm3 = nn.LayerNorm(512)
+        self.activation3 = nn.ReLU()
         
         self.head_logits = nn.Linear(512, 1, bias=False)
         
@@ -33,17 +33,17 @@ class DiscriminatorEncoder(nn.Module):
         
         # First layer
         x = self.layer1(x)
-        x = self.layernorm1(x)
+        # x = self.layernorm1(x)
         x = self.activation1(x)
         
         # Second layer
-        x = self.layer2(x)
-        x = self.layernorm2(x)
-        x = self.activation2(x)
+        # x = self.layer2(x)
+        # # x = self.layernorm2(x)
+        # x = self.activation2(x)
         
         # Third layer
         x = self.layer3(x)
-        x = self.layernorm3(x)
+        # x = self.layernorm3(x)
         x = self.activation3(x)
         
         # Output layers

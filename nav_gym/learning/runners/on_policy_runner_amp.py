@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter as TensorboardSummaryWriter
 # torch
 import torch
 # rsl-rl
-from nav_gym.learning.algorithms.ppo_ase import PPO_ASE
+from nav_gym.learning.algorithms.ppo_amp import PPO_AMP
 from nav_gym.learning.modules.actor_critic import ActorCritic, ActorCriticSeparate
 from nav_gym.learning.modules.privileged_training.teacher_models import TeacherModelBase
 from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
@@ -24,6 +24,7 @@ from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity
 import numpy as np
+from nav_gym.learning.modules.normalizer import Normalizer_RM
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}
@@ -44,7 +45,7 @@ def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normal
 
 # JL: THIS DOES NOT SUPPORT ASYMMETRIC AC MODELS
 # JL: THIS ONLY WORKS WITH TEACHER_STUDENT SETUP IN WHEELED_LEGGED_ENV
-class OnPolicyASERunner:
+class OnPolicyAMPRunner:
     def __init__(self, env: VecEnv, train_cfg, log_dir=None, device="cpu"):
         self.cfg = train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
@@ -93,7 +94,7 @@ class OnPolicyASERunner:
         # alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.num_steps_per_env = self.cfg["num_steps_per_env"]
         self.save_interval = self.cfg["save_interval"]
-        self.alg: PPO_ASE = PPO_ASE(actor_critic, 
+        self.alg: PPO_AMP = PPO_AMP(actor_critic, 
                                       device=self.device, 
                                       num_envs=self.num_envs,
                                       num_transitions_per_env=self.num_steps_per_env ,
@@ -122,15 +123,14 @@ class OnPolicyASERunner:
         self.current_learning_iteration = 0
         # self.git_status_repos = [nav_gym.learning.__file__]
 
-        #ASE
-        self._latent_reset_steps = torch.zeros(self.num_envs, dtype=torch.int32, device=self.device)
-        self._latent_steps_min = 1
-        self._latent_steps_max = 150
+        #AMP
+        # self._latent_reset_steps = torch.zeros(self.num_envs, dtype=torch.int32, device=self.device)
+        # self._latent_steps_min = 1
+        # self._latent_steps_max = 150
         self.runner_step_count = 0
-        self.scale_disc_r = 50
-
         self.log_disc_prob = 0.5 * torch.ones(self.num_envs, device=self.device)
-
+        self.amp_reward_coef = 2.0
+        self.amp_task_reward_lerp = 0.3
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
         if self.log_dir is not None and self.writer is None:
@@ -172,8 +172,8 @@ class OnPolicyASERunner:
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
                     #--ASE--
-                    self.runner_step_count += 1
-                    self._update_latents()
+                    # self.runner_step_count += 1
+                    # self._update_latents()
                     #-------
                     actions = self.alg.act(obs, critic_obs)
                     log_prob = self.alg.get_log_prob(actions)
@@ -192,9 +192,8 @@ class OnPolicyASERunner:
                     
                     if self.alg.amp_obs_storage.is_ready(self.alg.history_length):
                         amp_obs_traj = self.alg.amp_obs_storage.get_current_obs(self.alg.history_length).to(self.device)
-                        disc_r, enc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
-                        # rewards = rewards + disc_r + enc_r
-                        rewards = rewards + disc_r 
+                        disc_r = self._calc_amp_rewards(amp_obs_traj, self.alg.ase_latents)
+                        rewards = self.amp_task_reward_lerp * rewards + (1.0 - self.amp_task_reward_lerp) * disc_r 
                         infos['episode']['rew_dis']=disc_r
                         # infos['episode']['rew_enc']=enc_r
                     #-------
@@ -389,8 +388,8 @@ class OnPolicyASERunner:
         with torch.no_grad():
             disc_logits,mu_q = self.alg.discriminator_encoder(amp_obs_traj)
         disc_r = self._calc_disc_rewards(disc_logits).squeeze()
-        enc_r = self._calc_enc_rewards(mu_q, ase_latents).squeeze()
-        return disc_r, enc_r
+        # enc_r = self._calc_enc_rewards(mu_q, ase_latents).squeeze()
+        return disc_r
     def _calc_disc_rewards(self, disc_logits):
         prob = 1 / (1 + torch.exp(-disc_logits)) 
         self.log_disc_prob = prob
@@ -402,11 +401,10 @@ class OnPolicyASERunner:
         # disc_r2 = torch.log(prob)
         # disc_r = disc_r1 + disc_r2
         #-------------------reward function 3----------------
-        disc_r = torch.maximum((1.0 - 0.25*torch.square(disc_logits - 1.0)), torch.tensor(0.0001, device=self.device))
-        
-        disc_r = torch.clamp(disc_r * self.scale_disc_r,min=0.0,max=30.0)
+        disc_r = torch.clamp(1 - (1/4) * torch.square(disc_logits - 1), min=0)
+        disc_r = self.amp_reward_coef * disc_r
         return disc_r
-    def _calc_enc_rewards(self, mu_q, ase_latents):
-        enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)
-        return enc_r
+    # def _calc_enc_rewards(self, mu_q, ase_latents):
+    #     enc_r = torch.clamp_min(torch.sum(mu_q * ase_latents, dim=-1, keepdim=True), 0.0).to(self.device)
+    #     return enc_r
 

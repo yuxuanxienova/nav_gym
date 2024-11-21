@@ -2,7 +2,8 @@
 import os
 import git
 import pathlib
-
+import numpy as np
+from typing import Tuple
 # torch
 import torch
 
@@ -132,15 +133,6 @@ def get_base_quat_from_base_ang_vel(base_ang_vel, dt, source_frame="local", init
     return base_quat
 
 
-# python
-import os
-import git
-import pathlib
-
-# torch
-import torch
-
-
 def knn(x, k):
     inner = -2*torch.matmul(x.transpose(2, 1), x)
     xx = torch.sum(x**2, dim=1, keepdim=True)
@@ -229,3 +221,4 @@ def store_code_state(logdir, repositories):
         content = f"--- git status ---\n{repo.git.status()} \n\n\n--- git log & diff ---\n{git_log_msg} "
         with open(os.path.join(logdir, f"{repo_name}_git.diff"), "x", encoding="utf-8") as f:
             f.write(content)
+

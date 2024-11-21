@@ -39,7 +39,7 @@ class TrainConfig:
         policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
         num_steps_per_env = 24 #24 per iteration
-        max_iterations = 15000 # number of policy updates
+        max_iterations = 500000 # number of policy updates
         empirical_normalization: bool = True
 
         # logging
