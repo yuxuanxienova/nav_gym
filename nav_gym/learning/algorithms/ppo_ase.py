@@ -70,7 +70,7 @@ class PPO_ASE:
         self.num_transitions_per_env = num_transitions_per_env
         
         self.history_length = 2
-        self.amp_obs_dim = 24
+        self.amp_obs_dim = 30
         self.ase_latent_dim = 32
 
         self.discriminator_encoder = DiscriminatorEncoder(self.history_length, self.amp_obs_dim, latent_dim=self.ase_latent_dim).to(self.device)

@@ -95,7 +95,9 @@ class LocomotionASEEnvCfg:
             add_noise: bool = True  # turns off the noise in all observations 
             #--------------------------- 
             dof_pos: dict = {"func": O.dof_pos, "noise": 0.01}  
-            dof_vel: dict = {"func": O.dof_vel, "noise": 1.5} 
+            dof_vel: dict = {"func": O.dof_vel, "noise": 0.5} 
+            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
+            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
 
 
 

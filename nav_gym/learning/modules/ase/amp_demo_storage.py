@@ -38,8 +38,10 @@ class AMPDemoStorage:
         # sampled_steps : [k, motion_features_dim]
         sampled_dof_pos = sampled_steps[:, self.state_idx_dict["dof_pos"][0]:self.state_idx_dict["dof_pos"][1]]# Shape: [k, 12]
         sampled_dof_vel = sampled_steps[:, self.state_idx_dict["dof_vel"][0]:self.state_idx_dict["dof_vel"][1]]# Shape: [k, 12]
+        sampled_root_lin_vel = sampled_steps[:, self.state_idx_dict["base_lin_vel"][0]:self.state_idx_dict["base_lin_vel"][1]]# Shape: [k, 3]
+        sampled_root_ang_vel = sampled_steps[:, self.state_idx_dict["base_ang_vel"][0]:self.state_idx_dict["base_ang_vel"][1]]# Shape: [k, 3]
         # amp_demo_obs : [k, amp_obs_dim]
-        amp_demo_obs = torch.cat([sampled_dof_pos, sampled_dof_vel], dim=1)
+        amp_demo_obs = torch.cat([sampled_dof_pos, sampled_dof_vel, sampled_root_lin_vel,sampled_root_ang_vel], dim=1)
         return amp_demo_obs
     
 if __name__ == "__main__":
