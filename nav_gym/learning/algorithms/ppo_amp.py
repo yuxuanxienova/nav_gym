@@ -77,7 +77,7 @@ class PPO_AMP:
         self.discriminator_encoder = DiscriminatorEncoder(self.history_length, self.amp_obs_dim, latent_dim=self.ase_latent_dim).to(self.device)
         self.optimizer_dis_enc = optim.Adam(self.discriminator_encoder.parameters(), lr=learning_rate)
         self.amp_demo_storage = AMPDemoStorage()
-        self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 20)
+        self.amp_obs_storage = AMPObsStorage(self.amp_obs_dim, self.num_envs, self.num_transitions_per_env, self.num_transitions_per_env * 2)
         self.amp_normalizer = Normalizer_RM(self.amp_obs_dim)
         self.num_samples = self.num_envs
 

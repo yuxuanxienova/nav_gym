@@ -13,8 +13,9 @@ if __name__ == "__main__":
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
-
-    env = LocomotionASEEnv(LocomotionASEEnvCfg())
+    env_cfg = LocomotionASEEnvCfg()
+    env_cfg.gym.headless = True
+    env = LocomotionASEEnv(env_cfg)
     runner = OnPolicyAMPRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
     # runner.load(checkpoint_dir)
     # runner.load_actor_critic(checkpoint_dir)

@@ -27,6 +27,8 @@ RUN pip3 install matplotlib tensorboard trimesh warp-lang trimesh pytest GitPyth
 RUN pip3 install opencv-python
 RUN pip3 install open3d
 RUN pip3 install rtree
+RUN pip3 install networkx
+RUN pip3 install pygame
 
 # Install IsaacGym
 ADD isaacgym $WORKSPACE/isaacgym
