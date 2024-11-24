@@ -58,7 +58,7 @@ class FLDModule:
         #3. Initialize buffers
         self.fld_dim_of_interest = torch.cat([torch.tensor(ids, device=self.device, dtype=torch.long, requires_grad=False) for state, ids in self.fld_state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
         self.fld_observation_dim = len(self.fld_dim_of_interest)
-        self.fld_observation_buf = torch.zeros(self.num_envs, self.fld_observation_horizon, self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
+        # self.fld_observation_buf = torch.zeros(self.num_envs, self.fld_observation_horizon, self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
         self.fld_state = torch.zeros(self.num_envs, self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
         
         self.latent_encoding = torch.zeros(self.num_envs, self.fld_cfg.latent_channel, 4, dtype=torch.float, device=self.device, requires_grad=False)
@@ -91,26 +91,26 @@ class FLDModule:
         self.latent_param_max, self.latent_param_min, self.latent_param_mean, self.latent_param_std = statistics_dict["latent_param_max"], statistics_dict["latent_param_min"], statistics_dict["latent_param_mean"], statistics_dict["latent_param_std"]
  
     def on_env_post_physics_step(self):
-        # self._update_fld_observation_buf()
+        self._update_fld_observation_buf()
         self._update_latent_phase()
         pass
-    # def _update_fld_observation_buf(self):
-    #     full_state = torch.cat(
-    #         (
-    #             self.robot.root_states[:, :3] - self.terrain.env_origins[:, :3],
-    #             self.base_quat,
-    #             self.base_lin_vel,
-    #             self.base_ang_vel,
-    #             self.projected_gravity,
-    #             self.dof_pos - self.default_dof_pos,
-    #             self.dof_vel,
-    #             # self.feet_pos,
-    #             ), dim=1
-    #         )
-    #     for key, value in self.decoded_obs_state_idx_dict.items():
-    #         self.fld_state[:, value] = full_state[:, self.fld_state_idx_dict[key]].clone()
-    #     self.fld_observation_buf[:, :-1] = self.fld_observation_buf[:, 1:].clone()
-    #     self.fld_observation_buf[:, -1] = self.fld_state.clone()
+    def _update_fld_observation_buf(self):
+        full_state = torch.cat(
+            (
+                self.robot.root_states[:, :3] - self.terrain.env_origins[:, :3],
+                self.base_quat,
+                self.base_lin_vel,
+                self.base_ang_vel,
+                self.projected_gravity,
+                self.dof_pos - self.default_dof_pos,
+                self.dof_vel,
+                # self.feet_pos,
+                ), dim=1
+            )
+        for key, value in self.decoded_obs_state_idx_dict.items():
+            self.fld_state[:, value] = full_state[:, self.fld_state_idx_dict[key]].clone()
+        # self.fld_observation_buf[:, :-1] = self.fld_observation_buf[:, 1:].clone()
+        # self.fld_observation_buf[:, -1] = self.fld_state.clone()
     def _update_latent_phase(self):
         #self.latent_encoding: Dim(num_envs,latent_channel,4)
         phase_t = self.latent_encoding[:, :, 0]#Dim(num_envs,latent_channel)
@@ -155,11 +155,11 @@ class FLDModule:
         self.latent_encoding[env_ids, :, 0] = torch.rand((len(env_ids), self.fld_latent_channel),device=self.device) * 1.0 - 0.5  # Scaling to range [-0.5, 0.5]
         self.latent_encoding[env_ids, :, 1:] = self.task_sampler.sample(len(env_ids)).view(len(env_ids), 3, self.fld_latent_channel).swapaxes(1, 2)
         
-        print("[INFO] Sampled latent encoding for env_ids: ", env_ids)
-        print("[INFO] self.latent_encoding[env_ids, :, 0]: ", self.latent_encoding[env_ids, :, 0])
-        print("[INFO] self.latent_encoding[env_ids, :, 1]: ", self.latent_encoding[env_ids, :, 1])
-        print("[INFO] self.latent_encoding[env_ids, :, 2]: ", self.latent_encoding[env_ids, :, 2])
-        print("[INFO] self.latent_encoding[env_ids, :, 3]: ", self.latent_encoding[env_ids, :, 3])
+        # print("[INFO] Sampled latent encoding for env_ids: ", env_ids)
+        # print("[INFO] self.latent_encoding[env_ids, :, 0]: ", self.latent_encoding[env_ids, :, 0])
+        # print("[INFO] self.latent_encoding[env_ids, :, 1]: ", self.latent_encoding[env_ids, :, 1])
+        # print("[INFO] self.latent_encoding[env_ids, :, 2]: ", self.latent_encoding[env_ids, :, 2])
+        # print("[INFO] self.latent_encoding[env_ids, :, 3]: ", self.latent_encoding[env_ids, :, 3])
         # if self.fld_cfg.with_stand:
         #     # 20% chance of standing
         #     self.standing_latent[env_ids, :] = (torch.randint(0, 5, (len(env_ids), 1), device=self.device, dtype=torch.float, requires_grad=False) == 0).float()
