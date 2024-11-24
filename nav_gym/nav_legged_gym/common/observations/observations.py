@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
     from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
 
     ANY_ENV = Union[LocomotionEnv]
 
@@ -252,3 +253,11 @@ def node_positions_times(env: "ANY_ENV", params):
     graph_data[range_tensor >= num_nodes.unsqueeze(1)] = 0.0
 
     return graph_data
+
+#-----------------------FLD Observation Functions-----------------------
+def fld_latent_phase_sin(env: "LocomotionFLDEnv", params):
+    return torch.sin(2 * torch.pi * env.fld_module.latent_encoding[:, :, 0])
+def fld_latent_phase_cos(env: "LocomotionFLDEnv", params):
+    return torch.sin(2 * torch.pi * env.fld_module.latent_encoding[:, :, 0])
+def fld_latent_others(env: "LocomotionFLDEnv", params):
+    return (env.fld_module.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2) - env.fld_module.latent_param_mean) / env.fld_module.latent_param_std

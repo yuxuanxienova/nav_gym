@@ -73,7 +73,7 @@ class LocomotionFLDEnvCfg:
             # --add this to every group--
             add_noise: bool = True  # turns off the noise in all observations
             #---------------------------
-            velocity_commands: dict = {"func": O.velocity_commands}
+            # velocity_commands: dict = {"func": O.velocity_commands}
             dof_pos: dict = {"func": O.dof_pos, "noise": 0.01}
             dof_prev_pos: dict = {"func": O.dof_pos_history_selected,"noise": 1e-3,"dofs": ".*(HAA|HFE|KFE)","hist_index": -4,}  # 0.005 x 4
             dof_vel: dict = {"func": O.dof_vel, "noise": 1.5}
@@ -92,6 +92,14 @@ class LocomotionFLDEnvCfg:
             projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05}
             base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
             base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
+
+        class fld:
+            # --add this to every group--
+            add_noise: bool = False
+            #---------------------------
+            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
+            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
+            fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
 
         # teacher_obs_list = ["prop", "exte", "priv"]
 

@@ -75,7 +75,7 @@ class FLDModule:
         fld_load_root = self.fld_cfg.load_root_pretrain
         fld_load_model = self.fld_cfg.load_fld_model
         loaded_dict = torch.load(fld_load_root + "/" + fld_load_model)
-        #If the model was saved with DataParallel, you need to remove the 'module.' prefix
+        #If the model was saved with DataParallel, need to remove the 'module.' prefix
         # Assuming state dict is under 'fld_state_dict' key
         original_state_dict = loaded_dict['fld_state_dict']
         clean_state_dict = remove_module_prefix(original_state_dict)

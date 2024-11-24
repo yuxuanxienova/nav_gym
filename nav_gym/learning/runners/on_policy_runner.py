@@ -23,6 +23,7 @@ from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.learning.distribution.gaussian import Gaussian
 from nav_gym.learning.distribution.beta_distribution import BetaDistribution
 from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMemory
+from nav_gym.learning.modules.fld.fld_actor_critic_model import FLDLocomotionActorCritic
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}

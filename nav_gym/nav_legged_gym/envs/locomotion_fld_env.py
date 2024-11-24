@@ -65,6 +65,7 @@ class LocomotionFLDEnv:
         self._init_external_forces()
 
         #8. Prepare mdp helper managers
+        self.fld_module = FLDModule(self)
         self.sensor_manager = SensorManager(self)
         self.command_generator: CommandBase = eval(self.cfg.commands.class_name)(self.cfg.commands, self)
         self.reward_manager = RewardManager(self)
@@ -76,7 +77,7 @@ class LocomotionFLDEnv:
         self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
         self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
         #10. Initialize Other Modules
-        self.fld_module = FLDModule(self)
+
         #11. Perform initial reset of all environments (to fill up buffers)
         self.reset()
         #12. Create debug usage

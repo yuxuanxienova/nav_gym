@@ -77,7 +77,7 @@ if __name__ == "__main__":
         #dof pos
         env.robot.dof_pos[idx_shadow_env] = env.robot.dof_pos[idx_main_env]
         #update the shadow env fld module
-        env.fld_module._update_fld_observation_buf()
+        # env.fld_module._update_fld_observation_buf()
         # #set the latent encoding manually
         # env.fld_module.latent_encoding[idx_shadow_env,:,1] = torch.tensor([0.7, 0.1, 0.0, 0.0], device=env.device)
         # env.fld_module.latent_encoding[idx_shadow_env,:,2] = torch.tensor([0.1, 0.0, 0.0, 0.0], device=env.device)
