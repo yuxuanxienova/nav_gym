@@ -80,8 +80,8 @@ if __name__ == "__main__":
             env.robot.root_states[:, :3] = root_pos
             root_ori = motion_loader.get_base_quat(motion_data_per_step)
             env.robot.root_states[:, 3:7] = root_ori
-            env.robot.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel(motion_data_per_step))
-            env.robot.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel(motion_data_per_step))
+            env.robot.root_states[:, 7:10] = quat_rotate(root_ori, motion_loader.get_base_lin_vel_b(motion_data_per_step))
+            env.robot.root_states[:, 10:13] = quat_rotate(root_ori, motion_loader.get_base_ang_vel_b(motion_data_per_step))
 
             env_ids_int32 = torch.arange(env.num_envs, device=env.device).to(dtype=torch.int32)        
             env.gym.set_dof_state_tensor_indexed(env.sim,

@@ -78,9 +78,9 @@ class MimicModule:
     def get_dof_vel_cur_step(self):
         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
         return self.motion_loader.get_dof_vel(motion_data_per_step)
-    def get_base_lin_vel_cur_step(self):
+    def get_base_lin_vel_w_cur_step(self):
         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-        return quat_rotate(self.base_quat_w, self.motion_loader.get_base_lin_vel(motion_data_per_step))
-    def get_base_ang_vel_cur_step(self):
+        return quat_rotate(self.base_quat_w, self.motion_loader.get_base_lin_vel_b(motion_data_per_step))
+    def get_base_ang_vel_w_cur_step(self):
         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-        return quat_rotate(self.base_quat_w, self.motion_loader.get_base_ang_vel(motion_data_per_step))
+        return quat_rotate(self.base_quat_w, self.motion_loader.get_base_ang_vel_b(motion_data_per_step))

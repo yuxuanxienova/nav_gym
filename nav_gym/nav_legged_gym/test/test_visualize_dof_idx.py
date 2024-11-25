@@ -74,9 +74,9 @@ if __name__ == "__main__":
         #-----------2. test get_dof_pos_leg_hl_cur_step() [test leg_idx_dict_abs]----------------
         env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]] = env.mimic_module.get_dof_pos_leg_hr_cur_step()[idx_main_env]
         #linear velocity#
-        env.robot.root_states[idx_shadow_env, 7:10] = env.mimic_module.get_base_lin_vel_cur_step()[idx_main_env]
+        env.robot.root_states[idx_shadow_env, 7:10] = env.mimic_module.get_base_lin_vel_w_cur_step()[idx_main_env]
         #angular velocity
-        env.robot.root_states[idx_shadow_env, 10:13] = env.mimic_module.get_base_ang_vel_cur_step()[idx_main_env]
+        env.robot.root_states[idx_shadow_env, 10:13] = env.mimic_module.get_base_ang_vel_w_cur_step()[idx_main_env]
 
         env_ids_int32 = torch.arange(env.num_envs, device=env.device).to(dtype=torch.int32)        
         env.gym.set_dof_state_tensor_indexed(env.sim,

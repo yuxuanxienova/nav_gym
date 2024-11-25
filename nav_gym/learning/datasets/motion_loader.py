@@ -165,13 +165,13 @@ class MotionLoader:
         else:
             raise Exception("[MotionLoader] base_quat not specified in the state_idx_dict")
 
-    def get_base_lin_vel(self, motion_data_i):
+    def get_base_lin_vel_b(self, motion_data_i):
         if "base_lin_vel" in self.state_idx_dict:
             return motion_data_i[:, self.state_idx_dict["base_lin_vel"][0]:self.state_idx_dict["base_lin_vel"][1]]
         else:
             raise Exception("[MotionLoader] base_lin_vel not specified in the state_idx_dict")
 
-    def get_base_ang_vel(self, motion_data_i):
+    def get_base_ang_vel_b(self, motion_data_i):
         if "base_ang_vel" in self.state_idx_dict:
             return motion_data_i[:, self.state_idx_dict["base_ang_vel"][0]:self.state_idx_dict["base_ang_vel"][1]]
         else:
@@ -227,13 +227,13 @@ class MotionLoader:
 #-------------------------------------------------------------------
     def compute_base_pos(self, motion_data_i, ori, dt):
         """approximate base position from base linear velocity"""
-        base_lin_vel = quat_rotate(ori, self.get_base_lin_vel(motion_data_i))
+        base_lin_vel = quat_rotate(ori, self.get_base_lin_vel_b(motion_data_i))
         pos = base_lin_vel * dt
         return pos
 
     def compute_ori(self, motion_data_i, ori, dt):
         """approximate base orientation from base angular velocity"""
-        base_ang_vel = quat_rotate(ori, self.get_base_ang_vel(motion_data_i))
+        base_ang_vel = quat_rotate(ori, self.get_base_ang_vel_b(motion_data_i))
         ori = (base_ang_vel * dt).squeeze(0)
         return ori[0], ori[1], ori[2]     
 if __name__ == "__main__":

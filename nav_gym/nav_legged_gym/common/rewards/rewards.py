@@ -547,9 +547,9 @@ def mimic_tracking_dof_vel(env: "LocomotionMimicEnv", params):
     return torch.exp(-error)
 
 def mimic_tracking_base_lin_vel(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_base_lin_vel_cur_step() - env.robot.root_lin_vel_b), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_base_lin_vel_w_cur_step() - env.robot.root_lin_vel_w), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_base_ang_vel(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_base_ang_vel_cur_step() - env.robot.root_ang_vel_b), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_base_ang_vel_w_cur_step() - env.robot.root_ang_vel_w), dim=1)
     return torch.exp(-error)

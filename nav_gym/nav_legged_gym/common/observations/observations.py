@@ -278,6 +278,6 @@ def mimic_dof_pos_cur_step(env: "LocomotionMimicEnv", params):
 def mimic_dof_vel_cur_step(env: "LocomotionMimicEnv", params):
     return env.mimic_module.get_dof_vel_cur_step()
 def mimic_base_lin_vel_cur_step(env: "LocomotionMimicEnv", params):
-    return env.mimic_module.get_base_lin_vel_cur_step()
+    return env.mimic_module.get_base_lin_vel_w_cur_step()
 def mimic_base_ang_vel_cur_step(env: "LocomotionMimicEnv", params):
-    return env.mimic_module.get_base_ang_vel_cur_step()
+    return env.mimic_module.get_base_ang_vel_w_cur_step()
