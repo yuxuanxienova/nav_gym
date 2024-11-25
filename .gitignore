@@ -6,3 +6,4 @@
 *.tar
 events.out.tfevents.*
 *.zip
+*.txt

@@ -22,8 +22,8 @@ class MotionLoader:
         self.reference_state_idx_dict_file = os.path.join(file_root, "amp_state_idx_dict.json")
         with open(self.reference_state_idx_dict_file, 'r') as f:
             self.state_idx_dict = json.load(f)
-        self.observation_dim = sum([ids[1] - ids[0] for state, ids in self.state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
-        self.observation_start_dim = self.state_idx_dict["base_lin_vel"][0]
+        # self.observation_dim = sum([ids[1] - ids[0] for state, ids in self.state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
+        # self.observation_start_dim = self.state_idx_dict["base_lin_vel"][0]
         data_list = []
         for file_name in file_names:
             file_path = os.path.join(file_root, file_name)
@@ -35,10 +35,22 @@ class MotionLoader:
             base_quat[base_quat[:, :, -1] < 0] = -base_quat[base_quat[:, :, -1] < 0]
             data_list[i][:, :, self.state_idx_dict["base_quat"][0]:self.state_idx_dict["base_quat"][1]] = base_quat
             #Data corruption
-            data_list[i] = self._data_corruption(data_list[i], level=corruption_level)
+            # data_list[i] = self._data_corruption(data_list[i], level=corruption_level)
         #motion_loader.data_list: [num_files]
         #motion_loader.data_list[i]: [num_motion, num_steps, motion_features_dim]
         self.data_list = data_list
+        self.leg_idx_dict_abs = {
+        "dof_pos_leg_fl": [16, 17, 18],
+        "dof_pos_leg_hl": [19, 20, 21],
+        "dof_pos_leg_fr": [22, 23, 24],
+        "dof_pos_leg_hr": [25, 26, 27]
+        }
+        self.leg_idx_dict_rel = {
+        "dof_pos_leg_fl": [0, 1, 2],
+        "dof_pos_leg_hl": [3, 4, 5],
+        "dof_pos_leg_fr": [6, 7, 8],
+        "dof_pos_leg_hr": [9, 10, 11]
+        }
 
 
     def _data_corruption(self, loaded_data, level=0):
@@ -105,7 +117,8 @@ class MotionLoader:
         }
         noise_scale_vec = torch.zeros_like(data[0, 0], device=self.device, dtype=torch.float, requires_grad=False)
         for key, value in self.state_idx_dict.items():
-            noise_scale_vec[value[0]:value[1]] = noise_scales_dict[key] * level
+            if key in noise_scales_dict:
+                noise_scale_vec[value[0]:value[1]] = noise_scales_dict[key] * level
         data += (2 * torch.randn_like(data) - 1) * noise_scale_vec
         return data
     
@@ -188,6 +201,30 @@ class MotionLoader:
         else:
             raise Exception("[MotionLoader] feet_pos not specified in the state_idx_dict")
         
+#----------------------------Dependes on leg index dictionary--------------------------------
+
+    def get_dof_pos_leg_fr(self, motion_data_i):
+        if "dof_pos_leg_fr" in self.leg_idx_dict_abs:
+            return motion_data_i[:, self.leg_idx_dict_abs["dof_pos_leg_fr"]]
+        else:
+            raise Exception("[MotionLoader] dof_pos_leg_fr not specified in the state_idx_dict")
+    def get_dof_pos_leg_fl(self, motion_data_i):
+        if "dof_pos_leg_fl" in self.leg_idx_dict_abs:
+            return motion_data_i[:, self.leg_idx_dict_abs["dof_pos_leg_fl"]]
+        else:
+            raise Exception("[MotionLoader] dof_pos_leg_fl not specified in the state_idx_dict")
+    def get_dof_pos_leg_hr(self, motion_data_i):
+        if "dof_pos_leg_hr" in self.leg_idx_dict_abs:
+            return motion_data_i[:, self.leg_idx_dict_abs["dof_pos_leg_hr"]]
+        else:
+            raise Exception("[MotionLoader] dof_pos_leg_hr not specified in the state_idx_dict")
+        
+    def get_dof_pos_leg_hl(self, motion_data_i):
+        if "dof_pos_leg_hl" in self.leg_idx_dict_abs:
+            return motion_data_i[:, self.leg_idx_dict_abs["dof_pos_leg_hl"]]
+        else:
+            raise Exception("[MotionLoader] dof_pos_leg_hl not specified in the state_idx_dict")
+#-------------------------------------------------------------------
     def compute_base_pos(self, motion_data_i, ori, dt):
         """approximate base position from base linear velocity"""
         base_lin_vel = quat_rotate(ori, self.get_base_lin_vel(motion_data_i))

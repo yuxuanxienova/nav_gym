@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
     from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
     from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_mimic_env import LocomotionMimicEnv
 
     ANY_ENV = Union[LocomotionEnv]
 
@@ -270,3 +271,13 @@ def fld_reconstructed_projected_gravity(env: "LocomotionFLDEnv", params):
     return env.fld_module.get_reconstructed_projected_gravity().flatten(1, 2)
 def fld_reconstructed_dof_pos(env: "LocomotionFLDEnv", params):
     return env.fld_module.get_reconstructed_dof_pos().flatten(1, 2)
+
+#-------------------------- Mimiv Module Functions --------------------------
+def mimic_dof_pos_cur_step(env: "LocomotionMimicEnv", params):
+    return env.mimic_module.get_dof_pos_cur_step()
+def mimic_dof_vel_cur_step(env: "LocomotionMimicEnv", params):
+    return env.mimic_module.get_dof_vel_cur_step()
+def mimic_base_lin_vel_cur_step(env: "LocomotionMimicEnv", params):
+    return env.mimic_module.get_base_lin_vel_cur_step()
+def mimic_base_ang_vel_cur_step(env: "LocomotionMimicEnv", params):
+    return env.mimic_module.get_base_ang_vel_cur_step()

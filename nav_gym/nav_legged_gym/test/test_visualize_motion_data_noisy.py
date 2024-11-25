@@ -39,6 +39,8 @@ if __name__ == "__main__":
     env = LocomotionEnv(env_cfg)
     env.set_flag_enable_reset(False)
     env.set_flag_enable_resample(False)
+    runner = OnPolicyRunner(env, train_cfg_dict, log_dir=log_dir, device="cuda:0")
+    policy = runner.get_inference_policy()
     obs, extras = env.reset()
     
     #Load the Motion Data
@@ -61,10 +63,12 @@ if __name__ == "__main__":
     max_eps = num_steps * env.cfg.control.decimation
 
     while running:
-        for i in range(max_eps):
-            step = int(i // env.cfg.control.decimation) % num_steps
-            env.render()
-            env.gym.simulate(env.sim) 
+        for step in range(num_steps):
+            # step = int(i // env.cfg.control.decimation) % num_steps
+            # env.render()
+            # env.gym.simulate(env.sim) 
+            action = policy(obs)
+            obs, _, _, extras = env.step(action)
             #motion_loader.data_list: (num_files)
             #motion_loader.data_list[0]: [num_motion, num_steps, motion_features_dim]
             motion_data_per_step = motion_loader.data_list[motion_idx][0, step].repeat(env.num_envs, 1)

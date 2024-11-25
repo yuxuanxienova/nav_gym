@@ -10,11 +10,11 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionFLDEnvCfg:
+class LocomotionMimicEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 256
+        num_envs: int = 512
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -93,24 +93,21 @@ class LocomotionFLDEnvCfg:
             base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1}
             base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2}
 
-        class fld:
+        class mimic:
             # --add this to every group--
             add_noise: bool = False
             #---------------------------
-            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
-            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
-            fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
-            fld_reconstructed_base_lin_vel: dict = {"func": O.fld_reconstructed_base_lin_vel, "noise": 0.0}
-            fld_reconstructed_base_ang_vel: dict = {"func": O.fld_reconstructed_base_ang_vel, "noise": 0.0}
-            fld_reconstructed_projected_gravity: dict = {"func": O.fld_reconstructed_projected_gravity, "noise": 0.0}
-            fld_reconstructed_dof_pos: dict = {"func": O.fld_reconstructed_dof_pos, "noise": 0.0}
-        # teacher_obs_list = ["prop", "exte", "priv"]
+            mimic_dof_pos: dict = {"func": O.mimic_dof_pos_cur_step, "noise": 0.01}
+            mimic_dof_vel: dict = {"func": O.mimic_dof_vel_cur_step, "noise": 1.5}
+            mimic_base_lin_vel: dict = {"func": O.mimic_base_lin_vel_cur_step, "noise": 0.1}
+            mimic_base_ang_vel: dict = {"func": O.mimic_base_ang_vel_cur_step, "noise": 0.2}
+
 
     class rewards:
         # general params
         only_positive_rewards: bool = True
         # reward functions
-        # termination = {"func": R.termination, "scale": -7}
+        termination = {"func": R.termination, "scale": -7}
         # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
         # base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 0.5, "std_angvel": 2.0}
@@ -118,25 +115,17 @@ class LocomotionFLDEnvCfg:
         # torques = {"func": R.torques, "scale": -1e-6}
         # dof_acc = {"func": R.dof_acc, "scale": -5e-7}
         # feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
-        # collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
-        # collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
+        collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
+        collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
         # action_rate = {"func": R.action_rate, "scale": -0.005}
         # dof_vel = {"func": R.dof_vel, "scale": -0.0}
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
-        #-----fld rewards-----
-        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_dof_pos_leg_fl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fl, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_dof_pos_leg_hl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hl, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_dof_pos_leg_fr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fr, "scale": 1.0, "std": 0.25}
-        reward_tracking_reconstructed_dof_pos_leg_hr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hr, "scale": 1.0, "std": 0.25}
-        # reward_tracking_reconstructed_feet_pos_fl = {"func": R.reward_tracking_reconstructed_feet_pos_fl, "scale": 1.0, "std": 0.25}
-        # reward_tracking_reconstructed_feet_pos_fr = {"func": R.reward_tracking_reconstructed_feet_pos_fr, "scale": 1.0, "std": 0.25}
-        # reward_tracking_reconstructed_feet_pos_hl = {"func": R.reward_tracking_reconstructed_feet_pos_hl, "scale": 1.0, "std": 0.25}
-        # reward_tracking_reconstructed_feet_pos_hr = {"func": R.reward_tracking_reconstructed_feet_pos_hr, "scale": 1.0, "std": 0.25}
-        
+        #-----Mimic rewards-----
+        tracking_dof_pos = {"func": R.mimic_tracking_dof_pos, "scale": 5, "std": 0.1}
+        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 5, "std": 0.1}
+        tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 10, "std": 0.1}
+        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 5, "std": 0.1}
 
     class terminations:
         # general params
@@ -176,64 +165,58 @@ class LocomotionFLDEnvCfg:
         class point_pattern:
             env_origins:List = [(0.0, 0.0, 0.0)]
 #-----------------FLD Module--------------------
-    class fld:
-        latent_encoding_update_noise_level = 0.0
-        latent_channel = 4
-        observation_horizon = 31 # 51
-        encoder_shape = [64, 64]
-        decoder_shape = [64, 64]
-        # use_pae = False
-        # with_stand = False
-        filter_latent = True # if filter the latent with a low pass filter
-        filter_size = 30 # window size for filter
-        state_idx_dict = {
-            "base_pos": [0, 1, 2],
-            "base_quat": [3, 4, 5, 6],
-            "base_lin_vel": [7, 8, 9],
-            "base_ang_vel": [10, 11, 12],
-            "projected_gravity": [13, 14, 15],
-            "dof_pos_leg_fl": [16, 17, 18],
-            "dof_pos_leg_hl": [19, 20, 21],
-            "dof_pos_leg_fr": [22, 23, 24],
-            "dof_pos_leg_hr": [25, 26, 27],
-            # "feet_pos_fl": [40, 41, 42],
-            # "feet_pos_hl": [43, 44, 45],
-            # "feet_pos_fr": [46, 47, 48],
-            # "feet_pos_hr": [49, 50, 51],
-        }
-        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain"
-        load_fld_model = "model_9950.pt" 
-    class task_sampler:
-        name = "OfflineSampler"
-        collect_samples = True
-        collect_sample_step_interval = 5
-        collect_elite_performance_threshold = 1.0
-        library_size = 5000
-        update_interval = 50
-        elite_buffer_size = 1
-        max_num_updates = 1000
-        curriculum = True
-        curriculum_scale = 1.25
-        curriculum_performance_threshold = 0.8
-        max_num_curriculum_updates = 5
-        check_update_interval = 100
-        class offline:
-            pass
-        class random:
-            pass
-        class gmm:
-            num_components = 8
-        class alp_gmm:
-            init_num_components = 8
-            min_num_components = 2
-            max_num_components = 10
-            random_type = "uniform" # "uniform" or "gmm"
-        class classifier:
-            enabled = False
-            num_classes = 9
-if __name__ == "__main__":
-    cfg = LocomotionFLDEnvCfg()
-    cfg_dict = class_to_dict(cfg)
-    print(cfg.env.num_envs)
-    print(cfg.gym.viewer.eye)
-    print(cfg.robot.asset_root)
+    # class fld:
+    #     latent_encoding_update_noise_level = 0.0
+    #     latent_channel = 4
+    #     observation_horizon = 31 # 51
+    #     encoder_shape = [64, 64]
+    #     decoder_shape = [64, 64]
+    #     # use_pae = False
+    #     # with_stand = False
+    #     filter_latent = True # if filter the latent with a low pass filter
+    #     filter_size = 30 # window size for filter
+    #     state_idx_dict = {
+    #         "base_pos": [0, 1, 2],
+    #         "base_quat": [3, 4, 5, 6],
+    #         "base_lin_vel": [7, 8, 9],
+    #         "base_ang_vel": [10, 11, 12],
+    #         "projected_gravity": [13, 14, 15],
+    #         "dof_pos_leg_fl": [16, 17, 18],
+    #         "dof_pos_leg_hl": [19, 20, 21],
+    #         "dof_pos_leg_fr": [22, 23, 24],
+    #         "dof_pos_leg_hr": [25, 26, 27],
+    #         # "feet_pos_fl": [40, 41, 42],
+    #         # "feet_pos_hl": [43, 44, 45],
+    #         # "feet_pos_fr": [46, 47, 48],
+    #         # "feet_pos_hr": [49, 50, 51],
+    #     }
+    #     load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain"
+    #     load_fld_model = "model_9950.pt" 
+    # class task_sampler:
+    #     name = "OfflineSampler"
+    #     collect_samples = True
+    #     collect_sample_step_interval = 5
+    #     collect_elite_performance_threshold = 1.0
+    #     library_size = 5000
+    #     update_interval = 50
+    #     elite_buffer_size = 1
+    #     max_num_updates = 1000
+    #     curriculum = True
+    #     curriculum_scale = 1.25
+    #     curriculum_performance_threshold = 0.8
+    #     max_num_curriculum_updates = 5
+    #     check_update_interval = 100
+    #     class offline:
+    #         pass
+    #     class random:
+    #         pass
+    #     class gmm:
+    #         num_components = 8
+    #     class alp_gmm:
+    #         init_num_components = 8
+    #         min_num_components = 2
+    #         max_num_components = 10
+    #         random_type = "uniform" # "uniform" or "gmm"
+    #     class classifier:
+    #         enabled = False
+    #         num_classes = 9

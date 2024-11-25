@@ -24,6 +24,17 @@ class FLDLocomotionActorCriticCfg:
     output_mlp_size: List[int] = [256, 128, 64]
 
 @configclass
+class MimicLocomotionActorCriticCfg:
+    model_class: str = "MimicLocomotionActorCritic"
+    activation_fn: str = "elu"
+    obs_names_critic: Optional[List[str]] = None  # TODO: for asymmetric critic
+    scan_encoder_shape: List[int] = [128]
+    scan_latent_size: int = 64
+    priv_encoder_shape: Optional[List[int]] = None
+    priv_latent_size: int = 16
+    output_mlp_size: List[int] = [256, 128, 64]
+
+@configclass
 class TeacherArchCfg:
     # model_class: str = "SimpleNavPolicy"
     model_class: str = "NavPolicyWithMemory"

@@ -35,7 +35,7 @@ class FLDModule:
         self.robot = env.robot
         self.base_pos = self.robot.root_pos_w
         self.base_quat = self.robot.root_quat_w
-        self.base_lin_vel = self.robot.root_lin_vel_w
+        self.base_lin_vel = self.robot.root_lin_vel_w#TODO check if this is correct .root_lin_vel_b??
         self.base_ang_vel = self.robot.root_ang_vel_w
         self.projected_gravity = self.robot.projected_gravity_b
         self.dof_pos = self.robot.dof_pos
@@ -102,7 +102,7 @@ class FLDModule:
                 self.base_lin_vel,
                 self.base_ang_vel,
                 self.projected_gravity,
-                self.dof_pos - self.default_dof_pos,
+                self.dof_pos - self.default_dof_pos,#TODO check if this is correct
                 self.dof_vel,
                 # self.feet_pos,
                 ), dim=1
@@ -155,11 +155,11 @@ class FLDModule:
         self.latent_encoding[env_ids, :, 0] = torch.rand((len(env_ids), self.fld_latent_channel),device=self.device) * 1.0 - 0.5  # Scaling to range [-0.5, 0.5]
         self.latent_encoding[env_ids, :, 1:] = self.task_sampler.sample(len(env_ids)).view(len(env_ids), 3, self.fld_latent_channel).swapaxes(1, 2)
         
-        # print("[INFO] Sampled latent encoding for env_ids: ", env_ids)
-        # print("[INFO] self.latent_encoding[env_ids, :, 0]: ", self.latent_encoding[env_ids, :, 0])
-        # print("[INFO] self.latent_encoding[env_ids, :, 1]: ", self.latent_encoding[env_ids, :, 1])
-        # print("[INFO] self.latent_encoding[env_ids, :, 2]: ", self.latent_encoding[env_ids, :, 2])
-        # print("[INFO] self.latent_encoding[env_ids, :, 3]: ", self.latent_encoding[env_ids, :, 3])
+        print("[INFO] Sampled latent encoding for env_ids: ", env_ids)
+        print("[INFO] self.latent_encoding[env_ids, :, 0]: ", self.latent_encoding[env_ids, :, 0])
+        print("[INFO] self.latent_encoding[env_ids, :, 1]: ", self.latent_encoding[env_ids, :, 1])
+        print("[INFO] self.latent_encoding[env_ids, :, 2]: ", self.latent_encoding[env_ids, :, 2])
+        print("[INFO] self.latent_encoding[env_ids, :, 3]: ", self.latent_encoding[env_ids, :, 3])
         # if self.fld_cfg.with_stand:
         #     # 20% chance of standing
         #     self.standing_latent[env_ids, :] = (torch.randint(0, 5, (len(env_ids), 1), device=self.device, dtype=torch.float, requires_grad=False) == 0).float()
