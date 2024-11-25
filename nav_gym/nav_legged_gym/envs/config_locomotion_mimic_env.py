@@ -150,16 +150,6 @@ class LocomotionMimicEnvCfg:
         # terrain_levels = {"func": C.terrain_levels_vel, "mode": "on_reset"}
         max_lin_vel_command = None
 
-    # class commands:
-    #     resampling_time = 10.0  # time before commands are changed [s]
-    #     heading_command = True  # if true: compute ang vel command from heading error
-    #     rel_standing_envs = 0.02  # percentage of the robots are standing
-    #     rel_heading_envs = 1.0  # percentage of the robots follow heading command (the others follow angular velocity)
-    #     class ranges:
-    #         lin_vel_x: List = [-1.0, 1.0]  # min max [m/s]
-    #         lin_vel_y: List = [-1.0, 1.0]  # min max [m/s]
-    #         ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
-    #         heading: List = [-3.14, 3.14]  # [rad]
     commands = UnifromVelocityCommandCfg()
 
     class terrain_unity:
@@ -173,59 +163,4 @@ class LocomotionMimicEnvCfg:
             y_offset:float = -20.0
         class point_pattern:
             env_origins:List = [(0.0, 0.0, 0.0)]
-#-----------------FLD Module--------------------
-    # class fld:
-    #     latent_encoding_update_noise_level = 0.0
-    #     latent_channel = 4
-    #     observation_horizon = 31 # 51
-    #     encoder_shape = [64, 64]
-    #     decoder_shape = [64, 64]
-    #     # use_pae = False
-    #     # with_stand = False
-    #     filter_latent = True # if filter the latent with a low pass filter
-    #     filter_size = 30 # window size for filter
-    #     state_idx_dict = {
-    #         "base_pos": [0, 1, 2],
-    #         "base_quat": [3, 4, 5, 6],
-    #         "base_lin_vel": [7, 8, 9],
-    #         "base_ang_vel": [10, 11, 12],
-    #         "projected_gravity": [13, 14, 15],
-    #         "dof_pos_leg_fl": [16, 17, 18],
-    #         "dof_pos_leg_hl": [19, 20, 21],
-    #         "dof_pos_leg_fr": [22, 23, 24],
-    #         "dof_pos_leg_hr": [25, 26, 27],
-    #         # "feet_pos_fl": [40, 41, 42],
-    #         # "feet_pos_hl": [43, 44, 45],
-    #         # "feet_pos_fr": [46, 47, 48],
-    #         # "feet_pos_hr": [49, 50, 51],
-    #     }
-    #     load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain"
-    #     load_fld_model = "model_9950.pt" 
-    # class task_sampler:
-    #     name = "OfflineSampler"
-    #     collect_samples = True
-    #     collect_sample_step_interval = 5
-    #     collect_elite_performance_threshold = 1.0
-    #     library_size = 5000
-    #     update_interval = 50
-    #     elite_buffer_size = 1
-    #     max_num_updates = 1000
-    #     curriculum = True
-    #     curriculum_scale = 1.25
-    #     curriculum_performance_threshold = 0.8
-    #     max_num_curriculum_updates = 5
-    #     check_update_interval = 100
-    #     class offline:
-    #         pass
-    #     class random:
-    #         pass
-    #     class gmm:
-    #         num_components = 8
-    #     class alp_gmm:
-    #         init_num_components = 8
-    #         min_num_components = 2
-    #         max_num_components = 10
-    #         random_type = "uniform" # "uniform" or "gmm"
-    #     class classifier:
-    #         enabled = False
-    #         num_classes = 9
+
