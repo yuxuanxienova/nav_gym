@@ -3,7 +3,8 @@ from dataclasses import dataclass, field, Field
 import importlib
 from typing import Callable, Any, Dict, Mapping, Iterable
 from copy import deepcopy
-
+import json
+import os
 # List of all methods provided by sub-module.
 __all__ = ["configclass", "update_class_from_dict", "class_to_dict"]
 
@@ -255,3 +256,28 @@ def _custom_post_init(obj):
         var = getattr(obj, key)
         if not callable(var):
             setattr(obj, key, deepcopy(var))
+
+def config_to_dict( obj: Any) -> dict:
+    """Recursively convert a configuration object to a dictionary."""
+    if isinstance(obj, (int, float, str, bool, type(None))):
+        return obj
+    elif isinstance(obj, (list, tuple)):
+        return [config_to_dict(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {k: config_to_dict(v) for k, v in obj.items()}
+    else:
+        result = {}
+        for key in dir(obj):
+            if key.startswith('_') or callable(getattr(obj, key)):
+                continue
+            value = getattr(obj, key)
+            result[key] = config_to_dict(value)
+        return result
+
+def save_config( cfg: Any, logdir: str, filename: str = "config.json"):
+    """Save the configuration to a JSON file in the log directory."""
+    config_dict = config_to_dict(cfg)
+    file_path = os.path.join(logdir, filename)
+    with open(file_path, 'w') as f:
+        json.dump(config_dict, f, indent=4)
+    print(f"Configuration saved to {file_path}")

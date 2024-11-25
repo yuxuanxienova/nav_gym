@@ -9,6 +9,7 @@ from typing import Tuple, Union, Dict, Any
 import math
 import torch
 import abc
+import json
 # legged-gym
 from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
@@ -432,6 +433,7 @@ class LocomotionFLDEnv:
 #-------- 5. Other functions--------
     def update_learning_curriculum(self):
         pass
+
 
 
 
