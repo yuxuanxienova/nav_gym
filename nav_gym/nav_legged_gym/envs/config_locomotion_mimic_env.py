@@ -97,10 +97,16 @@ class LocomotionMimicEnvCfg:
             # --add this to every group--
             add_noise: bool = False
             #---------------------------
-            mimic_dof_pos: dict = {"func": O.mimic_dof_pos_cur_step, "noise": 0.01}
-            mimic_dof_vel: dict = {"func": O.mimic_dof_vel_cur_step, "noise": 1.5}
-            mimic_base_lin_vel: dict = {"func": O.mimic_base_lin_vel_cur_step, "noise": 0.1}
-            mimic_base_ang_vel: dict = {"func": O.mimic_base_ang_vel_cur_step, "noise": 0.2}
+            # mimic_dof_pos: dict = {"func": O.mimic_dof_pos_cur_step, "noise": 0.01}
+            # mimic_dof_vel: dict = {"func": O.mimic_dof_vel_cur_step, "noise": 1.5}
+            # mimic_base_lin_vel: dict = {"func": O.mimic_base_lin_vel_w_cur_step, "noise": 0.1}
+            # mimic_base_ang_vel: dict = {"func": O.mimic_base_ang_vel_w_cur_step, "noise": 0.2}
+            error_mimic_tracking_dof_pos_fl: dict = {"func": O.error_mimic_tracking_dof_pos_fl, "noise": 0.01}
+            error_mimic_tracking_dof_pos_fr: dict = {"func": O.error_mimic_tracking_dof_pos_fr, "noise": 0.01}
+            error_mimic_tracking_dof_pos_hl: dict = {"func": O.error_mimic_tracking_dof_pos_hl, "noise": 0.01}
+            error_mimic_tracking_dof_pos_hr: dict = {"func": O.error_mimic_tracking_dof_pos_hr, "noise": 0.01}
+            error_mimic_tracking_base_lin_vel: dict = {"func": O.error_mimic_tracking_base_lin_vel, "noise": 0.01}
+            error_mimic_tracking_base_ang_vel: dict = {"func": O.error_mimic_tracking_base_ang_vel, "noise": 0.01}
 
 
     class rewards:
@@ -122,10 +128,13 @@ class LocomotionMimicEnvCfg:
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----Mimic rewards-----
-        tracking_dof_pos = {"func": R.mimic_tracking_dof_pos, "scale": 5, "std": 0.1}
-        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 5, "std": 0.1}
+        tracking_mimic_tracking_dof_pos_fr = {"func": R.mimic_tracking_dof_pos_fr, "scale": 5, "std": 0.1}
+        tracking_mimic_tracking_dof_pos_fl = {"func": R.mimic_tracking_dof_pos_fl, "scale": 5, "std": 0.1}
+        tracking_mimic_tracking_dof_pos_hr = {"func": R.mimic_tracking_dof_pos_hr, "scale": 5, "std": 0.1}
+        tracking_mimic_tracking_dof_pos_hl = {"func": R.mimic_tracking_dof_pos_hl, "scale": 5, "std": 0.1}
+        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 3, "std": 0.1}
         tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 10, "std": 0.1}
-        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 5, "std": 0.1}
+        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 4, "std": 0.1}
 
     class terminations:
         # general params

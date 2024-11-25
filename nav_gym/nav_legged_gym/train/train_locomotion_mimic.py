@@ -10,7 +10,7 @@ import os
 import time
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(__file__), "logs/locomotion_mimic/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/locomotion_mimic/20241125-173731/" + "model_1200.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/locomotion_mimic/20241125-181423/" + "model_10500.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
