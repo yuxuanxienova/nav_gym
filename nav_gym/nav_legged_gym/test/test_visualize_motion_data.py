@@ -123,5 +123,8 @@ if __name__ == "__main__":
                                                         gymtorch.unwrap_tensor(env.robot.root_states),
                                                         gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
             env.gym.refresh_rigid_body_state_tensor(env.sim)
+
+            # Get the feet positions
+            env.robot.feet_positions_w #(num_envs,num_feets,3)
             
 

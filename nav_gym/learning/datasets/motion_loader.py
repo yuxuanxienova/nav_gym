@@ -51,6 +51,25 @@ class MotionLoader:
         "dof_pos_leg_fr": [6, 7, 8],
         "dof_pos_leg_hr": [9, 10, 11]
         }
+        #['LF_FOOT', 'LH_FOOT', 'RF_FOOT', 'RH_FOOT']
+        self.feet_pos_idx_dict_abs = {
+            'LF_FOOT' : [40,41,42],
+            'LH_FOOT' : [43,44,45],
+            'RF_FOOT' : [46,47,48],
+            'RH_FOOT' : [49,50,51]
+        }
+        self.feet_pos_idx_dict_rela = {
+            'LF_FOOT' : [0, 1, 2],
+            'LH_FOOT' : [3, 4, 5],
+            'RF_FOOT' : [6, 7, 8],
+            'RH_FOOT' : [9,10,11]
+        }
+        self.feet_pos_name_to_id = {
+            'LF_FOOT' : 0,
+            'LH_FOOT' : 1,
+            'RF_FOOT' : 2,
+            'RH_FOOT' : 3     
+        }
 
 
     def _data_corruption(self, loaded_data, level=0):
@@ -224,7 +243,18 @@ class MotionLoader:
             return motion_data_i[:, self.leg_idx_dict_abs["dof_pos_leg_hl"]]
         else:
             raise Exception("[MotionLoader] dof_pos_leg_hl not specified in the state_idx_dict")
-#-------------------------------------------------------------------
+    
+#-------------------------  Depends on feet index dictionary------------------------------------------
+#feet position in robot(base) frame
+    def get_feet_pos_b_LF(self, motion_data_i):
+        return motion_data_i[:,self.feet_pos_idx_dict_abs['LF_FOOT']]
+    def get_feet_pos_b_LH(self, motion_data_i):
+        return motion_data_i[:,self.feet_pos_idx_dict_abs['LH_FOOT']]
+    def get_feet_pos_b_RF(self, motion_data_i):
+        return motion_data_i[:,self.feet_pos_idx_dict_abs['RF_FOOT']]
+    def get_feet_pos_b_RH(self, motion_data_i):
+        return motion_data_i[:,self.feet_pos_idx_dict_abs['RH_FOOT']]
+#------------------------------------------------------------------------------------
     def compute_base_pos(self, motion_data_i, ori, dt):
         """approximate base position from base linear velocity"""
         base_lin_vel = quat_rotate(ori, self.get_base_lin_vel_b(motion_data_i))

@@ -522,34 +522,51 @@ def reward_tracking_reconstructed_feet_pos_hr(env: "LocomotionFLDEnv", params):
     return torch.exp(-error)
 
 """Mimic specific reward Functions"""
+
+def mimic_tracking_feet_pos_LF(env: "LocomotionMimicEnv", params):
+    error = torch.sum(torch.square(env.mimic_module.get_target_feet_pos_b_LF_cur_step() - env.mimic_module.get_robot_feet_pos_b_LF()), dim=1)
+    return torch.exp(-error)
+
+def mimic_tracking_feet_pos_LH(env: "LocomotionMimicEnv", params):
+    error = torch.sum(torch.square(env.mimic_module.get_target_feet_pos_b_LH_cur_step() - env.mimic_module.get_robot_feet_pos_b_LH()), dim=1)
+    return torch.exp(-error)
+
+def mimic_tracking_feet_pos_RF(env: "LocomotionMimicEnv", params):
+    error = torch.sum(torch.square(env.mimic_module.get_target_feet_pos_b_RF_cur_step() - env.mimic_module.get_robot_feet_pos_b_RF()), dim=1)
+    return torch.exp(-error)
+
+def mimic_tracking_feet_pos_RH(env: "LocomotionMimicEnv", params):
+    error = torch.sum(torch.square(env.mimic_module.get_target_feet_pos_b_RH_cur_step() - env.mimic_module.get_robot_feet_pos_b_RH()), dim=1)
+    return torch.exp(-error)
+
 def mimic_tracking_dof_pos_fl(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_pos_leg_fl_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]]), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_pos_leg_fl_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]]), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_dof_pos_fr(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_pos_leg_fr_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fr"]]), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_pos_leg_fr_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fr"]]), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_dof_pos_hl(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_pos_leg_hl_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hl"]]), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_pos_leg_hl_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hl"]]), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_dof_pos_hr(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_pos_leg_hr_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]]), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_pos_leg_hr_cur_step() - env.robot.dof_pos[:,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]]), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_dof_pos(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_pos_cur_step() - env.robot.dof_pos), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_pos_cur_step() - env.robot.dof_pos), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_dof_vel(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_dof_vel_cur_step() - env.robot.dof_vel), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_dof_vel_cur_step() - env.robot.dof_vel), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_base_lin_vel(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_base_lin_vel_w_cur_step() - env.robot.root_lin_vel_w), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_base_lin_vel_w_cur_step() - env.robot.root_lin_vel_w), dim=1)
     return torch.exp(-error)
 
 def mimic_tracking_base_ang_vel(env: "LocomotionMimicEnv", params):
-    error = torch.sum(torch.square(env.mimic_module.get_base_ang_vel_w_cur_step() - env.robot.root_ang_vel_w), dim=1)
+    error = torch.sum(torch.square(env.mimic_module.get_target_base_ang_vel_w_cur_step() - env.robot.root_ang_vel_w), dim=1)
     return torch.exp(-error)

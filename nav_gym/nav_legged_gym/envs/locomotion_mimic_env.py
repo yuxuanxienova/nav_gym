@@ -67,6 +67,7 @@ class LocomotionMimicEnv:
 
         #8. Initialize Other Modules
         self.mimic_module = MimicModule(self)
+        self.mimic_module.initialize_plot()
 
         #9. Prepare mdp helper managers
         self.sensor_manager = SensorManager(self)
@@ -337,6 +338,7 @@ class LocomotionMimicEnv:
         self.gym_iface.render(sync_frame_time)
         #1. clear previous lines
         self.gym.clear_lines(self.viewer)
+
 
     def _draw_debug_vis(self):
         """Draws height measurement points for visualization."""

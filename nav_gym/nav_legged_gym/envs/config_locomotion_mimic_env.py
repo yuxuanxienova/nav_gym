@@ -101,19 +101,25 @@ class LocomotionMimicEnvCfg:
             # mimic_dof_vel: dict = {"func": O.mimic_dof_vel_cur_step, "noise": 1.5}
             # mimic_base_lin_vel: dict = {"func": O.mimic_base_lin_vel_w_cur_step, "noise": 0.1}
             # mimic_base_ang_vel: dict = {"func": O.mimic_base_ang_vel_w_cur_step, "noise": 0.2}
-            error_mimic_tracking_dof_pos_fl: dict = {"func": O.error_mimic_tracking_dof_pos_fl, "noise": 0.01}
-            error_mimic_tracking_dof_pos_fr: dict = {"func": O.error_mimic_tracking_dof_pos_fr, "noise": 0.01}
-            error_mimic_tracking_dof_pos_hl: dict = {"func": O.error_mimic_tracking_dof_pos_hl, "noise": 0.01}
-            error_mimic_tracking_dof_pos_hr: dict = {"func": O.error_mimic_tracking_dof_pos_hr, "noise": 0.01}
-            error_mimic_tracking_base_lin_vel: dict = {"func": O.error_mimic_tracking_base_lin_vel, "noise": 0.01}
-            error_mimic_tracking_base_ang_vel: dict = {"func": O.error_mimic_tracking_base_ang_vel, "noise": 0.01}
+            robot_feet_pos_b_LF: dict = {"func": O.robot_feet_pos_b_LF, "noise": 0.00}
+            robot_feet_pos_b_LH: dict = {"func": O.robot_feet_pos_b_LH, "noise": 0.00}
+            robot_feet_pos_b_RF: dict = {"func": O.robot_feet_pos_b_RF, "noise": 0.00}
+            robot_feet_pos_b_RH: dict = {"func": O.robot_feet_pos_b_RH, "noise": 0.00}
+            
+            error_mimic_tracking_dof_vel: dict = {"func": O.error_mimic_tracking_dof_vel, "noise": 0.00}
+            error_mimic_tracking_dof_pos_fl: dict = {"func": O.error_mimic_tracking_dof_pos_fl, "noise": 0.00}
+            error_mimic_tracking_dof_pos_fr: dict = {"func": O.error_mimic_tracking_dof_pos_fr, "noise": 0.00}
+            error_mimic_tracking_dof_pos_hl: dict = {"func": O.error_mimic_tracking_dof_pos_hl, "noise": 0.00}
+            error_mimic_tracking_dof_pos_hr: dict = {"func": O.error_mimic_tracking_dof_pos_hr, "noise": 0.00}
+            error_mimic_tracking_base_lin_vel: dict = {"func": O.error_mimic_tracking_base_lin_vel, "noise": 0.00}
+            error_mimic_tracking_base_ang_vel: dict = {"func": O.error_mimic_tracking_base_ang_vel, "noise": 0.00}
 
 
     class rewards:
         # general params
         only_positive_rewards: bool = True
         # reward functions
-        termination = {"func": R.termination, "scale": -7}
+        # termination = {"func": R.termination, "scale": -7}
         # tracking_lin_vel = {"func": R.tracking_lin_vel, "scale": 2.0, "std": 0.25}
         # tracking_ang_vel = {"func": R.tracking_ang_vel, "scale": 1.0, "std": 0.25}
         # base_motion = {"func": R.base_motion, "scale": 0.5, "std_z": 0.5, "std_angvel": 2.0}
@@ -121,20 +127,25 @@ class LocomotionMimicEnvCfg:
         # torques = {"func": R.torques, "scale": -1e-6}
         # dof_acc = {"func": R.dof_acc, "scale": -5e-7}
         # feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
-        collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
-        collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
+        # collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
+        # collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
         # action_rate = {"func": R.action_rate, "scale": -0.005}
         # dof_vel = {"func": R.dof_vel, "scale": -0.0}
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----Mimic rewards-----
-        tracking_mimic_tracking_dof_pos_fr = {"func": R.mimic_tracking_dof_pos_fr, "scale": 5, "std": 0.1}
-        tracking_mimic_tracking_dof_pos_fl = {"func": R.mimic_tracking_dof_pos_fl, "scale": 5, "std": 0.1}
-        tracking_mimic_tracking_dof_pos_hr = {"func": R.mimic_tracking_dof_pos_hr, "scale": 5, "std": 0.1}
-        tracking_mimic_tracking_dof_pos_hl = {"func": R.mimic_tracking_dof_pos_hl, "scale": 5, "std": 0.1}
-        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 3, "std": 0.1}
-        tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 10, "std": 0.1}
-        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 4, "std": 0.1}
+        tracking_mimic_tracking_feet_pos_LF = {"func": R.mimic_tracking_feet_pos_LF, "scale": 5.0}
+        tracking_mimic_tracking_feet_pos_LH = {"func": R.mimic_tracking_feet_pos_LH, "scale": 5.0}
+        tracking_mimic_tracking_feet_pos_RF = {"func": R.mimic_tracking_feet_pos_RF, "scale": 5.0}
+        tracking_mimic_tracking_feet_pos_RH = {"func": R.mimic_tracking_feet_pos_RH, "scale": 5.0}
+
+        tracking_mimic_tracking_dof_pos_fr = {"func": R.mimic_tracking_dof_pos_fr, "scale": 5.0}
+        tracking_mimic_tracking_dof_pos_fl = {"func": R.mimic_tracking_dof_pos_fl, "scale": 5.0}
+        tracking_mimic_tracking_dof_pos_hr = {"func": R.mimic_tracking_dof_pos_hr, "scale": 5.0}
+        tracking_mimic_tracking_dof_pos_hl = {"func": R.mimic_tracking_dof_pos_hl, "scale": 5.0}
+        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 3}
+        tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 1.0}
+        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 0.5}
 
     class terminations:
         # general params

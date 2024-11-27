@@ -13,10 +13,10 @@ from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robots_cfg
 
 class LeggedRobot(Articulation):
 
-    feet_positions: Tensor = None
+    feet_positions_w: Tensor = None
     """ Positions of the feet (Tensor), shape=(num_envs, num_feet, 3), view of rigid_body_states"""
 
-    feet_velocities: Tensor = None
+    feet_velocities_w: Tensor = None
     """ Velocities of the feet (Tensor), shape=(num_envs, num_feet, 3), view of rigid_body_states"""
 
     feet_current_air_time: Tensor = None
@@ -68,8 +68,8 @@ class LeggedRobot(Articulation):
         self.forward_vec_w = quat_apply(self.root_quat_w, self._forward_vec_b)
         self.heading_w = torch.zeros(self.num_envs, device=self.device)
 
-        self.feet_positions = self.rigid_body_states[:, self.feet_indices, 0:3]
-        self.feet_velocities = self.rigid_body_states[:, self.feet_indices, 7:10]
+        self.feet_positions_w = self.rigid_body_states[:, self.feet_indices, 0:3]
+        self.feet_velocities_w = self.rigid_body_states[:, self.feet_indices, 7:10]
 
         self.contact = torch.zeros(
             self.num_envs, len(self.feet_indices), dtype=torch.bool, device=self.device, requires_grad=False
@@ -99,6 +99,6 @@ class LeggedRobot(Articulation):
         self.feet_last_air_time = self.feet_current_air_time * first_contact
         self.feet_current_air_time *= ~self.contact
 
-        self.feet_positions[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 0:3][env_ids, ...]
-        self.feet_velocities[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 7:10][env_ids, ...]
+        self.feet_positions_w[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 0:3][env_ids, ...]
+        self.feet_velocities_w[env_ids, ...] = self.rigid_body_states[:, self.feet_indices, 7:10][env_ids, ...]
 

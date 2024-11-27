@@ -9,6 +9,7 @@ from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_locomotion_mimic import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 import nav_gym.nav_legged_gym.common.rewards.rewards as R
+from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 #isaac
 from isaacgym import gymtorch
 from isaacgym.torch_utils import (
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     # runner.load(checkpoint_dir)
     policy = runner.get_inference_policy()
     obs, extras = env.reset()
-
+    sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.05, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
     # Main loop
     running = True
     while running:
@@ -65,16 +66,26 @@ if __name__ == "__main__":
         #3. simulate the shadow env
         #root pos
         env.robot.root_states[idx_shadow_env, 0:3] = env.robot.root_states[idx_main_env, 0:3]
+        root_pos = env.robot.root_states[:, 0:3]
         #root ori
         env.robot.root_states[idx_shadow_env, 3:7] = env.robot.root_states[idx_main_env, 3:7]
+        root_ori = env.robot.root_states[:, 3:7]
         #dof pos
         env.robot.dof_pos[idx_shadow_env] = env.robot.dof_pos[idx_main_env]
-        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]] = env.mimic_module.get_dof_pos_leg_fl_cur_step()[idx_main_env]
-
+        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]] = env.mimic_module.get_target_dof_pos_leg_fl_cur_step()[idx_main_env]
+        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hl"]] = env.mimic_module.get_target_dof_pos_leg_hl_cur_step()[idx_main_env]
+        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fr"]] = env.mimic_module.get_target_dof_pos_leg_fr_cur_step()[idx_main_env]
+        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]] = env.mimic_module.get_target_dof_pos_leg_hr_cur_step()[idx_main_env]
+      
+        #feet pos
+        # env.robot.feet_positions_w[idx_shadow_env] = env.robot.feet_positions_w[idx_main_env]
+        # env.robot.feet_positions_w[idx_shadow_env,env.mimic_module.motion_loader.feet_pos_name_to_id['LF_FOOT'],:] = (quat_rotate_inverse(root_ori,env.mimic_module.get_target_feet_pos_b_LF_cur_step()) + root_pos)[idx_shadow_env]
+        # sphere_geoms_red.draw((quat_rotate(root_ori,env.mimic_module.get_target_feet_pos_b_LF_cur_step()) + root_pos)[idx_shadow_env], env.gym, env.viewer, env.envs[0])
+        sphere_geoms_red.draw((quat_rotate(root_ori,env.mimic_module.get_target_feet_pos_b_LH_cur_step()) + root_pos)[idx_shadow_env], env.gym, env.viewer, env.envs[0])
         #linear velocity
-        env.robot.root_states[idx_shadow_env, 7:10] = env.mimic_module.get_base_lin_vel_w_cur_step()[idx_main_env]
+        env.robot.root_states[idx_shadow_env, 7:10] = env.mimic_module.get_target_base_lin_vel_w_cur_step()[idx_main_env]
         #angular velocity
-        env.robot.root_states[idx_shadow_env, 10:13] = env.mimic_module.get_base_ang_vel_w_cur_step()[idx_main_env]
+        env.robot.root_states[idx_shadow_env, 10:13] = env.mimic_module.get_target_base_ang_vel_w_cur_step()[idx_main_env]
 
         env_ids_int32 = torch.arange(env.num_envs, device=env.device).to(dtype=torch.int32)        
         env.gym.set_dof_state_tensor_indexed(env.sim,
@@ -86,8 +97,8 @@ if __name__ == "__main__":
                                                     gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
         env.gym.refresh_rigid_body_state_tensor(env.sim)
         #Print the reward
-        print("[REWARD]R.mimic_tracking_dof_pos(env,None)[0]:{0}".format(R.mimic_tracking_dof_pos(env,None)[0]))
-        print("[REWARD]R.mimic_tracking_dof_pos_fl(env,None)[0]:{0}".format(R.mimic_tracking_dof_pos_fl(env,None)[0]))
-        print("[REWARD]R.mimic_tracking_dof_pos_fr(env,None)[0]:{0}".format(R.mimic_tracking_dof_pos_fr(env,None)[0]))
-        print("[REWARD]R.mimic_tracking_dof_pos_hr(env,None)[0]:{0}".format(R.mimic_tracking_dof_pos_hr(env,None)[0]))
-        print("[REWARD]R.mimic_tracking_dof_pos_hl(env,None)[0]:{0}".format(R.mimic_tracking_dof_pos_hl(env,None)[0]))
+        
+        print("[REWARD]R.mimic_tracking_feet_pos_LF(env,None)[0]:{0}".format(R.mimic_tracking_feet_pos_LF(env,None)[0]))
+        print("[REWARD]R.mimic_tracking_feet_pos_LH(env,None)[0]:{0}".format(R.mimic_tracking_feet_pos_LH(env,None)[0]))
+        print("[REWARD]R.mimic_tracking_feet_pos_RF(env,None)[0]:{0}".format(R.mimic_tracking_feet_pos_RF(env,None)[0]))
+        print("[REWARD]R.mimic_tracking_feet_pos_RH(env,None)[0]:{0}".format(R.mimic_tracking_feet_pos_RH(env,None)[0]))
