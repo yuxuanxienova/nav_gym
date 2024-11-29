@@ -14,7 +14,6 @@ class LocomotionMimicEnvCfg:
     class env:
         """Common configuration for environment."""
 
-<<<<<<< HEAD
         num_envs: int = 128
         """Number of environment instances."""
 
