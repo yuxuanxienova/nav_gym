@@ -10,4 +10,4 @@ ISAAC_WS="${PWD}/../../../"
 custom_flags="--nv -B $ISAAC_WS/nav_gym:/isaac_ws/nav_gym"
 echo $custom_flags
 
-singularity shell $custom_flags $ISAAC_WS/nav_gym/containers/singularity/nav_gym.sif
+singularity shell $custom_flags $ISAAC_WS/nav_gym/containers/singularity/navgym.sif

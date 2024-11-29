@@ -16,6 +16,7 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionMimicEnvCfg()
+    env_cfg.gym.headless = True
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
     # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)

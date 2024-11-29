@@ -14,7 +14,7 @@ class LocomotionMimicEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 128
+        num_envs: int = 512
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
