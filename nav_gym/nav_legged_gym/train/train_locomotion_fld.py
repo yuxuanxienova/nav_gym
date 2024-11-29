@@ -5,12 +5,13 @@ from nav_gym.nav_legged_gym.train.config_train_locomotion_fld import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.utils.config_utils import config_to_dict
 from nav_gym.nav_legged_gym.utils.config_utils import save_config_dict
+from nav_gym import NAV_GYM_ROOT_DIR
 import torch
 import os
 import time
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(__file__), "logs/locomotion_fld/" + time.strftime("%Y%m%d-%H%M%S"))
-    # checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241108-171530/" + "model_2400.pt")
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_fld/" + time.strftime("%Y%m%d-%H%M%S"))
+    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241108-171530/" + "model_2400.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)

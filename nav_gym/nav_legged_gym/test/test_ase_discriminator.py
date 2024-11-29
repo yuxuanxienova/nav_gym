@@ -25,7 +25,7 @@ if __name__ == "__main__":
     loaded_optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     # Load the saved states
-    log_dir = os.path.join(os.path.dirname(__file__), "logs/locomotion_ase/20241119-164451/")
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_ase/20241119-164451/")
     save_path = os.path.join(log_dir, "discriminator_encoder_300.pt")
     model.load(save_path, map_location=device, optimizer=loaded_optimizer)
 

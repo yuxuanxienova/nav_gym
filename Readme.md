@@ -20,7 +20,7 @@ echo "export WORK=/cluster/work/rsl/$USER" >> ~/.bashrc
 
 cd ~/isaac_ws/nav_gym/containers/singularity
 sudo tar -cvf navgym.tar navgym.sif
-sudo scp navgym.tar $EULER_USER@euler.ethz.ch:/cluster/work/rsl/$EULER_USER
+sudo scp -v navgym.tar $EULER_USER@euler.ethz.ch:/cluster/work/rsl/$EULER_USER
 
 ```
 

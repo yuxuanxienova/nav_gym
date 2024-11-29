@@ -4,13 +4,14 @@ from nav_gym.nav_legged_gym.envs.local_nav_env_rela import LocalNavEnv
 from nav_gym.learning.runners.on_policy_runner_nav_interact import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_local_nav import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
+from nav_gym import NAV_GYM_ROOT_DIR
 import torch
 import os
 import time
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(__file__), "logs/local_nav/" + time.strftime("%Y%m%d-%H%M%S"))
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/" + time.strftime("%Y%m%d-%H%M%S"))
     # log_dir = None
-    # checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/20241107-223815/" + "model_2400.pt")
+    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241107-223815/" + "model_2400.pt")
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 

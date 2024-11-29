@@ -11,6 +11,7 @@ from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_local_nav import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity
+from nav_gym import NAV_GYM_ROOT_DIR
 import torch
 import os
 import time
@@ -18,8 +19,8 @@ if __name__ == "__main__":
     interact_module = InteractModuleVelocity()
 
     # Set up your environment and policy
-    log_dir = os.path.join(os.path.dirname(__file__), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(__file__), "logs/local_nav/" + "model_11100.pt")
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/" + "model_11100.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
