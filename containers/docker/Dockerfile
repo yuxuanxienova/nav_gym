@@ -1,5 +1,5 @@
-FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04 AS builder
-
+# FROM nvidia/cuda:11.4.3-runtime-ubuntu20.04 AS builder
+FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04 AS builder
 # nvidia-container-runtime
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
@@ -19,10 +19,20 @@ RUN mkdir -p $WORKSPACE && mkdir -p $WORKSPACE/isaacgym && mkdir -p $WORKSPACE/n
 
 ENV CXX=/usr/bin/g++
 ENV CC=/usr/bin/gcc
-
 # Install dependencies
 RUN apt-get update --fix-missing && apt-get install -y apt-utils git wget vim openscad python3-dev python3-distutils python3-pip libpython3-dev
-RUN pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
+RUN apt-get update --fix-missing && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.8 python3.8-venv python3.8-dev python3.8-distutils && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
+    update-alternatives --set python /usr/bin/python3.8 && \
+    update-alternatives --set python3 /usr/bin/python3.8
+RUN  pip3 install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 
+# RUN apt-get update --fix-missing && apt-get install -y apt-utils git wget vim openscad python3-dev python3-distutils python3-pip libpython3-dev
+# RUN pip3 install torch==1.10.0+cu113 torchvision==0.11.1+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 RUN pip3 install matplotlib tensorboard trimesh warp-lang trimesh pytest GitPython numpy==1.23.0 imageio ninja pillow pyyaml scipy
 RUN pip3 install opencv-python
 RUN pip3 install open3d
