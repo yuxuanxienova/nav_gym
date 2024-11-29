@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     env_cfg = LocomotionMimicEnvCfg()
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    env_cfg.terrain_unity.env_origin_pattern = "point"
+    # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     
     src_file_path = inspect.getfile(LocomotionMimicEnvCfg)

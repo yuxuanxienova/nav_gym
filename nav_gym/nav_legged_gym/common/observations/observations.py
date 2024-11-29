@@ -273,6 +273,9 @@ def fld_reconstructed_dof_pos(env: "LocomotionFLDEnv", params):
     return env.fld_module.get_reconstructed_dof_pos().flatten(1, 2)
 
 #-------------------------- Mimiv Module Functions --------------------------
+def mimic_phase_cur_step(env: "LocomotionMimicEnv", params):
+    return env.mimic_module.get_target_phase_cur_step()
+
 def robot_feet_pos_b_LF(env: "LocomotionMimicEnv", params):
     return env.mimic_module.get_robot_feet_pos_b_LF()
 def robot_feet_pos_b_LH(env: "LocomotionMimicEnv", params):

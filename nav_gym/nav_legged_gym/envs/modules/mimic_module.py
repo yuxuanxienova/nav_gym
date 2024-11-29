@@ -26,6 +26,7 @@ class MimicModule:
         self.env_draw_handle = env.envs[0]
         self.viewer = env.viewer
         self.gym = env.gym
+        self.device = env.device
 
         self.robot = env.robot
         self.base_pos_w = self.robot.root_pos_w
@@ -114,6 +115,9 @@ class MimicModule:
         robot_feet_pos_b_RH = quat_rotate_inverse(self.base_quat_w, robot_feet_pos_w_RH - self.base_pos_w)
         return robot_feet_pos_b_RH
     
+    def get_target_phase_cur_step(self):
+        return torch.tensor([self.cur_step],device=self.device).reshape(1,1).repeat(self.num_envs,1)
+
     def get_target_feet_pos_b_LF_cur_step(self):
         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
         #return shape:(num_envs, 3)
