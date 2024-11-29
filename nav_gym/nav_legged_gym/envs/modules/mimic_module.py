@@ -238,21 +238,13 @@ class MimicModule:
         target_vel_end = base_pos + target_vel
 
         # Draw the robot's velocity vector in blue
-        # robot_line = gymutil.LineGeometry(
-        #     gymapi.Vec3(*base_pos),
-        #     gymapi.Vec3(*robot_vel_end),
-        #     gymapi.Vec3(0, 0, 1)  # Blue color
-        # )
         p1 = gymapi.Vec3(*base_pos)
         p2 = gymapi.Vec3(*robot_vel_end)
-        color = gymapi.Vec3(0, 0, 1)
-        # gymutil.draw_lines([robot_line], self.gym, self.viewer, env_handle, self.line_thickness)
-        gymutil.draw_line(p1, p2, color, self.gym, self.viewer, self.env_draw_handle)
+        color_blue = gymapi.Vec3(0, 0, 1)
+        gymutil.draw_line(p1, p2, color_blue, self.gym, self.viewer, self.env_draw_handle)
 
         # Draw the target velocity vector in red
-        # target_line = gymutil.LineGeometry(
-        #     gymapi.Vec3(*base_pos),
-        #     gymapi.Vec3(*target_vel_end),
-        #     gymapi.Vec3(1, 0, 0)  # Red color
-        # )
-        # gymutil.draw_lines([target_line], self.gym, self.viewer, env_handle, self.line_thickness)
+        p3 = gymapi.Vec3(*base_pos)
+        p4 = gymapi.Vec3(*target_vel_end)
+        color_red = gymapi.Vec3(1, 0, 0)
+        gymutil.draw_line(p3, p4, color_red, self.gym, self.viewer, self.env_draw_handle)
