@@ -16,81 +16,17 @@ if TYPE_CHECKING:
     ANY_ENV = Union[LocomotionMimicEnv]
 from collections import OrderedDict
 
-# class MimicModule:
-#     def __init__(self, env:"ANY_ENV"):
-#         self.num_envs = env.num_envs
-
-#         self.robot = env.robot
-#         self.base_pos_w = self.robot.root_pos_w
-#         self.base_quat_w = self.robot.root_quat_w
-#         self.base_lin_vel_w = self.robot.root_lin_vel_w
-#         self.base_ang_vel_w = self.robot.root_ang_vel_w
-#         self.projected_gravity_b = self.robot.projected_gravity_b
-#         self.dof_pos = self.robot.dof_pos
-#         self.default_dof_pos = self.robot.default_dof_pos
-#         self.dof_vel = self.robot.dof_vel
-#         #Load the Motion Data
-#         self.datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
-#         self.motion_names = ["motion_data_pace1.0.pt","motion_data_walk01_0.5.pt","motion_data_walk03_0.5.pt","motion_data_canter02_1.5.pt"]
-
-#         self.motion_loader = MotionLoader(
-#             device="cuda",
-#             file_names=self.motion_names,
-#             file_root=self.datasets_root,
-#             corruption_level=0.0,
-#             reference_observation_horizon=2,
-#             test_mode=False,
-#             test_observation_dim=None
-#         )
-#         self.motion_idx = 0
-#         self.num_motion_clips, self.num_steps, self.motion_features_dim = self.motion_loader.data_list[self.motion_idx].size()
-#         self.cur_step = 0
-
-#     def on_env_post_physics_step(self):
-#         self._update()
-#     def _update(self):
-#         self.cur_step += 1
-#         if self.cur_step >= self.num_steps:
-#             self.cur_step = 0
-# #---------------------------------Getters---------------------------------
-# #Observations
-#     def get_dof_pos_leg_fr_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         #shape: (num_envs, num_dofs)
-#         return self.motion_loader.get_dof_pos_leg_fr(motion_data_per_step)
-#     def get_dof_pos_leg_fl_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         #shape: (num_envs, num_dofs)
-#         return self.motion_loader.get_dof_pos_leg_fl(motion_data_per_step)
-#     def get_dof_pos_leg_hr_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         #shape: (num_envs, num_dofs)
-#         return self.motion_loader.get_dof_pos_leg_hr(motion_data_per_step)
-#     def get_dof_pos_leg_hl_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         #shape: (num_envs, num_dofs)
-#         return self.motion_loader.get_dof_pos_leg_hl(motion_data_per_step)
-
-#     def get_dof_pos_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         #shape: (num_envs, num_dofs)
-#         return self.motion_loader.get_dof_pos(motion_data_per_step)
-#     def get_dof_vel_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         return self.motion_loader.get_dof_vel(motion_data_per_step)
-#     def get_base_lin_vel_w_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         return quat_rotate(self.base_quat_w, self.motion_loader.get_base_lin_vel_b(motion_data_per_step))
-#     def get_base_ang_vel_w_cur_step(self):
-#         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
-#         return quat_rotate(self.base_quat_w, self.motion_loader.get_base_ang_vel_b(motion_data_per_step))
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
+from isaacgym import gymutil, gymapi
 class MimicModule:
     def __init__(self, env:"ANY_ENV"):
         self.num_envs = env.num_envs
+        self.env_draw_handle = env.envs[0]
+        self.viewer = env.viewer
+        self.gym = env.gym
+        self.device = env.device
 
         self.robot = env.robot
         self.base_pos_w = self.robot.root_pos_w
@@ -152,6 +88,10 @@ class MimicModule:
         N = 10  # Update plot every N steps
         if self.cur_step % N == 0:
             self.update_plot()
+        # Collect root linear velocities
+        robot_root_lin_vel = self.robot.root_lin_vel_w.clone()
+        target_root_lin_vel = self.get_target_base_lin_vel_w_cur_step()
+        self.visualize_velocities(robot_root_lin_vel, target_root_lin_vel)
 
     # ---------------------------------Getters---------------------------------
     # Observations
@@ -175,6 +115,9 @@ class MimicModule:
         robot_feet_pos_b_RH = quat_rotate_inverse(self.base_quat_w, robot_feet_pos_w_RH - self.base_pos_w)
         return robot_feet_pos_b_RH
     
+    def get_target_phase_cur_step(self):
+        return torch.tensor([self.cur_step],device=self.device).reshape(1,1).repeat(self.num_envs,1)
+
     def get_target_feet_pos_b_LF_cur_step(self):
         motion_data_per_step = self.motion_loader.data_list[self.motion_idx][0, self.cur_step].repeat(self.num_envs, 1)
         #return shape:(num_envs, 3)
@@ -276,3 +219,36 @@ class MimicModule:
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+    # Visualization method for velocities
+    def visualize_velocities(self, robot_root_lin_vel, target_root_lin_vel):
+        # Loop through each environment to draw velocities
+ 
+        env_handle = self.env_draw_handle
+        i=0
+        self.velocity_scale=1
+
+        #offset
+        offset = np.array([0,0,1])
+        # Get the base position of the robot
+        base_pos = self.base_pos_w[i].cpu().numpy() + offset
+
+        # Robot's current velocity
+        robot_vel = robot_root_lin_vel[i].cpu().numpy() * self.velocity_scale
+        robot_vel_end = base_pos + robot_vel
+
+        # Target velocity
+        target_vel = target_root_lin_vel[i].cpu().numpy() * self.velocity_scale
+        target_vel_end = base_pos + target_vel
+
+        # Draw the robot's velocity vector in blue
+        p1 = gymapi.Vec3(*base_pos)
+        p2 = gymapi.Vec3(*robot_vel_end)
+        color_blue = gymapi.Vec3(0, 0, 1)
+        gymutil.draw_line(p1, p2, color_blue, self.gym, self.viewer, self.env_draw_handle)
+
+        # Draw the target velocity vector in red
+        p3 = gymapi.Vec3(*base_pos)
+        p4 = gymapi.Vec3(*target_vel_end)
+        color_red = gymapi.Vec3(1, 0, 0)
+        gymutil.draw_line(p3, p4, color_red, self.gym, self.viewer, self.env_draw_handle)

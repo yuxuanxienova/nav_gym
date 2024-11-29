@@ -16,6 +16,10 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionMimicEnvCfg()
+    env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
+    # env_cfg.terrain_unity.env_origin_pattern = "point"
+    env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
+    
     src_file_path = inspect.getfile(LocomotionMimicEnvCfg)
     dest_dir = os.path.join(log_dir, "config")
     save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionMimicEnvCfg.py")

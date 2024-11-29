@@ -14,6 +14,7 @@ class LocomotionMimicEnvCfg:
     class env:
         """Common configuration for environment."""
 
+<<<<<<< HEAD
         num_envs: int = 128
         """Number of environment instances."""
 
@@ -101,6 +102,8 @@ class LocomotionMimicEnvCfg:
             # mimic_dof_vel: dict = {"func": O.mimic_dof_vel_cur_step, "noise": 1.5}
             # mimic_base_lin_vel: dict = {"func": O.mimic_base_lin_vel_w_cur_step, "noise": 0.1}
             # mimic_base_ang_vel: dict = {"func": O.mimic_base_ang_vel_w_cur_step, "noise": 0.2}
+            phase: dict = {"func": O.mimic_phase_cur_step, "noise": 0.00 }
+
             robot_feet_pos_b_LF: dict = {"func": O.robot_feet_pos_b_LF, "noise": 0.00}
             robot_feet_pos_b_LH: dict = {"func": O.robot_feet_pos_b_LH, "noise": 0.00}
             robot_feet_pos_b_RF: dict = {"func": O.robot_feet_pos_b_RF, "noise": 0.00}
@@ -143,9 +146,9 @@ class LocomotionMimicEnvCfg:
         tracking_mimic_tracking_dof_pos_fl = {"func": R.mimic_tracking_dof_pos_fl, "scale": 5.0}
         tracking_mimic_tracking_dof_pos_hr = {"func": R.mimic_tracking_dof_pos_hr, "scale": 5.0}
         tracking_mimic_tracking_dof_pos_hl = {"func": R.mimic_tracking_dof_pos_hl, "scale": 5.0}
-        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 3}
-        tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 1.0}
-        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 0.5}
+        tracking_dof_vel = {"func": R.mimic_tracking_dof_vel, "scale": 5}
+        tracking_base_lin_vel = {"func": R.mimic_tracking_base_lin_vel, "scale": 30.0}
+        tracking_base_ang_vel = {"func": R.mimic_tracking_base_ang_vel, "scale": 5}
 
     class terminations:
         # general params
