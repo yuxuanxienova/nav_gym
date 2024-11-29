@@ -4,7 +4,7 @@ from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_locomotion_fld import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.utils.config_utils import config_to_dict
-from nav_gym.nav_legged_gym.utils.config_utils import save_config
+from nav_gym.nav_legged_gym.utils.config_utils import save_config_dict
 import torch
 import os
 import time
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     env_cfg = LocomotionFLDEnvCfg()
     log_dir_env_cfg = log_dir + "/env_cfg.json"
     os.makedirs(log_dir_env_cfg, exist_ok=True)
-    save_config(env_cfg, log_dir + "/env_cfg.json")
+    save_config_dict(env_cfg, log_dir + "/env_cfg.json")
 
     env = LocomotionFLDEnv(env_cfg)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")

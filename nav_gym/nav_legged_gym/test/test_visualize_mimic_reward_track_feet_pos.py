@@ -72,12 +72,12 @@ if __name__ == "__main__":
         root_ori = env.robot.root_states[:, 3:7]
         #dof pos
         env.robot.dof_pos[idx_shadow_env] = env.robot.dof_pos[idx_main_env]
-        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]] = env.mimic_module.get_target_dof_pos_leg_fl_cur_step()[idx_main_env]
+        # env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fl"]] = env.mimic_module.get_target_dof_pos_leg_fl_cur_step()[idx_main_env]
         env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hl"]] = env.mimic_module.get_target_dof_pos_leg_hl_cur_step()[idx_main_env]
-        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fr"]] = env.mimic_module.get_target_dof_pos_leg_fr_cur_step()[idx_main_env]
-        env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]] = env.mimic_module.get_target_dof_pos_leg_hr_cur_step()[idx_main_env]
+        # env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_fr"]] = env.mimic_module.get_target_dof_pos_leg_fr_cur_step()[idx_main_env]
+        # env.robot.dof_pos[idx_shadow_env,env.mimic_module.motion_loader.leg_idx_dict_rel["dof_pos_leg_hr"]] = env.mimic_module.get_target_dof_pos_leg_hr_cur_step()[idx_main_env]
       
-        #feet pos
+        # #feet pos
         # env.robot.feet_positions_w[idx_shadow_env] = env.robot.feet_positions_w[idx_main_env]
         # env.robot.feet_positions_w[idx_shadow_env,env.mimic_module.motion_loader.feet_pos_name_to_id['LF_FOOT'],:] = (quat_rotate_inverse(root_ori,env.mimic_module.get_target_feet_pos_b_LF_cur_step()) + root_pos)[idx_shadow_env]
         # sphere_geoms_red.draw((quat_rotate(root_ori,env.mimic_module.get_target_feet_pos_b_LF_cur_step()) + root_pos)[idx_shadow_env], env.gym, env.viewer, env.envs[0])

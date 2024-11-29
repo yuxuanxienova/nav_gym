@@ -1,3 +1,4 @@
+from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 # python
 from dataclasses import dataclass, field, Field
 import importlib
@@ -257,27 +258,33 @@ def _custom_post_init(obj):
         if not callable(var):
             setattr(obj, key, deepcopy(var))
 
-def config_to_dict( obj: Any) -> dict:
-    """Recursively convert a configuration object to a dictionary."""
-    if isinstance(obj, (int, float, str, bool, type(None))):
-        return obj
-    elif isinstance(obj, (list, tuple)):
-        return [config_to_dict(item) for item in obj]
-    elif isinstance(obj, dict):
-        return {k: config_to_dict(v) for k, v in obj.items()}
-    else:
-        result = {}
-        for key in dir(obj):
-            if key.startswith('_') or callable(getattr(obj, key)):
-                continue
-            value = getattr(obj, key)
-            result[key] = config_to_dict(value)
-        return result
+# def config_to_dict( obj: Any) -> dict:
+#     """Recursively convert a configuration object to a dictionary."""
+#     if isinstance(obj, (int, float, str, bool, type(None))):
+#         return obj
+#     elif isinstance(obj, (list, tuple)):
+#         return [config_to_dict(item) for item in obj]
+#     elif isinstance(obj, dict):
+#         return {k: config_to_dict(v) for k, v in obj.items()}
+#     else:
+#         result = {}
+#         for key in dir(obj):
+#             if key.startswith('_') or callable(getattr(obj, key)):
+#                 continue
+#             value = getattr(obj, key)
+#             result[key] = config_to_dict(value)
+#         return result
 
-def save_config( cfg: Any, logdir: str, filename: str = "config.json"):
+def save_config_dict( config_dict: dict, logdir: str, filename: str = "config.json"):
     """Save the configuration to a JSON file in the log directory."""
-    config_dict = config_to_dict(cfg)
     file_path = os.path.join(logdir, filename)
     with open(file_path, 'w') as f:
         json.dump(config_dict, f, indent=4)
     print(f"Configuration saved to {file_path}")
+    
+import shutil
+def save_config_py_file(src_file_path: str, dest_dir: str, dest_file_name: str = "config.py"):
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_file_path = os.path.join(dest_dir, dest_file_name)
+    shutil.copy(src_file_path, dest_file_path)
+    print(f"Configuration file saved to {dest_file_path}")

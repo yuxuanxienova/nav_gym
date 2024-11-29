@@ -14,7 +14,7 @@ class LocomotionFLDEnvCfg:
     class env:
         """Common configuration for environment."""
 
-        num_envs: int = 256
+        num_envs: int = 5
         """Number of environment instances."""
 
         num_actions: int = 12  # joint positions, velocities or torques
@@ -136,7 +136,7 @@ class LocomotionFLDEnvCfg:
         # reward_tracking_reconstructed_feet_pos_fr = {"func": R.reward_tracking_reconstructed_feet_pos_fr, "scale": 1.0, "std": 0.25}
         # reward_tracking_reconstructed_feet_pos_hl = {"func": R.reward_tracking_reconstructed_feet_pos_hl, "scale": 1.0, "std": 0.25}
         # reward_tracking_reconstructed_feet_pos_hr = {"func": R.reward_tracking_reconstructed_feet_pos_hr, "scale": 1.0, "std": 0.25}
-        
+
 
     class terminations:
         # general params
