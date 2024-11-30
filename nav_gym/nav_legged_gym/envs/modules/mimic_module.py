@@ -70,9 +70,11 @@ class MimicModule:
 
     def _update(self):
         self.i += 1
-        self.cur_step = int(self.i // 4) 
-        if self.cur_step >= self.num_steps:
+        step = int(self.i // 4)
+        if step >= self.num_steps:
             self.i = 0
+            step = 0
+        self.cur_step = step
 
         # Collect data for plotting
         robot_dof_pos = self.dof_pos.clone()
