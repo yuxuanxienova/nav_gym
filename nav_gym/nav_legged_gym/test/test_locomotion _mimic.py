@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_mimic/20241127-034615/" + "model_10500.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_mimic/20241130-000213/" + "model_6000.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)

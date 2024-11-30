@@ -54,6 +54,7 @@ class MimicModule:
         self.motion_idx = 0
         self.num_motion_clips, self.num_steps, self.motion_features_dim = self.motion_loader.data_list[self.motion_idx].size()
         self.cur_step = 0
+        self.i = 0
 
         # Initialize data for plotting DOF positions
         self.dof_pos_robot_history = []
@@ -68,9 +69,10 @@ class MimicModule:
         self._update()
 
     def _update(self):
-        self.cur_step += 1
+        self.i += 1
+        self.cur_step = int(self.i // 4) 
         if self.cur_step >= self.num_steps:
-            self.cur_step = 0
+            self.i = 0
 
         # Collect data for plotting
         robot_dof_pos = self.dof_pos.clone()
@@ -85,13 +87,13 @@ class MimicModule:
         self.time_steps.append(self.cur_step)
 
         # Update the plot every N steps to reduce overhead
-        N = 10  # Update plot every N steps
-        if self.cur_step % N == 0:
-            self.update_plot()
+        # N = 10  # Update plot every N steps
+        # if self.cur_step % N == 0:
+        #     self.update_plot()
         # Collect root linear velocities
-        robot_root_lin_vel = self.robot.root_lin_vel_w.clone()
-        target_root_lin_vel = self.get_target_base_lin_vel_w_cur_step()
-        self.visualize_velocities(robot_root_lin_vel, target_root_lin_vel)
+        # robot_root_lin_vel = self.robot.root_lin_vel_w.clone()
+        # target_root_lin_vel = self.get_target_base_lin_vel_w_cur_step()
+        # self.visualize_velocities(robot_root_lin_vel, target_root_lin_vel)
 
     # ---------------------------------Getters---------------------------------
     # Observations
