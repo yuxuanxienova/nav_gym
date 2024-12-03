@@ -106,7 +106,7 @@ if __name__ == "__main__":
         env.gym.refresh_rigid_body_state_tensor(env.sim)
 
         # Get feet positions in world frame
-        feet_positions_world = env.robot.feet_positions_w # Shape: [1, num_feet, 3]
+        feet_positions_world = env.robot.feet_pos_w # Shape: [1, num_feet, 3]
         # print(feet_positions_world)
         num_feet = feet_positions_world.shape[1]
         # Transform feet positions to robot frame

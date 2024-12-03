@@ -28,7 +28,7 @@ sudo scp -v navgym.tar $EULER_USER@euler.ethz.ch:/cluster/work/rsl/$EULER_USER
 
 ```bash
 
-tar -xf $WORK/navgym.tar -C $SCRATCH
+tar -xvf $WORK/navgym.tar -C $SCRATCH
 
 ```
 

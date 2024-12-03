@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionFLDEnvCfg:
+class LocomotionPAEEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -201,7 +201,7 @@ class LocomotionFLDEnvCfg:
             # "feet_pos_fr": [46, 47, 48],
             # "feet_pos_hr": [49, 50, 51],
         }
-        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain"
+        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/fld_9950"
         load_fld_model = "model_9950.pt" 
     class task_sampler:
         name = "OfflineSampler"
@@ -232,7 +232,7 @@ class LocomotionFLDEnvCfg:
             enabled = False
             num_classes = 9
 if __name__ == "__main__":
-    cfg = LocomotionFLDEnvCfg()
+    cfg = LocomotionPAEEnvCfg()
     cfg_dict = class_to_dict(cfg)
     print(cfg.env.num_envs)
     print(cfg.gym.viewer.eye)

@@ -4,7 +4,7 @@ import pygame
 
 # Your existing imports
 # from legged_gym import LeggedNavEnv, LeggedNavEnvCfg, OnPolicyRunner, TrainConfig, class_to_dict
-from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionPAEEnvCfg
 from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_locomotion_fld import TrainConfig
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
-    env_cfg = LocomotionFLDEnvCfg()
+    env_cfg = LocomotionPAEEnvCfg()
     env_cfg.env.num_envs = 1
     env_cfg.robot.randomization.randomize_friction = False
     env_cfg.randomization.push_robots = False
