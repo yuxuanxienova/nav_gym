@@ -10,8 +10,8 @@ from nav_gym import NAV_GYM_ROOT_DIR
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
-    from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionPAEEnvCfg
-    ANY_ENV_CFG = Union[LocomotionEnvCfg, LocomotionPAEEnvCfg]
+    from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
+    ANY_ENV_CFG = Union[LocomotionEnvCfg, LocomotionFLDEnvCfg]
 
 class TerrainUnity:
     def __init__(self,gym,sim,device,num_envs,terrain_unity_cfg:"ANY_ENV_CFG.terrain_unity"):

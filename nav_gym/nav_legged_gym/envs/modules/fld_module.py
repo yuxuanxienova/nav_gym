@@ -49,11 +49,11 @@ class FLDModule:
 
         self.dt = env.dt
         #2. other arguments
-        self.decoded_obs_state_idx_dict = {}
+        self.target_fld_state_state_idx_dict = {}
         current_length = 0
         for state, ids in self.fld_state_idx_dict.items():
             if (state != "base_pos") and (state != "base_quat"):
-                self.decoded_obs_state_idx_dict[state] = list(range(current_length, current_length + len(ids)))
+                self.target_fld_state_state_idx_dict[state] = list(range(current_length, current_length + len(ids)))
                 current_length = current_length + len(ids)
         #3. Initialize buffers
         self.fld_dim_of_interest = torch.cat([torch.tensor(ids, device=self.device, dtype=torch.long, requires_grad=False) for state, ids in self.fld_state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
@@ -65,7 +65,7 @@ class FLDModule:
         self.params = torch.zeros(self.num_envs, self.fld_cfg.latent_channel, 4, dtype=torch.float, device=self.device, requires_grad=False)
         self.latent_manifold = torch.zeros(self.num_envs, self.fld_cfg.latent_channel * 2, dtype=torch.float, device=self.device, requires_grad=False)
         self.obs_pred = torch.zeros(self.num_envs, self.fld_observation_horizon,self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
-        self.decoded_obs = torch.zeros(self.num_envs, self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
+        self.target_fld_state = torch.zeros(self.num_envs, self.fld_observation_dim, dtype=torch.float, device=self.device, requires_grad=False)
         #4. Initialize Task Sampler
         if self.task_sampler_cfg.name == "OfflineSampler":
             self.task_sampler =  OfflineSampler(self.device)
@@ -107,7 +107,7 @@ class FLDModule:
                 # self.feet_pos,
                 ), dim=1
             )
-        for key, value in self.decoded_obs_state_idx_dict.items():
+        for key, value in self.target_fld_state_state_idx_dict.items():
             self.fld_state[:, value] = full_state[:, self.fld_state_idx_dict[key]].clone()
         # self.fld_observation_buf[:, :-1] = self.fld_observation_buf[:, 1:].clone()
         # self.fld_observation_buf[:, -1] = self.fld_state.clone()
@@ -132,13 +132,13 @@ class FLDModule:
         #reconstructed_z_tplus1: Dim(num_envs,latent_channel,horizon_length)
         with torch.no_grad():
             #reconstructed_z_tplus1: Dim(num_envs,latent_channel,horizon_length)
-            decoded_obs_buf_pred = self.fld.decoder(reconstructed_z_tplus1)
-            #decoded_obs_buf_pred: Dim(num_envs,input_channel,horizon_length)
-        decoded_obs_buf_raw = decoded_obs_buf_pred.swapaxes(1, 2)#Dim(num_envs,horizon_length,input_channel)
-        self.obs_pred = decoded_obs_buf_raw * self.state_transitions_std.reshape(1,1,-1) + self.state_transitions_mean.reshape(1,1,-1)
-        self.decoded_obs[:] = decoded_obs_buf_raw[:, -1, :] * self.state_transitions_std + self.state_transitions_mean#Dim(num_envs,input_channel)
+            target_fld_state_buf_pred = self.fld.decoder(reconstructed_z_tplus1)
+            #target_fld_state_buf_pred: Dim(num_envs,input_channel,horizon_length)
+        target_fld_state_buf_raw = target_fld_state_buf_pred.swapaxes(1, 2)#Dim(num_envs,horizon_length,input_channel)
+        self.obs_pred = target_fld_state_buf_raw * self.state_transitions_std.reshape(1,1,-1) + self.state_transitions_mean.reshape(1,1,-1)
+        self.target_fld_state[:] = target_fld_state_buf_raw[:, -1, :] * self.state_transitions_std + self.state_transitions_mean#Dim(num_envs,input_channel)
         # if self.cfg.fld.with_stand:
-        #     self.decoded_obs[:] = self.decoded_obs * (1 - self.standing_latent) + self.standing_latent * self.standing_obs
+        #     self.target_fld_state[:] = self.target_fld_state * (1 - self.standing_latent) + self.standing_latent * self.standing_obs
         self.latent_manifold[:] = torch.hstack(
             (
                 amplitude_t * torch.sin(2.0 * torch.pi * phase_t) + offset_t,
@@ -166,43 +166,43 @@ class FLDModule:
 
     def get_reconstructed_base_lin_vel(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:,torch.tensor(self.decoded_obs_state_idx_dict["base_lin_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:,torch.tensor(self.target_fld_state_state_idx_dict["base_lin_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
         
     def get_reconstructed_base_ang_vel(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["base_ang_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["base_ang_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
         
     def get_reconstructed_projected_gravity(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["projected_gravity"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["projected_gravity"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     def get_reconstructed_dof_pos_leg_fl(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     def get_reconstructed_dof_pos_leg_hl(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     def get_reconstructed_dof_pos_leg_fr(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     def get_reconstructed_dof_pos_leg_hr(self):
         #return: Dim(num_envs,prediction_horizon,3)
-        return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
+        return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     # def get_reconstructed_dof_feet_pos_fl(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["feet_pos_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
+    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     # def get_reconstructed_dof_feet_pos_fr(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["feet_pos_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
+    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     # def get_reconstructed_dof_feet_pos_hl(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["feet_pos_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
+    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     # def get_reconstructed_dof_feet_pos_hr(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.decoded_obs_state_idx_dict["feet_pos_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
+    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
 
     def get_reconstructed_dof_pos(self):
         #return: Dim(num_envs,prediction_horizon,12)

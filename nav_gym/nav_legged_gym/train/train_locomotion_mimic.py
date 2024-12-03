@@ -12,19 +12,20 @@ import time
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_mimic/" + time.strftime("%Y%m%d-%H%M%S"))
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_mimic/20241125-181423/" + "model_10500.pt")
-    # log_dir = None
+    log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionMimicEnvCfg()
-    env_cfg.gym.headless = True
+    env_cfg.env.num_envs=1
+    env_cfg.gym.headless = False
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    # env_cfg.terrain_unity.env_origin_pattern = "point"
+    env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     
-    src_file_path = inspect.getfile(LocomotionMimicEnvCfg)
-    dest_dir = os.path.join(log_dir, "config")
-    save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionMimicEnvCfg.py")
+    # src_file_path = inspect.getfile(LocomotionMimicEnvCfg)
+    # dest_dir = os.path.join(log_dir, "config")
+    # save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionMimicEnvCfg.py")
 
     env = LocomotionMimicEnv(env_cfg)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")

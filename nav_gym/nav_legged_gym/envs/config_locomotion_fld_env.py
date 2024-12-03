@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionPAEEnvCfg:
+class LocomotionFLDEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -100,10 +100,10 @@ class LocomotionPAEEnvCfg:
             fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
             fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
-            fld_reconstructed_base_lin_vel: dict = {"func": O.fld_reconstructed_base_lin_vel, "noise": 0.0}
-            fld_reconstructed_base_ang_vel: dict = {"func": O.fld_reconstructed_base_ang_vel, "noise": 0.0}
-            fld_reconstructed_projected_gravity: dict = {"func": O.fld_reconstructed_projected_gravity, "noise": 0.0}
-            fld_reconstructed_dof_pos: dict = {"func": O.fld_reconstructed_dof_pos, "noise": 0.0}
+            fld_reconstructed_base_lin_vel: dict = {"func": O.fld_target_base_lin_vel, "noise": 0.0}
+            fld_reconstructed_base_ang_vel: dict = {"func": O.fld_target_base_ang_vel, "noise": 0.0}
+            fld_reconstructed_projected_gravity: dict = {"func": O.fld_target_projected_gravity, "noise": 0.0}
+            fld_reconstructed_dof_pos: dict = {"func": O.fld_target_dof_pos, "noise": 0.0}
         # teacher_obs_list = ["prop", "exte", "priv"]
 
     class rewards:
@@ -232,7 +232,7 @@ class LocomotionPAEEnvCfg:
             enabled = False
             num_classes = 9
 if __name__ == "__main__":
-    cfg = LocomotionPAEEnvCfg()
+    cfg = LocomotionFLDEnvCfg()
     cfg_dict = class_to_dict(cfg)
     print(cfg.env.num_envs)
     print(cfg.gym.viewer.eye)

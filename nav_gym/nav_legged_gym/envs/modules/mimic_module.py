@@ -93,9 +93,9 @@ class MimicModule:
         # if self.cur_step % N == 0:
         #     self.update_plot()
         # Collect root linear velocities
-        # robot_root_lin_vel = self.robot.root_lin_vel_w.clone()
-        # target_root_lin_vel = self.get_target_base_lin_vel_w_cur_step()
-        # self.visualize_velocities(robot_root_lin_vel, target_root_lin_vel)
+        robot_root_lin_vel = self.robot.root_lin_vel_w.clone()
+        target_root_lin_vel = self.get_target_base_lin_vel_w_cur_step()
+        self.visualize_velocities(robot_root_lin_vel, target_root_lin_vel)
 
     # ---------------------------------Getters---------------------------------
     # Observations

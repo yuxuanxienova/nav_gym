@@ -103,11 +103,8 @@ class LocomotionPAEEnvCfg:
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
             # fld_latent_onehot: dict = {"func": O.fld_latent_onehot, "noise": 0.0}---------------------TODO
-            fld_reconstructed_base_lin_vel: dict = {"func": O.fld_reconstructed_base_lin_vel, "noise": 0.0}
-            fld_reconstructed_base_ang_vel: dict = {"func": O.fld_reconstructed_base_ang_vel, "noise": 0.0}
-            fld_reconstructed_projected_gravity: dict = {"func": O.fld_reconstructed_projected_gravity, "noise": 0.0}
-            fld_reconstructed_dof_pos: dict = {"func": O.fld_reconstructed_dof_pos, "noise": 0.0}
-        # teacher_obs_list = ["prop", "exte", "priv"]
+ 
+
 
     class rewards:
         # general params
