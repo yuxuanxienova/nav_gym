@@ -37,7 +37,7 @@ class MimicModule:
         self.dof_pos = self.robot.dof_pos
         self.default_dof_pos = self.robot.default_dof_pos
         self.dof_vel = self.robot.dof_vel
-        self.feet_pos_w = self.robot.feet_positions_w#(num_envs,num_feets,3)
+        self.feet_pos_w = self.robot.feet_pos_w#(num_envs,num_feets,3)
         # Load the Motion Data
         self.datasets_root = os.path.join(NAV_GYM_ROOT_DIR + "/resources/fld/motion_data/")
         self.motion_names = ["motion_data_pace1.0_with_feet_pos.pt"]

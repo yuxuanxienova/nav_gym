@@ -13,7 +13,43 @@ class LeggedRobotCfg(ArticulationCfg):
 
 
 # Ready to use robots
-
+anymal_d_robot_pae_cfg = LeggedRobotCfg(
+    asset_name="anymal_d",
+    asset_file = "anymal_d/urdf/anymal_d.urdf",
+    feet_names=".*FOOT",
+    self_collisions=True,
+    replace_cylinder_with_capsule=True,
+    init_state=LeggedRobotCfg.InitState(
+        pos=(0.0, 0.0, 0.7),
+        rot = (0.0, 0.0, 0.0, 1.0),  # x,y,z,w [quat]
+        lin_vel = (0.0, 0.0, 0.0),  # x,y,z [m/s]
+        ang_vel = (0.0, 0.0, 0.0),  # x,y,z [rad/s]
+        dof_pos = {
+            "LF_HAA": -0.13859,
+            "LF_HFE": 0.480936,
+            "LF_KFE": -0.761428,
+            "RF_HAA": 0.13859,
+            "RF_HFE": 0.480936,
+            "RF_KFE": -0.761428,
+            "LH_HAA": -0.13859,
+            "LH_HFE": -0.480936,
+            "LH_KFE": 0.761428,
+            "RH_HAA": 0.13859,
+            "RH_HFE": -0.480936,
+            "RH_KFE": 0.761428,
+        },
+    ),
+    actuators=[{"actuator": anymal_d_actuator_cfg, "dof_names": [".*"]}],
+    # actuators=[{"actuator": anymal_simple_actuator_cfg, "dof_names": [".*"], "p_gains": {".*": 80.0},
+    #     "d_gains": {".*": 2.0},}],
+    randomization=LeggedRobotCfg.Randomization(
+        randomize_added_mass=True,
+        randomize_friction=True,
+        friction_range=(0., 1.5),  # friction coefficients are averaged, mu = 0.5*(mu_terrain + mu_foot)
+        # friction_range=(0.75, 1.5),
+        added_mass_range=(-5.0, 5.0),
+    ),
+)
 
 anymal_d_robot_cfg = LeggedRobotCfg(
     asset_name="anymal_d",

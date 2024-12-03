@@ -139,12 +139,12 @@ class LocomotionEnv:
         # -- robot
         self.robot.init_buffers()
         #----history
-        self.dof_pos_history = torch.zeros(
-            self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
-        ).to(self.device)
-        self.dof_vel_history = torch.zeros(
-            self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
-        ).to(self.device)
+        # self.dof_pos_history = torch.zeros(
+        #     self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
+        # ).to(self.device)
+        # self.dof_vel_history = torch.zeros(
+        #     self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
+        # ).to(self.device)
     def _init_external_forces(self):
         self.external_forces = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
         self.external_torques = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
@@ -176,8 +176,8 @@ class LocomotionEnv:
         self.episode_length_buf[env_ids] = 0
         self.reset_buf[env_ids] = 1
         #----reset hsitory
-        self.dof_pos_history[env_ids] = 0
-        self.dof_vel_history[env_ids] = 0
+        # self.dof_pos_history[env_ids] = 0
+        # self.dof_vel_history[env_ids] = 0
         # self.push_robots_buf[env_ids] = torch.randint(
         #     0, self._push_interval, (len(env_ids), 1), device=self.device
         # ).squeeze()
@@ -261,7 +261,7 @@ class LocomotionEnv:
             #sensors update
             self.sensor_manager.update()
             # update substep history
-            self.update_substep_history()
+            # self.update_substep_history()
 
         self.robot.net_contact_forces[:] = contact_forces
         # render viewer
@@ -304,17 +304,17 @@ class LocomotionEnv:
             gymapi.ENV_SPACE,
         )
 
-    def update_substep_history(self):
-        if self.num_envs > 1:
-            self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :]
-            self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :]
-            self.dof_pos_history[:, -1, :] = self.robot.dof_pos
-            self.dof_vel_history[:, -1, :] = self.robot.dof_vel
-        else:
-            self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :].clone()
-            self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :].clone()
-            self.dof_pos_history[:, -1, :] = self.robot.dof_pos
-            self.dof_vel_history[:, -1, :] = self.robot.dof_vel
+    # def update_substep_history(self):
+        # if self.num_envs > 1:
+        #     self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :]
+        #     self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :]
+        #     self.dof_pos_history[:, -1, :] = self.robot.dof_pos
+        #     self.dof_vel_history[:, -1, :] = self.robot.dof_vel
+        # else:
+        #     self.dof_pos_history[:, :-1, :] = self.dof_pos_history[:, 1:, :].clone()
+        #     self.dof_vel_history[:, :-1, :] = self.dof_vel_history[:, 1:, :].clone()
+        #     self.dof_pos_history[:, -1, :] = self.robot.dof_pos
+        #     self.dof_vel_history[:, -1, :] = self.robot.dof_vel
 
     def render(self, sync_frame_time=True):
         """Render the viewer."""

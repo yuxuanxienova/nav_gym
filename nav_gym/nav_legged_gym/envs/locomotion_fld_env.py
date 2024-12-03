@@ -11,7 +11,7 @@ import torch
 import abc
 import json
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionFLDEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_fld_env import LocomotionPAEEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -27,10 +27,10 @@ from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSpher
 from nav_gym.nav_legged_gym.envs.modules.fld_module import FLDModule
 class LocomotionFLDEnv:
     robot: LeggedRobot
-    cfg: LocomotionFLDEnvCfg
+    cfg: LocomotionPAEEnvCfg
     """Environment for locomotion tasks using a legged robot."""
 #-------- 1. Initialize the environment--------
-    def __init__(self, cfg: LocomotionFLDEnvCfg):
+    def __init__(self, cfg: LocomotionPAEEnvCfg):
         #1. Store the environment information from config
         self._init_done = False
         self.cfg = cfg

@@ -125,6 +125,6 @@ if __name__ == "__main__":
             env.gym.refresh_rigid_body_state_tensor(env.sim)
 
             # Get the feet positions
-            env.robot.feet_positions_w #(num_envs,num_feets,3)
+            env.robot.feet_pos_w #(num_envs,num_feets,3)
             
 
