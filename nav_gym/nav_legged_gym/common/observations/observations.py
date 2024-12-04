@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
     from nav_gym.nav_legged_gym.envs.local_nav_env import LocalNavEnv
     from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
     from nav_gym.nav_legged_gym.envs.locomotion_mimic_env import LocomotionMimicEnv
 
     ANY_ENV = Union[LocomotionEnv]
@@ -272,6 +273,12 @@ def fld_latent_others(env: "LocomotionFLDEnv", params):
 # def fld_target_dof_pos(env: "LocomotionFLDEnv", params):
 #     return env.fld_module.dof_pos - env.fld_module.default_dof_pos
 
+def fld_one_hot(env: "LocomotionPAEEnv", params):
+    #motions: Dim: [n_motions*n_trajs, n_slide_win, n_obs_dim, obs_horizon]=[10, 219, 21, 31]
+    one_hot_encoding = torch.zeros(env.num_envs, env.fld_module.task_sampler.motions.shape[0], device=env.device, requires_grad=False)#Dim: (num_envs, num_motions)
+    idx = torch.vstack((torch.arange(env.num_envs, device=env.device), env.fld_module.motion_idx)).T
+    one_hot_encoding[idx[:, 0], idx[:, 1]] = 1
+    return one_hot_encoding
 #-------------------------- Mimiv Module Functions --------------------------
 def mimic_phase_cur_step(env: "LocomotionMimicEnv", params):
     return env.mimic_module.get_target_phase_cur_step()

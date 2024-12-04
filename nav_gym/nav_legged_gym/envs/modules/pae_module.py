@@ -109,10 +109,10 @@ class FLD_PAEModule:
         self._update_fld_observation_buf()
         self._update_latent_phase_pae()
 
-        # robot_root_lin_vel_w = quat_rotate(self.base_quat,self.fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
-        # target_root_lin_vel_w = quat_rotate(self.base_quat,self.target_fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
+        robot_root_lin_vel_w = quat_rotate(self.base_quat,self.fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
+        target_root_lin_vel_w = quat_rotate(self.base_quat,self.target_fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
         
-        # self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
+        self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
         pass
     def _update_fld_observation_buf(self):
         full_state = torch.cat(
@@ -164,6 +164,7 @@ class FLD_PAEModule:
     def _sample_latent_encoding(self,env_ids):
         if len(env_ids) == 0:
             return
+        self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         #self.task_sampler.data: Dim: [n_motions, n_steps, n_latent_features]=[10, 169, 16]
         #self.task_sampler.data[self.motion_idx[env_ids], self.cur_steps[env_ids]]: Dim: [num_envs, n_latent_features]=[num_envs, 16]
         self.latent_encoding[env_ids, :, :] = self.task_sampler.data[self.motion_idx[env_ids], self.cur_steps[env_ids]].view(len(env_ids), 4, self.fld_latent_channel).swapaxes(1, 2)

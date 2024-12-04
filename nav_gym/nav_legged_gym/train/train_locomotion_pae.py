@@ -17,11 +17,11 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionPAEEnvCfg()
-    env_cfg.env.num_envs = 1024
+    env_cfg.env.num_envs = 256
     # env_cfg.env.num_envs = 4096
-    env_cfg.gym.headless = True
+    env_cfg.gym.headless = False
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    env_cfg.terrain_unity.env_origin_pattern = "point"
+    # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     
     src_file_path = inspect.getfile(LocomotionPAEEnvCfg)
