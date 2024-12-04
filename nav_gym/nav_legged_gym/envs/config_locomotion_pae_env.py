@@ -127,7 +127,7 @@ class LocomotionPAEEnvCfg:
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----fld rewards-----
-        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 10.0, "exp_scale": 1.0}
+        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 1.0, "exp_scale": 1.0}
         reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 1.0, "exp_scale": 0.8}
         reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 1.0, "exp_scale": 3.0}
         reward_tracking_reconstructed_dof_pos_leg_fl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fl, "scale": 1.0, "exp_scale": 2.0}
