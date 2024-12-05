@@ -263,7 +263,6 @@ def fld_latent_phase_cos(env: "LocomotionFLDEnv", params):
     return torch.sin(2 * torch.pi * env.fld_module.latent_encoding[:, :, 0])
 def fld_latent_others(env: "LocomotionFLDEnv", params):
     return (env.fld_module.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2) - env.fld_module.latent_param_mean) / env.fld_module.latent_param_std
-
 # def fld_target_base_lin_vel(env: "LocomotionFLDEnv", params):
 #     return env.fld_module.base_lin_vel
 # def fld_target_base_ang_vel(env: "LocomotionFLDEnv", params):

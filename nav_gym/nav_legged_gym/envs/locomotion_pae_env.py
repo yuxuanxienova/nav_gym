@@ -425,7 +425,7 @@ class LocomotionPAEEnv:
         return self.obs_buf, self.extras
     # def get_privileged_observations(self):
     #     return self.obs_manager.get_obs_from_group("privileged")
-    def  set_observation_buffer(self):
+    def set_observation_buffer(self):
         self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
         self.extras["observations"] = self.obs_dict
     def set_flag_enable_reset(self, enable_reset: bool):

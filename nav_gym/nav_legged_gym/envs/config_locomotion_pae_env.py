@@ -55,16 +55,16 @@ class LocomotionPAEEnvCfg:
                           }
     class randomization:
         # randomize_friction: bool = True
-        friction_range: Tuple = (0.5, 1.25)
+        friction_range: Tuple = (0,0)#(0.5, 1.25)
         randomize_base_mass: bool = True
-        added_mass_range: Tuple = (-1.0, 1.0)
+        added_mass_range: Tuple = (0,0)#(-1.0, 1.0)
         push_robots: bool = False
         push_interval_s: float = 15  # push applied each time interval [s]
-        init_pos: Tuple = (-1.0, 1.0)  # max xy position added to default position [m]
-        init_yaw: Tuple = (-3.14, 3.14)  # max yaw angle added to default orientation [rad]
+        init_pos: Tuple = (0,0)#(-1.0, 1.0)  # max xy position added to default position [m]
+        init_yaw: Tuple = (0,0)#(-3.14, 3.14)  # max yaw angle added to default orientation [rad]
         init_roll_pitch: Tuple = (0.0, 0.0)  # max roll and pitch angles added to default orientation [rad]
-        push_vel: Tuple = (-1.0, 1.0)  # velocity offset added by push [m/s]
-        external_force: Tuple = (-0.0, 0.0)  # wind force applied at base, constant over episode [N]
+        push_vel: Tuple = (0,0)#(-1.0, 1.0)  # velocity offset added by push [m/s]
+        external_force: Tuple = (0,0)#(-0.0, 0.0)  # wind force applied at base, constant over episode [N]
         external_torque: Tuple = (-0.0, 0.0)  # wind torque applied at base, constant over episode [Nm]
         external_foot_force: Tuple = (-0.0, 0.0)  # wind force applied at feet, constant over episode [N]
 
@@ -91,9 +91,11 @@ class LocomotionPAEEnvCfg:
             # --add this to every group--
             add_noise: bool = False  # turns off the noise in all observations
             #---------------------------
-            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.01, "scale": 1.0}
             base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.0, "scale": 2.0}
             base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.0, "scale": 0.25}
+            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.01, "scale": 1.0}
+            
+            
 
         class fld:
             # --add this to every group--
@@ -102,7 +104,7 @@ class LocomotionPAEEnvCfg:
             fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
-            # fld_latent_onehot: dict = {"func": O.fld_latent_onehot, "noise": 0.0}---------------------TODO
+            fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
  
 
 

@@ -117,6 +117,7 @@ class OnPolicyRunner:
         self.tot_time = 0
         self.current_learning_iteration = 0
         # self.git_status_repos = [nav_gym.learning.__file__]
+        self.num_obs = actor_model.num_obs
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
