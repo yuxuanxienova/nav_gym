@@ -254,6 +254,8 @@ class LocomotionPAEEnv:
         contact_forces = torch.zeros_like(self.robot.net_contact_forces)
         for _ in range(self.cfg.control.decimation):
             #Simulation loop interval = sim_params.dt (0.0025[s])
+            print("[INFO][step][self.common_step_counter]{0}".format(self.common_step_counter))
+            print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
             self._apply_external_disturbance()
@@ -292,11 +294,20 @@ class LocomotionPAEEnv:
             - scaling of actions (based on configuration)
         """
         # clip actions and move to env device
+        # actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
+        # actions = actions.to(self.device)
+        # self.actions = actions
+        # # -- default scaling of actions
+        # scaled_actions = self.cfg.control.action_scale * self.actions
+
+        #----------------------debug--------------
+            # clip actions and move to env device
         actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
         actions = actions.to(self.device)
-        self.actions = actions
         # -- default scaling of actions
-        scaled_actions = self.cfg.control.action_scale * self.actions
+        scaled_actions = self.cfg.control.action_scale * actions
+        self.actions = scaled_actions
+        #------------------------------------------
         return scaled_actions
     def _apply_actions(self, actions):
         """Apply actions to simulation buffers in the environment."""
@@ -426,7 +437,23 @@ class LocomotionPAEEnv:
     # def get_privileged_observations(self):
     #     return self.obs_manager.get_obs_from_group("privileged")
     def set_observation_buffer(self):
-        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        # self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        #debug-------
+        obs_list = []
+        obs_list.append(self.obs_manager.obs_per_func["base_lin_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["base_ang_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["projected_gravity"])
+
+        obs_list.append(self.obs_manager.obs_per_func["dof_pos"])
+        obs_list.append(self.obs_manager.obs_per_func["dof_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["actions"])
+
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_sin"])
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_onehot"])
+
+        self.obs_buf = torch.cat(obs_list, dim=1)
+        #-------------
         self.extras["observations"] = self.obs_dict
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset

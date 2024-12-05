@@ -42,19 +42,34 @@ if __name__ == "__main__":
     train_cfg = WildAnymalDPPOCfg()
     train_cfg_dict = class_to_dict(train_cfg)
     actor_critic = ActorCritic(runner.num_obs, runner.num_obs, env.num_actions, **train_cfg_dict["policy"]).to(env.device)
-    path = "/home/yuxuan/isaac_ws/nav_gym/nav_gym/nav_legged_gym/test/pae_origin_policy/model_7500.pt"
+    path = "/home/yuxuan/isaac_ws/nav_gym/nav_gym/nav_legged_gym/test/pae_origin_policy/model_8000.pt"
     loaded_dict = torch.load(path)
     actor_critic.load_state_dict(loaded_dict["model_state_dict"])
+    actor_critic.eval()
+    policy = actor_critic.act_inference
 
+    #Main loop
+    running = True
+    while running:
+        # Run the policy and step the environment
+        #----------set obs manually------------
+        obs = torch.zeros_like(obs).to(env.device)
+        default_dof_pos = torch.tensor([-0.1386,  0.4809, -0.7614, -0.1386, -0.4809,  0.7614,  0.1386,  0.4809,
+         -0.7614,  0.1386, -0.4809,  0.7614], device=env.device)
+   
+        #------------------------------
+        action = policy(obs)
 
-    # Main loop
-    # running = True
-    # while running:
-
-    #     # Run the policy and step the environment
-    #     action = policy(obs)
-    #     obs, _, _, extras = env.step(action)
-    #     env.render()
+        #---------------debug---------------
+        print("obs", obs)
+        print("actions", action)
+        print("env.fld_module.latent_encoding[:, :, 0]",env.fld_module.latent_encoding[:, :, 0])
+        action = action + default_dof_pos/0.2
+        #-----------------------------------
+        obs, _, _, extras = env.step(action)
+        print("obs2", obs)
+        print("env.fld_module.latent_encoding[:, :, 0]2",env.fld_module.latent_encoding[:, :, 0])
+        env.render()
 
 
     

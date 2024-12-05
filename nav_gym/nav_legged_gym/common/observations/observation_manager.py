@@ -8,7 +8,12 @@ class ObsManager:
         #1. Initializing Attributes
         self.obs_per_group = {}
         self.obs_dims_per_group = {}
+        #-----------------------
+        self.func_name_to_func = {}
+        self.func_to_func_name = {}
+        #-------------------------
         self.obs = {}
+        self.obs_per_func = {}
         if class_to_dict(env.cfg).get("observations", None) is None:
             return
         obs_cfg_dict =class_to_dict(env.cfg.observations)
@@ -21,7 +26,7 @@ class ObsManager:
             obs_dim = 0
             add_noise = obs_group_dict["add_noise"]
             #2.2 Iterating Over Observation Functions in the Group
-            for _, params in obs_group_dict.items():
+            for func_name, params in obs_group_dict.items():
                 if not isinstance(params, dict):
                     continue
                 if not add_noise:  # turn off all noise
@@ -41,6 +46,10 @@ class ObsManager:
                 #     env.enable_sensor(params["sensor"])
                 #Accumulating Observation Dimensions
                 obs_dim += function(env, params).shape[1]
+                #-----------------------
+                self.func_name_to_func[func_name] = function
+                self.func_to_func_name[function] = func_name
+                #-----------------------------
             self.obs_dims_per_group[group_name] = obs_dim
 
     def compute_obs(self, env, obs_group=None):
@@ -80,6 +89,9 @@ class ObsManager:
                     # obs = torch.nan_to_num(obs, nan=0.0)
                 #Collecting Processed Observations
                 obs_list.append(obs)
+                #-----------------------
+                self.obs_per_func[self.func_to_func_name[function]] = obs
+                #-----------------------
             #3.2 Concatenating Observations Within the Group
             self.obs[group] = torch.cat(obs_list, dim=1)
         return self.obs

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionPAEEnvCfg()
-    env_cfg.env.num_envs = 1
+    env_cfg.env.num_envs = 256
     # env_cfg.env.num_envs = 4096
     env_cfg.gym.headless = False
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
