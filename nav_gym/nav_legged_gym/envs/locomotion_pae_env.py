@@ -66,10 +66,11 @@ class LocomotionPAEEnv:
         self._init_external_forces()
 
         #8. Prepare mdp helper managers
-        self.fld_module = FLD_PAEModule(self)
+       
         self.sensor_manager = SensorManager(self)
         self.command_generator: CommandBase = eval(self.cfg.commands.class_name)(self.cfg.commands, self)
         self.reward_manager = RewardManager(self)
+        self.fld_module = FLD_PAEModule(self)
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)

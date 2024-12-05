@@ -13,8 +13,8 @@ from nav_gym import NAV_GYM_ROOT_DIR
 from nav_gym.learning.modules.fld.fld import FLD
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
-    from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
-    ANY_ENV = Union[LocomotionFLDEnv]
+    from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
+    ANY_ENV = Union[LocomotionPAEEnv]
 from collections import OrderedDict
 
 def remove_module_prefix(state_dict):
@@ -53,11 +53,22 @@ class FLD_PAEModule:
         self.num_envs = env.num_envs
         self.device = env.device
 
+
         self.dt = env.dt
+        self.max_episode_length_s = self.env_cfg.env.episode_length_s
+        self.max_episode_length = np.ceil(self.max_episode_length_s / self.dt)
 
         self.env_draw_handle = env.envs[0]
         self.gym = env.gym
         self.viewer = env.viewer
+        self.common_step_counter = env.common_step_counter
+
+        self.reward_manager = env.reward_manager
+        self.tracking_reconstructed_terms = []
+        for rew_name,rew_fun in self.reward_manager.reward_functions.items():
+            if "reward_tracking_reconstructed" in rew_name:
+                self.tracking_reconstructed_terms.append(rew_name)
+
         #2. other arguments
         self.target_fld_state_state_idx_dict = {}
         current_length = 0
@@ -157,14 +168,31 @@ class FLD_PAEModule:
         self.target_fld_state[:] = target_fld_state_wins_raw[:, -1, :] * self.state_transitions_std + self.state_transitions_mean#Dim(num_envs,input_channel)
 
     def on_env_reset_idx(self,env_ids):
+        if self.env_cfg.task_sampler.curriculum and self.common_step_counter % self.max_episode_length == 0:
+            self.update_task_sampler_curriculum(env_ids)
         self._sample_latent_encoding(env_ids)
     def on_env_resample_commands(self,env_ids):
         self._sample_latent_encoding(env_ids)
-
+    def update_task_sampler_curriculum(self, env_ids):
+        # If the tracking reward is above 80% of the maximum, increase the range of commands
+        if not hasattr(self, "task_sampler_curriculum_flag"):
+            self.task_sampler_curriculum_flag = torch.zeros((self.num_envs, self.task_sampler.motions.shape[0]), dtype=torch.long, device=self.device, requires_grad=False)
+        self.task_sampler_curriculum_flag[env_ids, self.motion_idx[env_ids]] = True
+        for name in self.tracking_reconstructed_terms:
+            self.task_sampler_curriculum_flag[env_ids, self.motion_idx[env_ids]] &= (torch.mean(self.reward_manager.episode_sums[name][env_ids]) / self.max_episode_length
+            > self.env_cfg.task_sampler.curriculum_performance_threshold * self.reward_manager.reward_params[name]["scale"])
     def _sample_latent_encoding(self,env_ids):
         if len(env_ids) == 0:
             return
-        self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
+        if self.env_cfg.task_sampler.curriculum:
+            self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample_curriculum(len(env_ids), self.task_sampler_curriculum_flag)
+        else:
+            self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
+        # self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
+        #-----------debug-use------------
+        self.motion_idx[env_ids] = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
+        self.cur_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
+        #--------------------------------
         #self.task_sampler.data: Dim: [n_motions, n_steps, n_latent_features]=[10, 169, 16]
         #self.task_sampler.data[self.motion_idx[env_ids], self.cur_steps[env_ids]]: Dim: [num_envs, n_latent_features]=[num_envs, 16]
         self.latent_encoding[env_ids, :, :] = self.task_sampler.data[self.motion_idx[env_ids], self.cur_steps[env_ids]].view(len(env_ids), 4, self.fld_latent_channel).swapaxes(1, 2)
