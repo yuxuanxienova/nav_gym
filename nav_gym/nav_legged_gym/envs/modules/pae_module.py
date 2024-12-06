@@ -271,6 +271,7 @@ class FLD_PAEModule:
         p4 = gymapi.Vec3(*target_vel_end)
         color_red = gymapi.Vec3(1, 0, 0)
         gymutil.draw_line(p3, p4, color_red, self.gym, self.viewer, self.env_draw_handle)
+
     # Method to initialize the plot
     def _initialize_plot(self):
         plt.ion()  # Turn on interactive mode
@@ -288,11 +289,38 @@ class FLD_PAEModule:
             self.lines_desired.append(line_desired)
         self.axs[-1].set_xlabel('Time Step')
         self.plot_initialized = True
+
     def _update_plot_data(self):
         # Collect data for plotting
-        robot_dof_pos = self.dof_pos.clone()
-        desired_dof_pos = self.get_target_dof_pos()
+        robot_dof_pos_fl = self.fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
+        desired_dof_pos_fl = self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
 
+        robot_dof_pos_hl = self.fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
+        desired_dof_pos_hl = self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+        robot_dof_pos_fr = self.fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
+        desired_dof_pos_fr = self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+        robot_dof_pos_hr = self.fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
+        desired_dof_pos_hr = self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+        robot_dof_pos = torch.stack(
+                    (
+                        robot_dof_pos_fl,
+                        robot_dof_pos_hl,
+                        robot_dof_pos_fr,
+                        robot_dof_pos_hr
+                        ),dim=1
+                    ).reshape(self.num_envs,-1)
+        
+        desired_dof_pos = torch.stack(
+                    (
+                        desired_dof_pos_fl,
+                        desired_dof_pos_hl,
+                        desired_dof_pos_fr,
+                        desired_dof_pos_hr
+                        ),dim=1
+                    ).reshape(self.num_envs,-1)    
         # Select the first environment for plotting
         robot_dof_pos_env0 = robot_dof_pos[0].cpu().numpy()
         desired_dof_pos_env0 = desired_dof_pos[0].cpu().numpy()
@@ -307,7 +335,7 @@ class FLD_PAEModule:
         if not self.plot_initialized:
             self._initialize_plot()
 
-        M = 100  # Number of time steps to display (adjust as needed)
+        M = 500  # Number of time steps to display (adjust as needed)
         dof_pos_robot_history = np.array(self.dof_pos_robot_history)  # Shape: (num_time_steps, num_dofs)
         dof_pos_motion_history = np.array(self.dof_pos_motion_history)
         time_steps = np.array(self.time_steps)
@@ -320,7 +348,7 @@ class FLD_PAEModule:
             # Adjust time steps to be sequential for plotting
             time_steps = np.arange(len(time_steps))
 
-        for i in range(self.num_dofs):
+        for i in range(dof_pos_robot_history.shape[1]):
             self.lines_robot[i].set_data(time_steps, dof_pos_robot_history[:, i])
             self.lines_desired[i].set_data(time_steps, dof_pos_motion_history[:, i])
             self.axs[i].relim()
@@ -329,31 +357,5 @@ class FLD_PAEModule:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def get_target_dof_pos_leg_fl(self):
-        #return: Dim(num_envs,3)
-        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    def get_target_dof_pos_leg_hl(self):
-        #return: Dim(num_envs,3)
-        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    def get_target_dof_pos_leg_fr(self):
-        #return: Dim(num_envs,3)
-        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    def get_target_dof_pos_leg_hr(self):
-        #return: Dim(num_envs,3)
-        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    def get_target_dof_pos(self):
-        #return: Dim(num_envs,12)
-        return torch.stack(
-            (
-                self.get_target_dof_pos_leg_fl(),
-                self.get_target_dof_pos_leg_hl(),
-                self.get_target_dof_pos_leg_fr(),
-                self.get_target_dof_pos_leg_hr(),
-                ),dim=2
-            ).reshape(self.num_envs,-1)
 if __name__ == "__main__":
     pass

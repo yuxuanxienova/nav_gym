@@ -1,6 +1,6 @@
 from nav_gym.nav_legged_gym.utils.config_utils import configclass
 from nav_gym.nav_legged_gym.common.assets.robots.articulation_cfg import ArticulationCfg
-from nav_gym.nav_legged_gym.common.actuators.actuator_cfg import anymal_d_actuator_cfg
+from nav_gym.nav_legged_gym.common.actuators.actuator_cfg import anymal_d_actuator_cfg, anymal_d_pae_actuator_cfg
 import os
 
 @configclass
@@ -46,12 +46,12 @@ anymal_d_robot_pae_cfg = LeggedRobotCfg(
         #     ".*H_KFE": 0.8,
         # },
     ),
-    actuators=[{"actuator": anymal_d_actuator_cfg, "dof_names": [".*"]}],#------------------------TODO: check this line
+    actuators=[{"actuator": anymal_d_pae_actuator_cfg, "dof_names": [".*"]}],#------------------------TODO: check this line
     # actuators=[{"actuator": anymal_simple_actuator_cfg, "dof_names": [".*"], "p_gains": {".*": 80.0},
     #     "d_gains": {".*": 2.0},}],
     randomization=LeggedRobotCfg.Randomization(
-        randomize_added_mass=True,
-        randomize_friction=True,
+        randomize_added_mass=False,
+        randomize_friction=False,
         friction_range=(0., 1.5),  # friction coefficients are averaged, mu = 0.5*(mu_terrain + mu_foot)
         # friction_range=(0.75, 1.5),
         added_mass_range=(-5.0, 5.0),

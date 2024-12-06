@@ -62,6 +62,13 @@ anymal_d_actuator_cfg = ActuatorNetMLPCfg(
     motor_torque_limit=89.0,
 )
 
+anymal_d_pae_actuator_cfg = ActuatorNetMLPCfg(
+    network_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "resources") + "/actuator_model/anymal_d_actuator.jit",
+    gear_ratio=1.0,
+    peak_motor_torque=160.0,
+    motor_velocity_limit=8.5,
+    motor_torque_limit=95.0,
+)
 # 48V
 barry_hip_actuator = DCMotorCfg(
     gear_ratio=5.6, motor_torque_limit=140 / 5.6, peak_motor_torque=152.49 / 5.6, motor_velocity_limit=13.97 * 5.6
