@@ -59,7 +59,7 @@ anymal_d_actuator_cfg = ActuatorNetMLPCfg(
     gear_ratio=1.0,
     peak_motor_torque=140.0,
     motor_velocity_limit=8.5,
-    motor_torque_limit=85.0,
+    motor_torque_limit=89.0,
 )
 
 # 48V

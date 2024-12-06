@@ -483,58 +483,58 @@ def face_front(env: "ANY_ENV", params):
 
 def reward_tracking_reconstructed_lin_vel(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_lin_vel][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_lin_vel][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_lin_vel][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_lin_vel]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_lin_vel][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_lin_vel][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_lin_vel][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_lin_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_lin_vel]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_ang_vel(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_ang_vel][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_ang_vel][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_ang_vel][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_ang_vel]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_ang_vel][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_ang_vel][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_ang_vel][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["base_ang_vel"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_ang_vel]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_projected_gravity(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_projected_gravity][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_projected_gravity][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_projected_gravity][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_projected_gravity]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_projected_gravity][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_projected_gravity][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_projected_gravity][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["projected_gravity"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_projected_gravity]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_dof_pos_leg_fl(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fl]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_dof_pos_leg_hl(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hl]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_dof_pos_leg_fr(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_fr]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_dof_pos_leg_hr(env: "LocomotionPAEEnv", params):
     error = torch.sum(torch.square((env.fld_module.target_fld_state - env.fld_module.fld_state)[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]), dim=1)
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
-    print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr]{0}".format(torch.exp(-error * params["exp_scale"])))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][env.fld.latent_idx]{0}".format(env.fld_module.cur_steps))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][self.decoded_obs]{0}".format(env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr][self.fld_state]{0}".format(env.fld_module.fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)]))
+    # print("[INFO][reward_tracking_reconstructed_dof_pos_leg_hr]{0}".format(torch.exp(-error * params["exp_scale"])))
     return torch.exp(-error * params["exp_scale"])
 
 def reward_tracking_reconstructed_feet_pos_fl(env: "LocomotionPAEEnv", params):

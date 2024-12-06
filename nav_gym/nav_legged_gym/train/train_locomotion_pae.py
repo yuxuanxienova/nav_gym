@@ -19,7 +19,7 @@ if __name__ == "__main__":
     env_cfg = LocomotionPAEEnvCfg()
     env_cfg.env.num_envs = 256
     # env_cfg.env.num_envs = 4096
-    env_cfg.gym.headless = False
+    env_cfg.gym.headless = True
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
     # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)

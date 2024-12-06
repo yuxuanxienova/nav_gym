@@ -231,6 +231,11 @@ class Articulation(FileAsset):
                 self.dof_torques[:, act_dof_ids] = actions[:, act_dof_ids]
             # compute torques for explicit actuators
             if actuator.control_type == "explicit":
+                #---------Debug no default pos  added-----------------
+                print("[Debug][Articulation][apply_actions] no default pos  added!!!")
+                desired_pos = actions[:,actuator.dof_ids]
+                desired_vel = 0.0
+                #-----------------------------------------------------
                 # compute torques explicitly
                 actuator.set_dof_state(self.dof_pos[:, act_dof_ids], self.dof_vel[:, act_dof_ids])
                 actuator.set_desired_dof_state(desired_pos, desired_vel)
@@ -350,7 +355,7 @@ class Articulation(FileAsset):
             Tuple[torch.Tensor, torch.Tensor]: The sampled DOF position and velocity of the actor.
                 Each tensor has shape: (len(env_ids), 1).
         """
-        dof_pos = self.default_dof_pos[env_ids] #* torch.empty_like(self.dof_pos[env_ids]).uniform_(0.5, 1.5)
+        dof_pos = self.default_dof_pos[env_ids] #* torch.empty_like(self.dof_pos[env_ids]).uniform_(0.5, 1.5)----TODO SET REANDOM DOF POS??
         dof_vel = self.default_dof_vel[env_ids]
         # return sampled dof state
         return dof_pos, dof_vel
@@ -439,8 +444,10 @@ class Articulation(FileAsset):
                 # compute soft limits for DOFs
                 dof_mean = (dof_pos_limits[i, 0] + dof_pos_limits[i, 1]) / 2
                 dof_range = dof_pos_limits[i, 1] - dof_pos_limits[i, 0]
-                self.soft_dof_pos_limits[i, 0] = dof_mean - 0.5 * dof_range * self.cfg.soft_dof_limit_factor
-                self.soft_dof_pos_limits[i, 1] = dof_mean + 0.5 * dof_range * self.cfg.soft_dof_limit_factor
+                #---------------------------------Debug---------------------------------
+                print("[Debug][Articulation][_process_dof_props] disable soft limits")
+                # self.soft_dof_pos_limits[i, 0] = dof_mean - 0.5 * dof_range * self.cfg.soft_dof_limit_factor
+                # self.soft_dof_pos_limits[i, 1] = dof_mean + 0.5 * dof_range * self.cfg.soft_dof_limit_factor
         for actuator in self._actuators:
             # process implicit actuator config
             if actuator.control_type == "implicit":

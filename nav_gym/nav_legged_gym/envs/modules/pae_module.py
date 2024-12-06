@@ -11,6 +11,7 @@ from nav_gym.learning.modules.samplers.offline import OfflineSamplerPAE
 from nav_gym.learning.modules.samplers.gmm import GMMSampler
 from nav_gym import NAV_GYM_ROOT_DIR
 from nav_gym.learning.modules.fld.fld import FLD
+import matplotlib.pyplot as plt
 from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
@@ -61,7 +62,7 @@ class FLD_PAEModule:
         self.env_draw_handle = env.envs[0]
         self.gym = env.gym
         self.viewer = env.viewer
-        self.common_step_counter = env.common_step_counter
+        self.pae_module_step_counter = env.common_step_counter
 
         self.reward_manager = env.reward_manager
         self.tracking_reconstructed_terms = []
@@ -76,7 +77,18 @@ class FLD_PAEModule:
             if (state != "base_pos") and (state != "base_quat"):
                 self.target_fld_state_state_idx_dict[state] = list(range(current_length, current_length + len(ids)))
                 current_length = current_length + len(ids)
+
+        # Initialize data for plotting DOF positions
+        self.dof_pos_robot_history = []
+        self.dof_pos_motion_history = []
+        self.time_steps = []
+
+        # Initialize plotting
+        self.plot_initialized = False
+        self.num_dofs = self.dof_pos.shape[1]  # Assuming self.dof_pos shape is (num_envs, num_dofs)
+
         #3. Initialize buffers
+        self.pae_module_step_counter = 0
         self.motion_idx = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
         self.cur_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
         self.fld_dim_of_interest = torch.cat([torch.tensor(ids, device=self.device, dtype=torch.long, requires_grad=False) for state, ids in self.full_state_idx_dict.items() if ((state != "base_pos") and (state != "base_quat"))])
@@ -117,6 +129,9 @@ class FLD_PAEModule:
         self.latent_param_max, self.latent_param_min, self.latent_param_mean, self.latent_param_std = statistics_dict["latent_param_max"], statistics_dict["latent_param_min"], statistics_dict["latent_param_mean"], statistics_dict["latent_param_std"]
  
     def on_env_post_physics_step(self):
+        print("[INFO][self.cur_steps[0]:{0}] fld module on_env_post_physics_step".format(self.cur_steps[0]))
+        self.pae_module_step_counter += 1
+        self._update_module_buffers()
         self._update_fld_observation_buf()
         self._update_latent_phase_pae()
 
@@ -124,7 +139,22 @@ class FLD_PAEModule:
         target_root_lin_vel_w = quat_rotate(self.base_quat,self.target_fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
         
         self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
-        pass
+        # Update the plot every N steps to reduce overhead
+        self._update_plot_data()
+        N = 10  # Update plot every N steps
+        if self.pae_module_step_counter % N == 0:
+            self._update_plot()
+
+    def _update_module_buffers(self):
+        self.base_pos = self.robot.root_pos_w
+        self.base_quat = self.robot.root_quat_w
+        self.base_lin_vel = self.robot.root_lin_vel_b#TODO check if this is correct .root_lin_vel_b??!!!
+        self.base_ang_vel = self.robot.root_ang_vel_b
+        self.projected_gravity = self.robot.projected_gravity_b
+        self.dof_pos = self.robot.dof_pos
+        self.default_dof_pos = self.robot.default_dof_pos
+        self.dof_vel = self.robot.dof_vel
+
     def _update_fld_observation_buf(self):
         full_state = torch.cat(
             (
@@ -146,6 +176,7 @@ class FLD_PAEModule:
         #1. get current latent encoding
         #self.task_sampler.data: Dim: [n_motions, n_steps, n_latent_features]=[10, 169, 16]
         self.num_steps = self.task_sampler.data.shape[1]
+        # print("[Debug][pae_module][_update_latent_phase_pae]Disable self.cur_steps = (self.cur_steps + 1) % self.num_steps")
         self.cur_steps = (self.cur_steps + 1) % self.num_steps
         self.latent_encoding_target = self.task_sampler.data[self.motion_idx, self.cur_steps, :].view(self.num_envs, 4, self.fld_latent_channel).swapaxes(1, 2)
         #self.latent_encoding_target: Dim(num_envs,latent_channel,4)
@@ -166,9 +197,10 @@ class FLD_PAEModule:
         target_fld_state_wins_raw = self.task_sampler.motions[self.motion_idx, self.cur_steps,].swapaxes(1, 2)
         #target_fld_state_wins_raw: Dim: [num_envs,obs_horizon,obs_dim]
         self.target_fld_state[:] = target_fld_state_wins_raw[:, -1, :] * self.state_transitions_std + self.state_transitions_mean#Dim(num_envs,input_channel)
+        #self.target_fld_state: Dim(num_envs,obs_dim)
 
     def on_env_reset_idx(self,env_ids):
-        if self.env_cfg.task_sampler.curriculum and self.common_step_counter % self.max_episode_length == 0:
+        if self.env_cfg.task_sampler.curriculum and self.pae_module_step_counter % self.max_episode_length == 0:
             self.update_task_sampler_curriculum(env_ids)
         self._sample_latent_encoding(env_ids)
     def on_env_resample_commands(self,env_ids):
@@ -190,6 +222,7 @@ class FLD_PAEModule:
             self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         # self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         #-----------debug-use------------
+        print("[Debug][pae_module][_sample_latent_encoding] Setting motion_idx and cur_steps to 0")
         self.motion_idx[env_ids] = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
         self.cur_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
         #--------------------------------
@@ -205,62 +238,6 @@ class FLD_PAEModule:
             self.latent_encoding[env_ids, :, 1:] = self.task_sampler.filtered_data[self.motion_idx[env_ids], self.cur_steps[env_ids], self.fld_latent_channel:].view(len(env_ids), 3, self.fld_latent_channel).swapaxes(1, 2)
         
             
-        # print("[INFO] Sampled latent encoding for env_ids: ", env_ids)
-        # print("[INFO] self.latent_encoding[env_ids, :, 0]: ", self.latent_encoding[env_ids, :, 0])
-        # print("[INFO] self.latent_encoding[env_ids, :, 1]: ", self.latent_encoding[env_ids, :, 1])
-        # print("[INFO] self.latent_encoding[env_ids, :, 2]: ", self.latent_encoding[env_ids, :, 2])
-        # print("[INFO] self.latent_encoding[env_ids, :, 3]: ", self.latent_encoding[env_ids, :, 3])
-
-    # def get_reconstructed_base_lin_vel(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:,torch.tensor(self.target_fld_state_state_idx_dict["base_lin_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
-        
-    # def get_reconstructed_base_ang_vel(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["base_ang_vel"], device=self.device, dtype=torch.long, requires_grad=False)]
-        
-    # def get_reconstructed_projected_gravity(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["projected_gravity"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_pos_leg_fl(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_pos_leg_hl(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_pos_leg_fr(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_pos_leg_hr(self):
-    #     #return: Dim(num_envs,prediction_horizon,3)
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_feet_pos_fl(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_feet_pos_fr(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_feet_pos_hl(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_feet_pos_hr(self):
-    #     return self.obs_pred[:,:, torch.tensor(self.target_fld_state_state_idx_dict["feet_pos_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
-
-    # def get_reconstructed_dof_pos(self):
-    #     #return: Dim(num_envs,prediction_horizon,12)
-    #     return torch.stack(
-    #         (
-    #             self.get_reconstructed_dof_pos_leg_fl(),
-    #             self.get_reconstructed_dof_pos_leg_hl(),
-    #             self.get_reconstructed_dof_pos_leg_fr(),
-    #             self.get_reconstructed_dof_pos_leg_hr(),
-    #             ),dim=2
-    #         ).reshape(self.num_envs,self.fld_observation_horizon,-1)
     
     # Visualization method for velocities
     def visualize_velocities(self, robot_root_lin_vel, target_root_lin_vel):
@@ -294,6 +271,89 @@ class FLD_PAEModule:
         p4 = gymapi.Vec3(*target_vel_end)
         color_red = gymapi.Vec3(1, 0, 0)
         gymutil.draw_line(p3, p4, color_red, self.gym, self.viewer, self.env_draw_handle)
+    # Method to initialize the plot
+    def _initialize_plot(self):
+        plt.ion()  # Turn on interactive mode
+        self.fig, self.axs = plt.subplots(self.num_dofs, 1, figsize=(10, 2 * self.num_dofs), sharex=True)
+        if self.num_dofs == 1:
+            self.axs = [self.axs]
+        self.lines_robot = []
+        self.lines_desired = []
+        for i in range(self.num_dofs):
+            line_robot, = self.axs[i].plot([], [], label='Robot DOF {}'.format(i))
+            line_desired, = self.axs[i].plot([], [], label='Desired DOF {}'.format(i))
+            self.axs[i].set_ylabel('DOF Position')
+            self.axs[i].legend()
+            self.lines_robot.append(line_robot)
+            self.lines_desired.append(line_desired)
+        self.axs[-1].set_xlabel('Time Step')
+        self.plot_initialized = True
+    def _update_plot_data(self):
+        # Collect data for plotting
+        robot_dof_pos = self.dof_pos.clone()
+        desired_dof_pos = self.get_target_dof_pos()
 
+        # Select the first environment for plotting
+        robot_dof_pos_env0 = robot_dof_pos[0].cpu().numpy()
+        desired_dof_pos_env0 = desired_dof_pos[0].cpu().numpy()
+
+        self.dof_pos_robot_history.append(robot_dof_pos_env0)
+        self.dof_pos_motion_history.append(desired_dof_pos_env0)
+        self.time_steps.append(self.pae_module_step_counter)
+
+
+    # Method to update the plot
+    def _update_plot(self):
+        if not self.plot_initialized:
+            self._initialize_plot()
+
+        M = 100  # Number of time steps to display (adjust as needed)
+        dof_pos_robot_history = np.array(self.dof_pos_robot_history)  # Shape: (num_time_steps, num_dofs)
+        dof_pos_motion_history = np.array(self.dof_pos_motion_history)
+        time_steps = np.array(self.time_steps)
+
+        # Limit data to the last M points to keep the plot clean
+        if len(time_steps) > M:
+            dof_pos_robot_history = dof_pos_robot_history[-M:]
+            dof_pos_motion_history = dof_pos_motion_history[-M:]
+            time_steps = time_steps[-M:]
+            # Adjust time steps to be sequential for plotting
+            time_steps = np.arange(len(time_steps))
+
+        for i in range(self.num_dofs):
+            self.lines_robot[i].set_data(time_steps, dof_pos_robot_history[:, i])
+            self.lines_desired[i].set_data(time_steps, dof_pos_motion_history[:, i])
+            self.axs[i].relim()
+            self.axs[i].autoscale_view()
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def get_target_dof_pos_leg_fl(self):
+        #return: Dim(num_envs,3)
+        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+    def get_target_dof_pos_leg_hl(self):
+        #return: Dim(num_envs,3)
+        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+    def get_target_dof_pos_leg_fr(self):
+        #return: Dim(num_envs,3)
+        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+    def get_target_dof_pos_leg_hr(self):
+        #return: Dim(num_envs,3)
+        return self.target_fld_state[:, torch.tensor(self.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=self.device, dtype=torch.long, requires_grad=False)]
+
+    def get_target_dof_pos(self):
+        #return: Dim(num_envs,12)
+        return torch.stack(
+            (
+                self.get_target_dof_pos_leg_fl(),
+                self.get_target_dof_pos_leg_hl(),
+                self.get_target_dof_pos_leg_fr(),
+                self.get_target_dof_pos_leg_hr(),
+                ),dim=2
+            ).reshape(self.num_envs,-1)
 if __name__ == "__main__":
     pass

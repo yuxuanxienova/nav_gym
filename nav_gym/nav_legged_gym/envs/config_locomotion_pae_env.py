@@ -55,16 +55,16 @@ class LocomotionPAEEnvCfg:
                           }
     class randomization:
         # randomize_friction: bool = True
-        friction_range: Tuple = (0,0)#(0.5, 1.25)
-        randomize_base_mass: bool = True
+        friction_range: Tuple = (0,0)# (0.5, 1.25)
+        randomize_base_mass: bool = False#True
         added_mass_range: Tuple = (0,0)#(-1.0, 1.0)
         push_robots: bool = False
-        push_interval_s: float = 15  # push applied each time interval [s]
+        push_interval_s: float = 100#15  # push applied each time interval [s]
         init_pos: Tuple = (0,0)#(-1.0, 1.0)  # max xy position added to default position [m]
         init_yaw: Tuple = (0,0)#(-3.14, 3.14)  # max yaw angle added to default orientation [rad]
         init_roll_pitch: Tuple = (0.0, 0.0)  # max roll and pitch angles added to default orientation [rad]
         push_vel: Tuple = (0,0)#(-1.0, 1.0)  # velocity offset added by push [m/s]
-        external_force: Tuple = (0,0)#(-0.0, 0.0)  # wind force applied at base, constant over episode [N]
+        external_force: Tuple = (-0.0, 0.0)  # wind force applied at base, constant over episode [N]
         external_torque: Tuple = (-0.0, 0.0)  # wind torque applied at base, constant over episode [Nm]
         external_foot_force: Tuple = (-0.0, 0.0)  # wind force applied at feet, constant over episode [N]
 
@@ -73,12 +73,12 @@ class LocomotionPAEEnvCfg:
 
         class prop:
             # --add this to every group--
-            add_noise: bool = False  # turns off the noise in all observations
+            add_noise: bool = False # turns off the noise in all observations
             #---------------------------
             # velocity_commands: dict = {"func": O.velocity_commands}
-            dof_pos: dict = {"func": O.dof_pos, "noise": 0.01, "scale":1.0}
+            dof_pos: dict = {"func": O.dof_pos, "noise": 0.0, "scale":1.0}
             # dof_prev_pos: dict = {"func": O.dof_pos_history_selected,"noise": 0.01,"dofs": ".*(HAA|HFE|KFE)","hist_index": -4,}  # 0.005 x 4
-            dof_vel: dict = {"func": O.dof_vel, "noise": 0.1,"scale": 0.05}
+            dof_vel: dict = {"func": O.dof_vel, "noise": 0.0,"scale": 0.05}
             # dof_prev_vel: dict = {"func": O.dof_vel_history_selected, "noise": 3e-1, "dofs": ".*", "hist_index": -4}
             actions: dict = {"func": O.actions, "scale":1.0}
 
@@ -89,11 +89,11 @@ class LocomotionPAEEnvCfg:
         #     height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
         class priv:
             # --add this to every group--
-            add_noise: bool = False  # turns off the noise in all observations
+            add_noise: bool = False # turns off the noise in all observations
             #---------------------------
             base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.0, "scale": 2.0}
             base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.0, "scale": 0.25}
-            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.01, "scale": 1.0}
+            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.0, "scale": 1.0}
             
             
 

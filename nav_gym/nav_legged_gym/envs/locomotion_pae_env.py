@@ -16,6 +16,7 @@ from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot impo
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
 from nav_gym.nav_legged_gym.common.terrain.terrain_unity import TerrainUnity
+from nav_gym.nav_legged_gym.common.terrain.terrain import Terrain
 from nav_gym.nav_legged_gym.common.gym_interface import GymInterface
 from nav_gym.nav_legged_gym.common.rewards.reward_manager import RewardManager
 from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsManager
@@ -94,14 +95,11 @@ class LocomotionPAEEnv:
     def _create_envs(self):
         """Design the environment instances."""
         # add terrain instance
-        self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
-        #----------------------------------------------------------
-        # terrain_generator = TerrainGenerator(self.cfg.terrain)
-        # self.terrain = Terrain(self.cfg.terrain, self.num_envs, self.gym_iface)
-        # self.terrain.set_terrain_origins(terrain_generator.terrain_origins)
-        # self.terrain.set_valid_init_poses(terrain_generator.valid_init_poses)
-        # self.terrain.set_valid_targets(terrain_generator.valid_targets)
-        # self.terrain.add_mesh(terrain_generator.terrain_mesh, name="terrain")
+        # self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
+        
+        #---------------------Debug----------------------------------
+        self.terrain = Terrain(self.num_envs, self.gym_iface)
+        self.terrain.set_terrain_origins()
         #----------------------------------------------------------
         self.terrain.add_to_sim()
         # add robot class
@@ -220,8 +218,10 @@ class LocomotionPAEEnv:
         self.robot.set_dof_state(env_ids, dof_pos, dof_vel)
         # -- root state (custom)
         root_state = self.robot.get_default_root_state(env_ids)
-        # root_state[:, :3] += self.terrain.env_origins[env_ids]
-        root_state[:, :3] += self.terrain.sample_new_init_poses(env_ids)
+        #--------------------
+        root_state[:, :3] += self.terrain.env_origins[env_ids]
+        # root_state[:, :3] += self.terrain.sample_new_init_poses(env_ids)
+        #----------------------
         # shift initial pose
         # root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
         #     -self.cfg.randomization.max_init_pos, self.cfg.randomization.max_init_pos
@@ -258,7 +258,10 @@ class LocomotionPAEEnv:
             print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
-            self._apply_external_disturbance()
+            #---------Debug-----------
+            print("[Debug][step]Disable external disturbance")
+            # self._apply_external_disturbance()
+            #-------------------------
             # simulation step
             self.gym_iface.simulate()
             # refresh tensors
@@ -301,7 +304,7 @@ class LocomotionPAEEnv:
         # scaled_actions = self.cfg.control.action_scale * self.actions
 
         #----------------------debug--------------
-            # clip actions and move to env device
+        # clip actions and move to env device
         actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
         actions = actions.to(self.device)
         # -- default scaling of actions

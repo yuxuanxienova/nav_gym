@@ -95,6 +95,9 @@ class LeggedRobot(Articulation):
         super().reset_buffers(env_ids)
         self.feet_current_air_time[env_ids] = 0.0
         self.feet_last_air_time[env_ids] = 0.0
+        self.root_lin_vel_b = quat_rotate_inverse(self.root_quat_w, self.root_lin_vel_w)
+        self.root_ang_vel_b = quat_rotate_inverse(self.root_quat_w, self.root_ang_vel_w)
+        self.projected_gravity_b = quat_rotate_inverse(self.root_quat_w, self._gravity_vec_w)
         self.forward_vec_w[env_ids] = quat_apply(self.root_quat_w[env_ids], self._forward_vec_b[env_ids])
         self.heading_w[env_ids] = torch.atan2(self.forward_vec_w[env_ids, 1], self.forward_vec_w[env_ids, 0])
 
