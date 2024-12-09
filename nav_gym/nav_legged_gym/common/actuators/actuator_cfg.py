@@ -43,6 +43,7 @@ class ActuatorNetMLPCfg(DCMotorCfg):
     pos_scale = 5.0
     torque_scale = 60.0
     input_idx = [0, 2, 4]
+    # input_idx = [0, 4, 8]
 
 
 @configclass
@@ -60,14 +61,6 @@ anymal_d_actuator_cfg = ActuatorNetMLPCfg(
     peak_motor_torque=140.0,
     motor_velocity_limit=8.5,
     motor_torque_limit=89.0,
-)
-
-anymal_d_pae_actuator_cfg = ActuatorNetMLPCfg(
-    network_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "resources") + "/actuator_model/anymal_d_actuator.jit",
-    gear_ratio=1.0,
-    peak_motor_torque=160.0,
-    motor_velocity_limit=8.5,
-    motor_torque_limit=95.0,
 )
 # 48V
 barry_hip_actuator = DCMotorCfg(

@@ -519,8 +519,8 @@ class FileAsset(Asset):
         # resolve paths
         asset_root = self.cfg.asset_root
         asset_file = self.cfg.asset_file
-        asset_path = os.path.join(self.cfg.asset_root, self.cfg.asset_file)
-
+        asset_path = asset_root + asset_file
+ 
         # check file exists
         if not os.path.exists(asset_path):
             raise FileNotFoundError(f"Asset file does not exist: {asset_path}")

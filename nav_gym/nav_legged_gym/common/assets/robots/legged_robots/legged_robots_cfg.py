@@ -1,8 +1,8 @@
 from nav_gym.nav_legged_gym.utils.config_utils import configclass
 from nav_gym.nav_legged_gym.common.assets.robots.articulation_cfg import ArticulationCfg
-from nav_gym.nav_legged_gym.common.actuators.actuator_cfg import anymal_d_actuator_cfg, anymal_d_pae_actuator_cfg
+from nav_gym.nav_legged_gym.common.actuators.actuator_cfg import anymal_d_actuator_cfg
 import os
-
+from nav_gym import NAV_GYM_ROOT_DIR
 @configclass
 class LeggedRobotCfg(ArticulationCfg):
     cls_name = "LeggedRobot"
@@ -15,16 +15,13 @@ class LeggedRobotCfg(ArticulationCfg):
 # Ready to use robots
 anymal_d_robot_pae_cfg = LeggedRobotCfg(
     asset_name="anymal_d",
-    asset_file = "anymal_d/urdf/anymal_d.urdf",
+    asset_root = NAV_GYM_ROOT_DIR + "/resources/",
+    asset_file= "robots/anymal_d/urdf/anymal_d.urdf",
     feet_names=".*FOOT",
     self_collisions=True,
-    # replace_cylinder_with_capsule=True,
     init_state=LeggedRobotCfg.InitState(
-        pos=(0.0, 0.0, 0.7),
-        # rot = (0.0, 0.0, 0.0, 1.0),  # x,y,z,w [quat]
-        # lin_vel = (0.0, 0.0, 0.0),  # x,y,z [m/s]
-        # ang_vel = (0.0, 0.0, 0.0),  # x,y,z [rad/s]
-        dof_pos = {
+        pos=(0.0, 0.0, 0.70),
+        dof_pos={
             "LF_HAA": -0.13859,
             "LF_HFE": 0.480936,
             "LF_KFE": -0.761428,
@@ -37,30 +34,21 @@ anymal_d_robot_pae_cfg = LeggedRobotCfg(
             "RH_HAA": 0.13859,
             "RH_HFE": -0.480936,
             "RH_KFE": 0.761428,
-        },
-        # dof_pos={
-        #     ".*HAA": 0.0,  # all HAA
-        #     ".*F_HFE": 0.4,  # both front HFE
-        #     ".*H_HFE": -0.4,  # both hind HFE
-        #     ".*F_KFE": -0.8,
-        #     ".*H_KFE": 0.8,
-        # },
+        }
     ),
-    actuators=[{"actuator": anymal_d_pae_actuator_cfg, "dof_names": [".*"]}],#------------------------TODO: check this line
-    # actuators=[{"actuator": anymal_simple_actuator_cfg, "dof_names": [".*"], "p_gains": {".*": 80.0},
-    #     "d_gains": {".*": 2.0},}],
+    actuators=[{"actuator": anymal_d_actuator_cfg, "dof_names": [".*"]}],
     randomization=LeggedRobotCfg.Randomization(
-        randomize_added_mass=False,
-        randomize_friction=False,
-        friction_range=(0., 1.5),  # friction coefficients are averaged, mu = 0.5*(mu_terrain + mu_foot)
-        # friction_range=(0.75, 1.5),
-        added_mass_range=(-5.0, 5.0),
+        randomize_added_mass=True,
+        randomize_friction=True,
+        friction_range=(0.0, 1.5),  # friction coefficients are averaged, mu = 0.5*(mu_terrain + mu_foot)
+        added_mass_range=(-5.0, 5),
     ),
 )
 
 anymal_d_robot_cfg = LeggedRobotCfg(
     asset_name="anymal_d",
-    asset_file = "anymal_d/urdf/anymal_d.urdf",
+    asset_root = NAV_GYM_ROOT_DIR + "/resources/",
+    asset_file= "robots/anymal_d/urdf/anymal_d.urdf",
     feet_names=".*FOOT",
     self_collisions=True,
     replace_cylinder_with_capsule=True,
@@ -75,13 +63,10 @@ anymal_d_robot_cfg = LeggedRobotCfg(
         },
     ),
     actuators=[{"actuator": anymal_d_actuator_cfg, "dof_names": [".*"]}],
-    # actuators=[{"actuator": anymal_simple_actuator_cfg, "dof_names": [".*"], "p_gains": {".*": 80.0},
-    #     "d_gains": {".*": 2.0},}],
     randomization=LeggedRobotCfg.Randomization(
         randomize_added_mass=True,
         randomize_friction=True,
         friction_range=(0., 1.5),  # friction coefficients are averaged, mu = 0.5*(mu_terrain + mu_foot)
-        # friction_range=(0.75, 1.5),
         added_mass_range=(-5.0, 5.0),
     ),
 )

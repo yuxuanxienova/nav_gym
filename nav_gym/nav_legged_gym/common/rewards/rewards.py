@@ -99,9 +99,9 @@ def torque_limits(env: "ANY_ENV", params):
     # penalize torques too close to the limit
     # "ratio" defines the soft limit as a percentage of the hard limit
     return torch.sum(
-        (torch.abs(env.robot.des_dof_torques) - env.robot.soft_dof_torque_limits * params["soft_ratio"]).clip(min=0.0),
+        (torch.abs(env.robot.dof_torques) - env.robot.soft_dof_torque_limits * params["soft_ratio"]).clip(min=0.0),
         dim=1,
-    )
+    )#-------TODO check using des_dof_torques instead of dof_torques
 
 
 def contact_forces(env: "ANY_ENV", params):

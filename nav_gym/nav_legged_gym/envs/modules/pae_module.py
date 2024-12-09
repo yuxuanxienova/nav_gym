@@ -8,8 +8,6 @@ from isaacgym.torch_utils import (
 import numpy as np
 import torch
 from nav_gym.learning.modules.samplers.offline import OfflineSamplerPAE
-from nav_gym.learning.modules.samplers.gmm import GMMSampler
-from nav_gym import NAV_GYM_ROOT_DIR
 from nav_gym.learning.modules.fld.fld import FLD
 import matplotlib.pyplot as plt
 from typing import TYPE_CHECKING, Union
@@ -141,7 +139,7 @@ class FLD_PAEModule:
         self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
         # Update the plot every N steps to reduce overhead
         self._update_plot_data()
-        N = 10  # Update plot every N steps
+        N = 20  # Update plot every N steps
         if self.pae_module_step_counter % N == 0:
             self._update_plot()
 
@@ -220,7 +218,7 @@ class FLD_PAEModule:
             self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample_curriculum(len(env_ids), self.task_sampler_curriculum_flag)
         else:
             self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
-        # self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
+        self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         #-----------debug-use------------
         print("[Debug][pae_module][_sample_latent_encoding] Setting motion_idx and cur_steps to 0")
         self.motion_idx[env_ids] = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)

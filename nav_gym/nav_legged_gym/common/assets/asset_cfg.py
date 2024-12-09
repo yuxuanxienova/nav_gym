@@ -156,7 +156,8 @@ class FileAssetCfg(AssetCfg):
     """Configuration for spawning an asset from a file into simulation."""
 
     cls_name: str = "FileAsset"
-    asset_root=os.path.join(NAV_GYM_ROOT_DIR,"resources")
+    # asset_root=os.path.join(NAV_GYM_ROOT_DIR,"resources")
+    asset_root = MISSING
     asset_file = MISSING 
 
     density: float = 0.001  # Avoid adding weight to bodies without inertial properties.

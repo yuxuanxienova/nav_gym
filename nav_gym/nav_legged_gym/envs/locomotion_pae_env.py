@@ -1,6 +1,13 @@
 # isaac-gym
 from isaacgym import gymapi, gymtorch
 from isaacgym.torch_utils import quat_from_euler_xyz, quat_apply
+from isaacgym.torch_utils import (
+    torch_rand_float,
+    quat_rotate_inverse,
+    to_torch,
+    get_axis_params,
+    quat_apply,
+)
 # python
 from copy import deepcopy
 import torch
@@ -16,7 +23,7 @@ from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot impo
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
 from nav_gym.nav_legged_gym.common.terrain.terrain_unity import TerrainUnity
-from nav_gym.nav_legged_gym.common.terrain.terrain import Terrain
+from nav_gym.nav_legged_gym.common.terrain.terrainPlane import TerrainPlane
 from nav_gym.nav_legged_gym.common.gym_interface import GymInterface
 from nav_gym.nav_legged_gym.common.rewards.reward_manager import RewardManager
 from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsManager
@@ -75,14 +82,12 @@ class LocomotionPAEEnv:
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
-        
-        #9. Store the environment information from managers
-        self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
-        self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
-        #10. Initialize Other Modules
 
         #11. Perform initial reset of all environments (to fill up buffers)
         self.reset()
+        self.num_obs = self.obs_buf.shape[1]
+        self.num_privileged_obs = None
+
         #12. Create debug usage
         self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
         self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
@@ -92,14 +97,14 @@ class LocomotionPAEEnv:
         self.flag_enable_resample = True
         # we are ready now! :)
         self._init_done = True
+
     def _create_envs(self):
         """Design the environment instances."""
         # add terrain instance
-        # self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
-        
+        self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
         #---------------------Debug----------------------------------
-        self.terrain = Terrain(self.num_envs, self.gym_iface)
-        self.terrain.set_terrain_origins()
+        # self.terrain = Terrain(self.num_envs, self.gym_iface)
+        # self.terrain.set_terrain_origins()
         #----------------------------------------------------------
         self.terrain.add_to_sim()
         # add robot class
@@ -163,6 +168,7 @@ class LocomotionPAEEnv:
         self.set_observation_buffer()
         # return obs
         return self.obs_buf, self.extras
+    
     def reset_idx(self, env_ids):
         """Reset environments based on specified indices.
         Args:
@@ -214,7 +220,9 @@ class LocomotionPAEEnv:
     def _reset_robot(self, env_ids):
         """Resets root and dof states of robots in selected environments."""
         # -- dof state (handled by the robot)
-        dof_pos, dof_vel = self.robot.get_random_dof_state(env_ids)
+        dof_pos, dof_vel = self.robot.get_default_dof_state(env_ids)
+        print("[Debug][_reset_robot] disable randomization in dof_pos reset") 
+        # dof_pos = dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
         self.robot.set_dof_state(env_ids, dof_pos, dof_vel)
         # -- root state (custom)
         root_state = self.robot.get_default_root_state(env_ids)
@@ -226,11 +234,12 @@ class LocomotionPAEEnv:
         # root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
         #     -self.cfg.randomization.max_init_pos, self.cfg.randomization.max_init_pos
         # )
-        roll = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
-        pitch = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
-        yaw = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_yaw)
+        #-----init root from roll, pitch, yaw--------
+        # roll = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
+        # pitch = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
+        # yaw = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_yaw)
         # yaw += -np.pi * 2.
-        root_state[:, 3:7] = quat_from_euler_xyz(roll, pitch, yaw)
+        # root_state[:, 3:7] = quat_from_euler_xyz(roll, pitch, yaw)
         # root_state[:, 3:7] *= torch.sign(root_state[:, 6]).unsqueeze(1)
         # base velocities: [7:10]: lin vel, [10:13]: ang vel
         #root_state[:, 7:13].uniform_(-0.5, 0.5)
@@ -458,6 +467,7 @@ class LocomotionPAEEnv:
         self.obs_buf = torch.cat(obs_list, dim=1)
         #-------------
         self.extras["observations"] = self.obs_dict
+
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset
         print(f"[INFO][LocomotionEnv]Reset flag set to {enable_reset}")

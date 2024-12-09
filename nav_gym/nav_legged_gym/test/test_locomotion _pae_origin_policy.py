@@ -5,6 +5,7 @@ import pygame
 # Your existing imports
 # from legged_gym import LeggedNavEnv, LeggedNavEnvCfg, OnPolicyRunner, TrainConfig, class_to_dict
 from nav_gym.nav_legged_gym.envs.config_locomotion_pae_env import LocomotionPAEEnvCfg
+from nav_gym.nav_legged_gym.test.pae_origin_policy.wild_anymal_d import WildAnymal
 from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
 from nav_gym.nav_legged_gym.train.config_train_locomotion_pae import TrainConfig
@@ -15,10 +16,20 @@ from nav_gym.nav_legged_gym.test.pae_origin_policy.WildAnymalDPPOCfg import Wild
 import torch
 import os
 import time
-
+import random
+import numpy as np
 from isaacgym import gymtorch
 if __name__ == "__main__":
-
+    #--------------------------
+    # set seed
+    seed = 1
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # --------------------------
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
     checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/20241203-235826/" + "model_2100.pt")
@@ -28,16 +39,21 @@ if __name__ == "__main__":
 
     env_cfg = LocomotionPAEEnvCfg()
     env_cfg.env.num_envs = 1
-    env_cfg.robot.randomization.randomize_friction = False
-    env_cfg.randomization.push_robots = False
-    env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
-    env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    env_cfg.terrain_unity.env_origin_pattern = "point"
+    # env_cfg.robot.randomization.randomize_friction = False
+    # env_cfg.randomization.push_robots = False
+    # env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
+    # env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
+    # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
-
-    env = LocomotionPAEEnv(env_cfg)
+    #-----------------------
+    # env = LocomotionPAEEnv(env_cfg)
+    # env.set_flag_enable_reset(False)
+    # env.set_flag_enable_resample(False)
+    #-------------------
+    env = WildAnymal(env_cfg)
     env.set_flag_enable_reset(False)
     env.set_flag_enable_resample(False)
+
     runner = OnPolicyRunner(env, train_cfg_dict, log_dir=log_dir, device="cuda:0")
     obs, extras = env.reset()
     
@@ -59,8 +75,7 @@ if __name__ == "__main__":
     # env.gym.refresh_rigid_body_state_tensor(env.sim)
     #-----------------------------------------------
     #Main loop
-    running = True
-    while running:
+    while True:
         # Run the policy and step the environment
         #----------Debug: set obs manually------------
         # obs = torch.zeros_like(obs).to(env.device)
@@ -78,8 +93,8 @@ if __name__ == "__main__":
         #   0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,
         #   0.0000e+00,  0.0000e+00,  0.0000e+00]], device='cuda:0')
         default_dof_pos = torch.tensor([-0.1386,  0.4809, -0.7614, -0.1386, -0.4809,  0.7614,  0.1386,  0.4809,
-         -0.7614,  0.1386, -0.4809,  0.7614], device=env.device)
-   
+        -0.7614,  0.1386, -0.4809,  0.7614], device=env.device)
+  
         #------------------------------
         action = policy(obs)
 
