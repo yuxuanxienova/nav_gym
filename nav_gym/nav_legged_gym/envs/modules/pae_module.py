@@ -68,6 +68,7 @@ class FLD_PAEModule:
             if "reward_tracking_reconstructed" in rew_name:
                 self.tracking_reconstructed_terms.append(rew_name)
 
+        self.enable_module_visualization = self.fld_cfg.enable_module_visualization
         #2. other arguments
         self.target_fld_state_state_idx_dict = {}
         current_length = 0
@@ -136,12 +137,13 @@ class FLD_PAEModule:
         robot_root_lin_vel_w = quat_rotate(self.base_quat,self.fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
         target_root_lin_vel_w = quat_rotate(self.base_quat,self.target_fld_state[:,self.target_fld_state_state_idx_dict["base_lin_vel"]])
         
-        self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
-        # Update the plot every N steps to reduce overhead
-        self._update_plot_data()
-        N = 20  # Update plot every N steps
-        if self.pae_module_step_counter % N == 0:
-            self._update_plot()
+        if self.enable_module_visualization:
+            self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
+            # Update the plot every N steps to reduce overhead
+            self._update_plot_data()
+            N = 20  # Update plot every N steps
+            if self.pae_module_step_counter % N == 0:
+                self._update_plot()
 
     def _update_module_buffers(self):
         self.base_pos = self.robot.root_pos_w

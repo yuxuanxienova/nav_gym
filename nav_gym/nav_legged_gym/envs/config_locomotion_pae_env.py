@@ -181,6 +181,7 @@ class LocomotionPAEEnvCfg:
             env_origins:List = [(0.0, 0.0, 0.0)]
 #-----------------FLD Module--------------------
     class fld:
+        enable_module_visualization = False
         latent_encoding_update_noise_level = 0.0
         latent_channel = 4
         observation_horizon = 31 # 51
