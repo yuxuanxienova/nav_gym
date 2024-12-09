@@ -209,8 +209,13 @@ class Articulation(FileAsset):
             act_dof_ids = actuator.dof_ids
             # compute desired DOF state based on model.
             if actuator.command_type == "P":
-                desired_pos = actions[:, actuator.dof_ids] + self.default_dof_pos[:, actuator.dof_ids]
+                # desired_pos = actions[:, actuator.dof_ids] + self.default_dof_pos[:, actuator.dof_ids]
+                # desired_vel = 0.0
+                #---------Debug no default pos  added-----------------
+                print("[Debug][Articulation][apply_actions] no default pos added here, add on process action function in step!!!")
+                desired_pos = actions[:,actuator.dof_ids]
                 desired_vel = 0.0
+                #-----------------------------------------------------
             elif actuator.command_type == "V":
                 desired_pos = self.dof_pos[:, act_dof_ids]  # zero torque from p_gains
                 desired_vel = actions[:, actuator.dof_ids] + self.default_dof_vel[:, actuator.dof_ids]
@@ -231,11 +236,6 @@ class Articulation(FileAsset):
                 self.dof_torques[:, act_dof_ids] = actions[:, act_dof_ids]
             # compute torques for explicit actuators
             if actuator.control_type == "explicit":
-                #---------Debug no default pos  added-----------------
-                print("[Debug][Articulation][apply_actions] no default pos  added!!!")
-                desired_pos = actions[:,actuator.dof_ids]
-                desired_vel = 0.0
-                #-----------------------------------------------------
                 # compute torques explicitly
                 actuator.set_dof_state(self.dof_pos[:, act_dof_ids], self.dof_vel[:, act_dof_ids])
                 actuator.set_desired_dof_state(desired_pos, desired_vel)

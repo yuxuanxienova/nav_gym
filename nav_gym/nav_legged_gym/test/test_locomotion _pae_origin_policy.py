@@ -41,18 +41,18 @@ if __name__ == "__main__":
     env_cfg.env.num_envs = 1
     # env_cfg.robot.randomization.randomize_friction = False
     # env_cfg.randomization.push_robots = False
-    # env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
-    # env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    # env_cfg.terrain_unity.env_origin_pattern = "point"
+    env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
+    env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
+    env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     #-----------------------
-    # env = LocomotionPAEEnv(env_cfg)
-    # env.set_flag_enable_reset(False)
-    # env.set_flag_enable_resample(False)
-    #-------------------
-    env = WildAnymal(env_cfg)
+    env = LocomotionPAEEnv(env_cfg)
     env.set_flag_enable_reset(False)
     env.set_flag_enable_resample(False)
+    #-------------------
+    # env = WildAnymal(env_cfg)
+    # env.set_flag_enable_reset(False)
+    # env.set_flag_enable_resample(False)
 
     runner = OnPolicyRunner(env, train_cfg_dict, log_dir=log_dir, device="cuda:0")
     obs, extras = env.reset()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         print("obs", obs)
         print("actions", action)
         print("env.fld_module.latent_encoding[:, :, 0]",env.fld_module.latent_encoding[:, :, 0])
-        action = action + default_dof_pos/0.2
+        # action = action + default_dof_pos/0.2
         #-----------------------------------
         obs, _, _, extras = env.step(action)
         print("obs2", obs)

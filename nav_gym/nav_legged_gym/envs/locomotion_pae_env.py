@@ -314,11 +314,11 @@ class LocomotionPAEEnv:
 
         #----------------------debug--------------
         # clip actions and move to env device
-        actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
+        # actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
         actions = actions.to(self.device)
         # -- default scaling of actions
         scaled_actions = self.cfg.control.action_scale * actions
-        self.actions = scaled_actions
+        self.actions = scaled_actions + self.robot.default_dof_pos
         #------------------------------------------
         return scaled_actions
     def _apply_actions(self, actions):
