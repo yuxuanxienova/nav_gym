@@ -127,7 +127,7 @@ class FLD_PAEModule:
         self.latent_param_max, self.latent_param_min, self.latent_param_mean, self.latent_param_std = statistics_dict["latent_param_max"], statistics_dict["latent_param_min"], statistics_dict["latent_param_mean"], statistics_dict["latent_param_std"]
  
     def on_env_post_physics_step(self):
-        print("[INFO][self.cur_steps[0]:{0}] fld module on_env_post_physics_step".format(self.cur_steps[0]))
+        # print("[INFO][self.cur_steps[0]:{0}] fld module on_env_post_physics_step".format(self.cur_steps[0]))
         self.pae_module_step_counter += 1
         self._update_module_buffers()
         self._update_fld_observation_buf()
@@ -220,9 +220,9 @@ class FLD_PAEModule:
             self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         #-----------debug-use------------
-        print("[Debug][pae_module][_sample_latent_encoding] Setting motion_idx and cur_steps to 0")
-        self.motion_idx[env_ids] = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
-        self.cur_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
+        # print("[Debug][pae_module][_sample_latent_encoding] Setting motion_idx and cur_steps to 0")
+        # self.motion_idx[env_ids] = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
+        # self.cur_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device, requires_grad=False)
         #--------------------------------
         #self.task_sampler.data: Dim: [n_motions, n_steps, n_latent_features]=[10, 169, 16]
         #self.task_sampler.data[self.motion_idx[env_ids], self.cur_steps[env_ids]]: Dim: [num_envs, n_latent_features]=[num_envs, 16]

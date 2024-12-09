@@ -99,14 +99,14 @@ if __name__ == "__main__":
         action = policy(obs)
 
         #---------------debug---------------
-        print("obs", obs)
-        print("actions", action)
-        print("env.fld_module.latent_encoding[:, :, 0]",env.fld_module.latent_encoding[:, :, 0])
+        # print("obs", obs)
+        # print("actions", action)
+        # print("env.fld_module.latent_encoding[:, :, 0]",env.fld_module.latent_encoding[:, :, 0])
         # action = action + default_dof_pos/0.2
         #-----------------------------------
         obs, _, _, extras = env.step(action)
-        print("obs2", obs)
-        print("env.fld_module.latent_encoding[:, :, 0]2",env.fld_module.latent_encoding[:, :, 0])
+        # print("obs2", obs)
+        # print("env.fld_module.latent_encoding[:, :, 0]2",env.fld_module.latent_encoding[:, :, 0])
         env.render()
 
 

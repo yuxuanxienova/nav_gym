@@ -263,13 +263,13 @@ class LocomotionPAEEnv:
         contact_forces = torch.zeros_like(self.robot.net_contact_forces)
         for _ in range(self.cfg.control.decimation):
             #Simulation loop interval = sim_params.dt (0.0025[s])
-            print("[INFO][step][self.common_step_counter]{0}".format(self.common_step_counter))
-            print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
+            # print("[INFO][step][self.common_step_counter]{0}".format(self.common_step_counter))
+            # print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
             #---------Debug-----------
-            print("[Debug][step]Disable external disturbance")
-            # self._apply_external_disturbance()
+            # print("[Debug][step]Disable external disturbance")
+            self._apply_external_disturbance()
             #-------------------------
             # simulation step
             self.gym_iface.simulate()

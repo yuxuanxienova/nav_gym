@@ -211,8 +211,8 @@ class Articulation(FileAsset):
             if actuator.command_type == "P":
                 # desired_pos = actions[:, actuator.dof_ids] + self.default_dof_pos[:, actuator.dof_ids]
                 # desired_vel = 0.0
-                #---------Debug no default pos  added-----------------
-                print("[Debug][Articulation][apply_actions] no default pos added here, add on process action function in step!!!")
+                #---------Changes: no default pos added here, add on preprocess action-----------------
+                # print("[Debug][Articulation][apply_actions] no default pos added here, add on process action function in step!!!")
                 desired_pos = actions[:,actuator.dof_ids]
                 desired_vel = 0.0
                 #-----------------------------------------------------
