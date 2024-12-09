@@ -271,6 +271,12 @@ class LocomotionPAEEnv:
             # print("[Debug][step]Disable external disturbance")
             self._apply_external_disturbance()
             #-------------------------
+            #-------Debug--------------------------
+            # print("[Debug]SET position z")
+            # self.robot.root_states[:, 2] = 2.0
+            # # self.gym_iface.root_state[:,:,2] = 2.0
+            # self.gym_iface.write_states_to_sim()
+            #--------------------------------------
             # simulation step
             self.gym_iface.simulate()
             # refresh tensors
@@ -463,6 +469,12 @@ class LocomotionPAEEnv:
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_sin"])
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_onehot"])
+
+        obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_fl"])
+        obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_hl"])
+        obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_fr"])
+        obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_hr"])
+
 
         self.obs_buf = torch.cat(obs_list, dim=1)
         #-------------

@@ -105,6 +105,10 @@ class LocomotionPAEEnvCfg:
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
             fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
+            fld_target_dof_pos_leg_fl: dict = {"func": O.fld_target_dof_pos_leg_fl, "noise": 0.0}
+            fld_target_dof_pos_leg_hl: dict = {"func": O.fld_target_dof_pos_leg_hl, "noise": 0.0}
+            fld_target_dof_pos_leg_fr: dict = {"func": O.fld_target_dof_pos_leg_fr, "noise": 0.0}
+            fld_target_dof_pos_leg_hr: dict = {"func": O.fld_target_dof_pos_leg_hr, "noise": 0.0}
  
 
 
@@ -129,11 +133,11 @@ class LocomotionPAEEnvCfg:
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----fld rewards-----
-        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 1.0, "exp_scale": 1.0}
-        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 1.0, "exp_scale": 0.8}
-        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 1.0, "exp_scale": 3.0}
+        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 0.0, "exp_scale": 1.0}
+        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 0.0, "exp_scale": 0.8}
+        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 0.0, "exp_scale": 3.0}
         reward_tracking_reconstructed_dof_pos_leg_fl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fl, "scale": 1.0, "exp_scale": 2.0}
-        reward_tracking_reconstructed_dof_pos_leg_hl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hl, "scale": 1.0, "exp_scale": 2.0}
+        reward_tracking_reconstructed_dof_pos_leg_hl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hl, "scale": 100.0, "exp_scale": 2.0}
         reward_tracking_reconstructed_dof_pos_leg_fr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fr, "scale": 1.0, "exp_scale": 2.0}
         reward_tracking_reconstructed_dof_pos_leg_hr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hr, "scale": 1.0, "exp_scale": 2.0}
         # reward_tracking_reconstructed_feet_pos_fl = {"func": R.reward_tracking_reconstructed_feet_pos_fl, "scale": 1.0, "std": 0.25}

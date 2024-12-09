@@ -271,6 +271,14 @@ def fld_latent_others(env: "LocomotionFLDEnv", params):
 #     return env.fld_module.projected_gravity
 # def fld_target_dof_pos(env: "LocomotionFLDEnv", params):
 #     return env.fld_module.dof_pos - env.fld_module.default_dof_pos
+def fld_target_dof_pos_leg_fl(env: "LocomotionFLDEnv", params):
+    return env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)].reshape(env.num_envs,-1)
+def fld_target_dof_pos_leg_hl(env: "LocomotionFLDEnv", params):
+    return env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hl"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)].reshape(env.num_envs,-1)
+def fld_target_dof_pos_leg_fr(env: "LocomotionFLDEnv", params):
+    return env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_fr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)].reshape(env.num_envs,-1)
+def fld_target_dof_pos_leg_hr(env: "LocomotionFLDEnv", params):
+    return env.fld_module.target_fld_state[:, torch.tensor(env.fld_module.target_fld_state_state_idx_dict["dof_pos_leg_hr"], device=env.fld_module.device, dtype=torch.long, requires_grad=False)].reshape(env.num_envs,-1)
 
 def fld_one_hot(env: "LocomotionPAEEnv", params):
     #motions: Dim: [n_motions*n_trajs, n_slide_win, n_obs_dim, obs_horizon]=[10, 219, 21, 31]

@@ -45,6 +45,7 @@ if __name__ == "__main__":
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
     env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
+    env_cfg.fld.enable_module_visualization = True
     #-----------------------
     env = LocomotionPAEEnv(env_cfg)
     env.set_flag_enable_reset(False)

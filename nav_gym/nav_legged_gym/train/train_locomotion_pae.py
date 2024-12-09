@@ -11,7 +11,7 @@ import os
 import time
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/" + time.strftime("%Y%m%d-%H%M%S"))
-    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241108-171530/" + "model_2400.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/20241209-162043/" + "model_600.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -19,9 +19,10 @@ if __name__ == "__main__":
     env_cfg = LocomotionPAEEnvCfg()
     env_cfg.env.num_envs = 256
     # env_cfg.env.num_envs = 4096
-    env_cfg.gym.headless = True
+    env_cfg.gym.headless = False
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
-    env_cfg.terrain_unity.grid_pattern.env_spacing = 0.5
+    env_cfg.terrain_unity.grid_pattern.env_spacing = 5
+    env_cfg.fld.enable_module_visualization = True
     # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     
@@ -32,4 +33,5 @@ if __name__ == "__main__":
     env = LocomotionPAEEnv(env_cfg)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
     # runner.load(checkpoint_dir)
+    runner.load_actor(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

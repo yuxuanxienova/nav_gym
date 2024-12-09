@@ -340,6 +340,23 @@ class OnPolicyRunner:
         self.current_learning_iteration = loaded_dict["iter"]
         print(f"Loaded model from {path} at iteration {self.current_learning_iteration}")
         return loaded_dict["infos"]
+    
+    def load_actor(self, path):
+        loaded_dict = torch.load(path)
+        # Extract the actor's state dict
+        # actor_state_dict = {k: v for k, v in loaded_dict["model_state_dict"].items() if k.startswith('actor.')}
+        actor_state_dict = {}
+        for k, v in loaded_dict["model_state_dict"].items():
+            if k.startswith('actor.'):
+                actor_state_dict[k[6:]] = v
+            else:
+                pass
+        # Create a new state dict without the 'actor.' prefix if necessary
+        # Alternatively, ensure that the keys match the current actor's state dict
+        
+        # Load the actor's state dict
+        self.alg.actor_critic.actor.load_state_dict(actor_state_dict, strict=True)
+        print(f"Loaded actor model from {path}")
 
     def get_inference_policy(self, device=None):
         self.eval_mode()  # switch to evaluation mode (dropout for example)
