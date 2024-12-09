@@ -17,14 +17,16 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/20241203-235826/" + "model_2100.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/cluster_1209_1/" + "model_11700.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionPAEEnvCfg()
     env_cfg.env.num_envs = 1
+    env_cfg.gym.headless = False
     env_cfg.robot.randomization.randomize_friction = False
+    env_cfg.fld.enable_module_visualization = True
     env_cfg.randomization.push_robots = False
     env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]

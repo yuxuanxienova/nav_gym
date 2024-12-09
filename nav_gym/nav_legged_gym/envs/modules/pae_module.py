@@ -141,7 +141,7 @@ class FLD_PAEModule:
             self.visualize_velocities(robot_root_lin_vel_w, target_root_lin_vel_w)
             # Update the plot every N steps to reduce overhead
             self._update_plot_data()
-            N = 20  # Update plot every N steps
+            N = 50  # Update plot every N steps
             if self.pae_module_step_counter % N == 0:
                 self._update_plot()
 
