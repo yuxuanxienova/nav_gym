@@ -221,8 +221,8 @@ class LocomotionPAEEnv:
         """Resets root and dof states of robots in selected environments."""
         # -- dof state (handled by the robot)
         dof_pos, dof_vel = self.robot.get_default_dof_state(env_ids)
-        print("[Debug][_reset_robot] disable randomization in dof_pos reset") 
-        # dof_pos = dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+        # print("[Debug][_reset_robot] disable randomization in dof_pos reset") 
+        dof_pos = dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.robot.num_dof), device=self.device)
         self.robot.set_dof_state(env_ids, dof_pos, dof_vel)
         # -- root state (custom)
         root_state = self.robot.get_default_root_state(env_ids)
@@ -231,9 +231,9 @@ class LocomotionPAEEnv:
         # root_state[:, :3] += self.terrain.sample_new_init_poses(env_ids)
         #----------------------
         # shift initial pose
-        # root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
-        #     -self.cfg.randomization.max_init_pos, self.cfg.randomization.max_init_pos
-        # )
+        root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
+            self.cfg.randomization.init_pos[0], self.cfg.randomization.init_pos[1]
+        )
         #-----init root from roll, pitch, yaw--------
         # roll = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
         # pitch = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)

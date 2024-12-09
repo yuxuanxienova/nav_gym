@@ -58,7 +58,7 @@ class LocomotionPAEEnvCfg:
         friction_range: Tuple = (0.5, 1.25)
         randomize_base_mass: bool = True
         added_mass_range: Tuple = (-1.0, 1.0)
-        push_robots: bool = False
+        push_robots: bool = True
         push_interval_s: float = 15  # push applied each time interval [s]
         init_pos: Tuple = (-1.0, 1.0)  # max xy position added to default position [m]
         init_yaw: Tuple = (-3.14, 3.14)  # max yaw angle added to default orientation [rad]
