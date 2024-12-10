@@ -103,8 +103,11 @@ class LocomotionPAEEnvCfg:
             #---------------------------
             fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
+            fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.0}
+            fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.0}
+            fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.0}
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
-            fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
+            # fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
             # fld_target_dof_pos_leg_fl: dict = {"func": O.fld_target_dof_pos_leg_fl, "noise": 0.0}
             # fld_target_dof_pos_leg_hl: dict = {"func": O.fld_target_dof_pos_leg_hl, "noise": 0.0}
             # fld_target_dof_pos_leg_fr: dict = {"func": O.fld_target_dof_pos_leg_fr, "noise": 0.0}
@@ -124,8 +127,8 @@ class LocomotionPAEEnvCfg:
         # feet_air_time = {"func": R.feet_air_time, "scale": 0.4, "time_threshold": 0.5}
         feet_acc = {"func": R.feet_acc, "scale": -0.0001}
         action_rate = {"func": R.action_rate, "scale": -0.005}
-        collision_THIGHSHANK = {"func": R.collision, "scale": -1.0, "bodies": ".*(THIGH|SHANK)"}
-        collision_base = {"func": R.collision, "scale": -1.0, "bodies": "base"}
+        collision_THIGHSHANK = {"func": R.collision, "scale": -0.5, "bodies": ".*(THIGH|SHANK)"}
+        collision_base = {"func": R.collision, "scale": -0.5, "bodies": "base"}
         dof_acc = {"func": R.dof_acc, "scale": -5e-7}
         torques = {"func": R.torques, "scale": -0.00001}
         torque_limits = {"func": R.torque_limits, "scale": -0.01, "soft_ratio": 0.9}
