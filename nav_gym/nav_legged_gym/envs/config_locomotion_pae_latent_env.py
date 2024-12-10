@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionPAEEnvCfg:
+class LocomotionPAELatentEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -50,7 +50,7 @@ class LocomotionPAEEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                        # "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=2.0, length=3.0, resolution=0.2),max_xy_drift=0.075,max_z_drift=0.075),
+                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=2.0, length=3.0, resolution=0.2),max_xy_drift=0.075,max_z_drift=0.075),
                         #  "base_scan_center" : BaseScanCfg(body_attachement_name="base", enable_debug_vis=False)  # to check base height
                           }
     class randomization:
@@ -73,12 +73,12 @@ class LocomotionPAEEnvCfg:
 
         class prop:
             # --add this to every group--
-            add_noise: bool = False # turns off the noise in all observations
+            add_noise: bool = True # turns off the noise in all observations
             #---------------------------
             # velocity_commands: dict = {"func": O.velocity_commands}
-            dof_pos: dict = {"func": O.dof_pos, "noise": 0.0, "scale":1.0}
+            dof_pos: dict = {"func": O.dof_pos, "noise": 0.01, "scale":1.0}
             # dof_prev_pos: dict = {"func": O.dof_pos_history_selected,"noise": 0.01,"dofs": ".*(HAA|HFE|KFE)","hist_index": -4,}  # 0.005 x 4
-            dof_vel: dict = {"func": O.dof_vel, "noise": 0.0,"scale": 0.05}
+            dof_vel: dict = {"func": O.dof_vel, "noise": 1.5,"scale": 0.05}
             # dof_prev_vel: dict = {"func": O.dof_vel_history_selected, "noise": 3e-1, "dofs": ".*", "hist_index": -4}
             actions: dict = {"func": O.actions, "scale":1.0}
 
@@ -89,23 +89,23 @@ class LocomotionPAEEnvCfg:
         #     height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
         class priv:
             # --add this to every group--
-            add_noise: bool = False # turns off the noise in all observations
+            add_noise: bool = True # turns off the noise in all observations
             #---------------------------
-            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.0, "scale": 2.0}
-            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.0, "scale": 0.25}
-            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.0, "scale": 1.0}
+            base_lin_vel: dict = {"func": O.base_lin_vel, "noise": 0.1, "scale": 2.0}
+            base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2, "scale": 0.25}
+            projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05, "scale": 1.0}
             
             
 
         class fld:
             # --add this to every group--
-            add_noise: bool = False
+            add_noise: bool = True
             #---------------------------
-            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
-            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
-            fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.0}
-            fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.0}
-            fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.0}
+            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.01}
+            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.01}
+            fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.1}
+            fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.1}
+            fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.01}
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
             # fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
             # fld_target_dof_pos_leg_fl: dict = {"func": O.fld_target_dof_pos_leg_fl, "noise": 0.0}
@@ -136,9 +136,9 @@ class LocomotionPAEEnvCfg:
         # survival = {"func": R.survival, "scale": 1.0}
         # contact_forces = {"func": "contact_forces", "scale": -0.01, "max_contact_force": 450}
         #-----fld rewards-----
-        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 0.0, "exp_scale": 1.0}
-        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 0.0, "exp_scale": 0.8}
-        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 0.0, "exp_scale": 3.0}
+        reward_tracking_reconstructed_lin_vel = {"func": R.reward_tracking_reconstructed_lin_vel, "scale": 2.0, "exp_scale": 1.0}
+        reward_tracking_reconstructed_ang_vel = {"func": R.reward_tracking_reconstructed_ang_vel, "scale": 1.0, "exp_scale": 0.8}
+        reward_tracking_reconstructed_projected_gravity = {"func": R.reward_tracking_reconstructed_projected_gravity, "scale": 1.0, "exp_scale": 3.0}
         reward_tracking_reconstructed_dof_pos_leg_fl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fl, "scale": 1.0, "exp_scale": 2.0}
         reward_tracking_reconstructed_dof_pos_leg_hl = {"func": R.reward_tracking_reconstructed_dof_pos_leg_hl, "scale": 1.0, "exp_scale": 2.0}
         reward_tracking_reconstructed_dof_pos_leg_fr = {"func": R.reward_tracking_reconstructed_dof_pos_leg_fr, "scale": 1.0, "exp_scale": 2.0}
@@ -247,5 +247,5 @@ class LocomotionPAEEnvCfg:
             num_classes = 9
 
 if __name__ == "__main__":
-    env_cfg = LocomotionPAEEnvCfg()
+    env_cfg = LocomotionPAELatentEnvCfg()
     print(env_cfg.robot.init_state.dof_pos.items())
