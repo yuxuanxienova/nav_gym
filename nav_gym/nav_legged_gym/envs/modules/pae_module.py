@@ -216,10 +216,10 @@ class FLD_PAEModule:
     def _sample_latent_encoding(self,env_ids):
         if len(env_ids) == 0:
             return
-        if self.env_cfg.task_sampler.curriculum:
-            self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample_curriculum(len(env_ids), self.task_sampler_curriculum_flag)
-        else:
-            self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
+        # if self.env_cfg.task_sampler.curriculum:
+        #     self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample_curriculum(len(env_ids), self.task_sampler_curriculum_flag)
+        # else:
+        #     self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         self.motion_idx[env_ids], self.cur_steps[env_ids] = self.task_sampler.sample(len(env_ids))
         #-----------debug-use------------
         # print("[Debug][pae_module][_sample_latent_encoding] Setting motion_idx and cur_steps to 0")
@@ -236,9 +236,13 @@ class FLD_PAEModule:
                 self.task_sampler.load_filtered_encoding(n_unfolds=self.fld_cfg.filter_size)
                 #filtered_data: Dim: [n_motions, n_steps, window_len]=[10, 170, 5]
             self.latent_encoding[env_ids, :, 1:] = self.task_sampler.filtered_data[self.motion_idx[env_ids], self.cur_steps[env_ids], self.fld_latent_channel:].view(len(env_ids), 3, self.fld_latent_channel).swapaxes(1, 2)
-        
-            
     
+    #---------------------------------------Get Set Methods---------------------------------------
+    def set_motion_idx(self,motion_idx):
+        #motion_idx: Dim(num_envs)
+        self.motion_idx = motion_idx
+            
+    #---------------------------------------Visualization---------------------------------------
     # Visualization method for velocities
     def visualize_velocities(self, robot_root_lin_vel, target_root_lin_vel):
         # Loop through each environment to draw velocities

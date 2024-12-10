@@ -470,12 +470,6 @@ class LocomotionPAEEnv:
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_onehot"])
 
-        # obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_fl"])
-        # obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_hl"])
-        # obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_fr"])
-        # obs_list.append(self.obs_manager.obs_per_func["fld_target_dof_pos_leg_hr"])
-
-
         self.obs_buf = torch.cat(obs_list, dim=1)
         #-------------
         self.extras["observations"] = self.obs_dict

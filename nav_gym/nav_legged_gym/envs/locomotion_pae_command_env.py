@@ -1,6 +1,13 @@
 # isaac-gym
 from isaacgym import gymapi, gymtorch
 from isaacgym.torch_utils import quat_from_euler_xyz, quat_apply
+from isaacgym.torch_utils import (
+    torch_rand_float,
+    quat_rotate_inverse,
+    to_torch,
+    get_axis_params,
+    quat_apply,
+)
 # python
 from copy import deepcopy
 import torch
@@ -9,12 +16,14 @@ from typing import Tuple, Union, Dict, Any
 import math
 import torch
 import abc
+import json
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_pae_command_env import LocomotionPAECommandEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
 from nav_gym.nav_legged_gym.common.terrain.terrain_unity import TerrainUnity
+from nav_gym.nav_legged_gym.common.terrain.terrainPlane import TerrainPlane
 from nav_gym.nav_legged_gym.common.gym_interface import GymInterface
 from nav_gym.nav_legged_gym.common.rewards.reward_manager import RewardManager
 from nav_gym.nav_legged_gym.common.observations.observation_manager import ObsManager
@@ -23,12 +32,13 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
-class LocomotionEnv:
+from nav_gym.nav_legged_gym.envs.modules.pae_module import FLD_PAEModule
+class LocomotionPAECommandEnv:
     robot: LeggedRobot
-    cfg: LocomotionEnvCfg
+    cfg: LocomotionPAECommandEnvCfg
     """Environment for locomotion tasks using a legged robot."""
 #-------- 1. Initialize the environment--------
-    def __init__(self, cfg: LocomotionEnvCfg):
+    def __init__(self, cfg: LocomotionPAECommandEnvCfg):
         #1. Store the environment information from config
         self._init_done = False
         self.cfg = cfg
@@ -64,38 +74,37 @@ class LocomotionEnv:
         self._init_external_forces()
 
         #8. Prepare mdp helper managers
+       
         self.sensor_manager = SensorManager(self)
         self.command_generator: CommandBase = eval(self.cfg.commands.class_name)(self.cfg.commands, self)
         self.reward_manager = RewardManager(self)
+        self.fld_module = FLD_PAEModule(self)
         self.obs_manager = ObsManager(self)
         self.termination_manager = TerminationManager(self)
         self.curriculum_manager = CurriculumManager(self)
-        
-        #9. Store the environment information from managers
-        self.num_obs = self.obs_manager.get_obs_dims_from_group("policy")
-        self.num_privileged_obs = self.obs_manager.get_obs_dims_from_group("privileged")
-        #10. Store the flags
-        self.flag_enable_reset = True
-        self.flag_enable_resample = True
-        #10. Perform initial reset of all environments (to fill up buffers)
+
+        #11. Perform initial reset of all environments (to fill up buffers)
         self.reset()
-        #11. Create debug usage
+        self.num_obs = self.obs_buf.shape[1]
+        self.num_privileged_obs = None
+
+        #12. Create debug usage
         self.sphere_geoms_red = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(1, 0, 0))
         self.sphere_geoms_green = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 1, 0))
         self.sphere_geoms_blue = BatchWireframeSphereGeometry(num_spheres=1,radius=0.1, num_lats=4, num_lons=4, pose=None, color=(0, 0, 1))
+        #12. Store the flags
+        self.flag_enable_reset = True
+        self.flag_enable_resample = True
         # we are ready now! :)
         self._init_done = True
+
     def _create_envs(self):
         """Design the environment instances."""
         # add terrain instance
         self.terrain = TerrainUnity(gym=self.gym, sim=self.sim,device=self.device, num_envs=self.num_envs, terrain_unity_cfg=self.cfg.terrain_unity)
-        #----------------------------------------------------------
-        # terrain_generator = TerrainGenerator(self.cfg.terrain)
-        # self.terrain = Terrain(self.cfg.terrain, self.num_envs, self.gym_iface)
-        # self.terrain.set_terrain_origins(terrain_generator.terrain_origins)
-        # self.terrain.set_valid_init_poses(terrain_generator.valid_init_poses)
-        # self.terrain.set_valid_targets(terrain_generator.valid_targets)
-        # self.terrain.add_mesh(terrain_generator.terrain_mesh, name="terrain")
+        #---------------------Debug----------------------------------
+        # self.terrain = Terrain(self.num_envs, self.gym_iface)
+        # self.terrain.set_terrain_origins()
         #----------------------------------------------------------
         self.terrain.add_to_sim()
         # add robot class
@@ -130,6 +139,7 @@ class LocomotionEnv:
         self.last_actions = torch.zeros_like(self.actions)
         self.last_last_actions = torch.zeros_like(self.actions)
         self.processed_actions = torch.zeros_like(self.actions)
+        
         # -- command: x vel, y vel, yaw vel, heading
         # self.commands = torch.zeros(self.num_envs, 4, device=self.device)
         # self.heading_target = torch.zeros(self.num_envs, device=self.device)
@@ -138,6 +148,7 @@ class LocomotionEnv:
         # assets buffers
         # -- robot
         self.robot.init_buffers()
+        self.last_feet_vel = torch.zeros_like(self.robot.feet_vel)
         #----history
         self.dof_pos_history = torch.zeros(
             self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
@@ -145,6 +156,10 @@ class LocomotionEnv:
         self.dof_vel_history = torch.zeros(
             self.num_envs, 14, self.robot.num_dof, dtype=torch.float, requires_grad=False
         ).to(self.device)
+        #-----fld command
+        self.command_motion_idx = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+        self.command_phase_sin = torch.zeros(self.num_envs, 4, device=self.device)
+        self.command_phase_cos = torch.zeros(self.num_envs, 4, device=self.device)
     def _init_external_forces(self):
         self.external_forces = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
         self.external_torques = torch.zeros((self.num_envs, self.robot.num_bodies, 3), device=self.device)
@@ -157,6 +172,7 @@ class LocomotionEnv:
         self.set_observation_buffer()
         # return obs
         return self.obs_buf, self.extras
+    
     def reset_idx(self, env_ids):
         """Reset environments based on specified indices.
         Args:
@@ -181,9 +197,10 @@ class LocomotionEnv:
         # self.push_robots_buf[env_ids] = torch.randint(
         #     0, self._push_interval, (len(env_ids), 1), device=self.device
         # ).squeeze()
-        #-- resample commands
-        self._update_commands()
 
+        #--------reset other modules-------
+        self.fld_module.on_env_reset_idx(env_ids)
+        #----------------------------------
         self.extras["episode"] = dict()
         self.reward_manager.log_info(self, env_ids, self.extras["episode"])
         self.curriculum_manager.log_info(self, env_ids, self.extras["episode"])
@@ -207,21 +224,26 @@ class LocomotionEnv:
     def _reset_robot(self, env_ids):
         """Resets root and dof states of robots in selected environments."""
         # -- dof state (handled by the robot)
-        dof_pos, dof_vel = self.robot.get_random_dof_state(env_ids)
+        dof_pos, dof_vel = self.robot.get_default_dof_state(env_ids)
+        # print("[Debug][_reset_robot] disable randomization in dof_pos reset") 
+        dof_pos = dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.robot.num_dof), device=self.device)
         self.robot.set_dof_state(env_ids, dof_pos, dof_vel)
         # -- root state (custom)
         root_state = self.robot.get_default_root_state(env_ids)
-        # root_state[:, :3] += self.terrain.env_origins[env_ids]
-        root_state[:, :3] += self.terrain.sample_new_init_poses(env_ids)
+        #--------------------
+        root_state[:, :3] += self.terrain.env_origins[env_ids]
+        # root_state[:, :3] += self.terrain.sample_new_init_poses(env_ids)
+        #----------------------
         # shift initial pose
-        # root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
-        #     -self.cfg.randomization.max_init_pos, self.cfg.randomization.max_init_pos
-        # )
-        roll = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
-        pitch = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
-        yaw = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_yaw)
+        root_state[:, :2] += torch.empty_like(root_state[:, :2]).uniform_(
+            self.cfg.randomization.init_pos[0], self.cfg.randomization.init_pos[1]
+        )
+        #-----init root from roll, pitch, yaw--------
+        # roll = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
+        # pitch = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_roll_pitch)
+        # yaw = torch.empty(len(env_ids), device=self.device).uniform_(*self.cfg.randomization.init_yaw)
         # yaw += -np.pi * 2.
-        root_state[:, 3:7] = quat_from_euler_xyz(roll, pitch, yaw)
+        # root_state[:, 3:7] = quat_from_euler_xyz(roll, pitch, yaw)
         # root_state[:, 3:7] *= torch.sign(root_state[:, 6]).unsqueeze(1)
         # base velocities: [7:10]: lin vel, [10:13]: ang vel
         #root_state[:, 7:13].uniform_(-0.5, 0.5)
@@ -245,9 +267,20 @@ class LocomotionEnv:
         contact_forces = torch.zeros_like(self.robot.net_contact_forces)
         for _ in range(self.cfg.control.decimation):
             #Simulation loop interval = sim_params.dt (0.0025[s])
+            # print("[INFO][step][self.common_step_counter]{0}".format(self.common_step_counter))
+            # print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
             self._apply_actions(processed_actions)
             # apply external disturbance to base and feet
+            #---------Debug-----------
+            # print("[Debug][step]Disable external disturbance")
             self._apply_external_disturbance()
+            #-------------------------
+            #-------Debug--------------------------
+            # print("[Debug]SET position z")
+            # self.robot.root_states[:, 2] = 2.0
+            # # self.gym_iface.root_state[:,:,2] = 2.0
+            # self.gym_iface.write_states_to_sim()
+            #--------------------------------------
             # simulation step
             self.gym_iface.simulate()
             # refresh tensors
@@ -260,7 +293,7 @@ class LocomotionEnv:
             #sensors update
             self.sensor_manager.update()
             # update substep history
-            # self.update_substep_history()
+            self.update_substep_history()
 
         self.robot.net_contact_forces[:] = contact_forces
         # render viewer
@@ -283,11 +316,20 @@ class LocomotionEnv:
             - scaling of actions (based on configuration)
         """
         # clip actions and move to env device
-        actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
+        # actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
+        # actions = actions.to(self.device)
+        # self.actions = actions
+        # # -- default scaling of actions
+        # scaled_actions = self.cfg.control.action_scale * self.actions
+
+        #----------------------debug--------------
+        # clip actions and move to env device
+        # actions = torch.clip(actions, -self.cfg.control.action_clipping, self.cfg.control.action_clipping)
         actions = actions.to(self.device)
-        self.actions = actions
         # -- default scaling of actions
-        scaled_actions = self.cfg.control.action_scale * self.actions
+        scaled_actions = self.cfg.control.action_scale * actions + self.robot.default_dof_pos
+        self.actions = scaled_actions 
+        #------------------------------------------
         return scaled_actions
     def _apply_actions(self, actions):
         """Apply actions to simulation buffers in the environment."""
@@ -357,6 +399,9 @@ class LocomotionEnv:
         self.common_step_counter += 1
         # update robot
         self.robot.update_buffers(dt=self.dt)
+        #----update other modules-----
+        self.fld_module.on_env_post_physics_step()
+        #-----------------------------
         # rewards, resets, ...
         # -- rewards
         self.rew_buf = self.reward_manager.compute_reward(self)
@@ -387,12 +432,16 @@ class LocomotionEnv:
          # check if need to resample
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
-        if self.flag_enable_resample:  
+        if self.flag_enable_resample :  
             self.command_generator.resample(env_ids)
+            #--------Other modules--------
+            self.fld_module.on_env_resample_commands(env_ids)
+
         self.command_generator.update()
+        
+
 
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
-        # print("[INFO][LocomotionEnv]Setting velocity commands")
         command = (x_vel, y_vel, yaw_vel)
         self.command_generator.set_velocity_command(command)
     def _push_robots(self):
@@ -403,15 +452,47 @@ class LocomotionEnv:
         self.robot.update_history()
         self.last_last_actions[:] = self.last_actions[:]
         self.last_actions[:] = self.actions[:]
+        self.last_feet_vel[:] = self.robot.feet_vel[:]
 #-------- 4. Get/Set functions--------
     def get_observations(self):
         return self.obs_buf, self.extras
-
     # def get_privileged_observations(self):
     #     return self.obs_manager.get_obs_from_group("privileged")
+    def set_commands(self, commands:dict):
+        command_phase = commands["phase"]#(num_envs,4)
+        command_motion_idx_normalized_float = commands["motion_idx_normalized_float"]#(num_envs,1)
+        #process command
+        command_motion_idx_normalized_float = torch.clip(command_motion_idx_normalized_float,0,1)
+        self.command_motion_idx = torch.round(command_motion_idx_normalized_float * self.fld_module.task_sampler.data.size(0)).long()
+        self.command_phase_sin = torch.sin(2 * torch.pi * command_phase)
+        self.command_phase_cos = torch.cos(2 * torch.pi * command_phase)
+
+        self.fld_module.set_motion_idx(self.command_motion_idx)
+
+
     def set_observation_buffer(self):
-        self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        # self.obs_buf = torch.cat([self.obs_dict[obs] for obs in self.obs_dict.keys()], dim=1)
+        #debug-------
+        obs_list = []
+        obs_list.append(self.obs_manager.obs_per_func["base_lin_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["base_ang_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["projected_gravity"])
+
+        obs_list.append(self.obs_manager.obs_per_func["dof_pos"])
+        obs_list.append(self.obs_manager.obs_per_func["dof_vel"])
+        obs_list.append(self.obs_manager.obs_per_func["actions"])
+
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_sin"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_onehot"])
+        obs_list.append(self.command_phase_sin)
+        obs_list.append(self.command_phase_cos)
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_onehot"])
+
+        self.obs_buf = torch.cat(obs_list, dim=1)
+        #-------------
         self.extras["observations"] = self.obs_dict
+
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset
         print(f"[INFO][LocomotionEnv]Reset flag set to {enable_reset}")
@@ -421,6 +502,7 @@ class LocomotionEnv:
 #-------- 5. Other functions--------
     def update_learning_curriculum(self):
         pass
+
 
 
 

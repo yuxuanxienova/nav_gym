@@ -1,7 +1,7 @@
-from nav_gym.nav_legged_gym.envs.config_locomotion_env import LocomotionEnvCfg
-from nav_gym.nav_legged_gym.envs.locomotion_env import LocomotionEnv
+from nav_gym.nav_legged_gym.envs.config_locomotion_pae_command_env import LocomotionPAECommandEnvCfg as LocomotionEnvCfg
+from nav_gym.nav_legged_gym.envs.locomotion_pae_command_env import LocomotionPAECommandEnv as LocomotionEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.config_train_locomotion import TrainConfig
+from nav_gym.nav_legged_gym.train.config_train_locomotion_pae import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.utils.helpers import export_policy_as_jit
 import torch
@@ -11,7 +11,7 @@ from nav_gym import NAV_GYM_ROOT_DIR
 
 if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241103-092555/" + "model_26099.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/cluster_1209_1/" + "model_11700.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -50,8 +50,8 @@ if __name__ == "__main__":
     
     # Script the policy model
     try:
-        scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/" )
-        file_name = "ll_jit_model2.pt"
+        scripted_model_path = os.path.join(NAV_GYM_ROOT_DIR, "resources/model/low_level/pae/" )
+        file_name = "ll_jit_model.pt"
         export_policy_as_jit(runner.alg.actor_critic, None, scripted_model_path, filename=file_name)
         print(f"Scripted model saved to {scripted_model_path}")
     except Exception as e:
