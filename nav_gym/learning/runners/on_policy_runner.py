@@ -26,6 +26,7 @@ from nav_gym.learning.modules.navigation.local_nav_model import NavPolicyWithMem
 from nav_gym.learning.modules.fld.fld_actor_critic_model import FLDLocomotionActorCritic
 from nav_gym.learning.modules.mimic.mimic_actor_critic_model import MimicLocomotionActorCritic
 from nav_gym.learning.modules.fld.pae_actor_critic_model import PAELocomotionActorCritic
+from nav_gym.learning.modules.fld.pae_scan_actor_critic_model import PAEScanLocomotionActorCritic
 def load_model(obs_names_list, arch_cfg, obs_dict, num_actions, empirical_normalization):
     # Define observation space
     obs_shape_dict = {}

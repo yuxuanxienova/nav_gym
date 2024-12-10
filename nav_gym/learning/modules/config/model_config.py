@@ -35,6 +35,17 @@ class PAELocomotionActorCriticCfg:
     output_mlp_size: List[int] = [512, 256, 128]
 
 @configclass
+class PAEScanLocomotionActorCriticCfg:
+    model_class: str = "PAEScanLocomotionActorCritic"
+    activation_fn: str = "elu"
+    obs_names_critic: Optional[List[str]] = None  # TODO: for asymmetric critic
+    scan_encoder_shape: List[int] = [128]
+    scan_latent_size: int = 64
+    # priv_encoder_shape: Optional[List[int]] = None
+    # priv_latent_size: int = 16
+    output_mlp_size: List[int] = [512, 256, 128]
+
+@configclass
 class MimicLocomotionActorCriticCfg:
     model_class: str = "MimicLocomotionActorCritic"
     activation_fn: str = "elu"
