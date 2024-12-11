@@ -10,7 +10,7 @@ import torch
 import os
 import time
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan/" + time.strftime("%Y%m%d-%H%M%S"))
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan_command/" + time.strftime("%Y%m%d-%H%M%S"))
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan/20241209-173845/" + "model_300.pt")
     # log_dir = None
     train_cfg = TrainConfig
