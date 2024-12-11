@@ -7,8 +7,9 @@ if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
     from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
     from nav_gym.nav_legged_gym.envs.locomotion_mimic_env import LocomotionMimicEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_command_pos_env import LocomotionPAELatentScanEnv
 
-    ANY_ENV = Union[LocomotionEnv]
+    ANY_ENV = Union[LocomotionEnv,LocomotionPAELatentScanEnv]
 
 import torch
 from nav_gym.nav_legged_gym.utils.math_utils import quat_rotate_inverse, yaw_quat
@@ -126,6 +127,8 @@ def base_ang_vel(env: "ANY_ENV", params):
 #     return env.commands[:, :3]
 def velocity_commands(env: "ANY_ENV", params):
     return env.command_generator.get_velocity_command()
+def goal_position_commands(env: "ANY_ENV", params):
+    return env.command_generator.get_goal_position_command()
 
 def latent(env: "LeggedEnv", params):
     sensor = env.sensors[params["sensor"]]

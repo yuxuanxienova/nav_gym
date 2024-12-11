@@ -326,6 +326,15 @@ def feet_acc(env: "LeggedEnv", params):
     return torch.sum(torch.norm(env.robot.body_acc[:, env.robot.feet_indices], dim=-1), dim=1)
 
 """
+ASE specific reward Functions
+"""
+def tracking_pos_ase(env: "ANY_ENV", params):
+    error = torch.sum(torch.square(env.command_generator.get_goal_position_command() - env.robot.root_pos_w),dim=1)
+    return torch.exp(-error * params["exp_scale"])
+
+
+
+"""
 High level specific reward Functions
 """
 

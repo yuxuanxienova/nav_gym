@@ -19,7 +19,7 @@ import torch
 import abc
 import json
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_pae_latent_scan_env import LocomotionPAELatentScanEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_pae_latent_scan_command_vel_env import LocomotionPAELatentScanEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -497,37 +497,7 @@ class LocomotionPAELatentScanEnv:
         pass
         # Visualization method for velocities
 
-    def visualize_velocities(self, robot_root_lin_vel, target_root_lin_vel):
-        # Loop through each environment to draw velocities
- 
-        env_handle = self.env_draw_handle
-        i=0
-        self.velocity_scale=1
 
-        #offset
-        offset = np.array([0,0,1])
-        # Get the base position of the robot
-        base_pos = self.robot.root_pos_w[i].cpu().numpy() + offset
-
-        # Robot's current velocity
-        robot_vel = robot_root_lin_vel[i].cpu().numpy() * self.velocity_scale
-        robot_vel_end = base_pos + robot_vel
-
-        # Target velocity
-        target_vel = target_root_lin_vel[i].cpu().numpy() * self.velocity_scale
-        target_vel_end = base_pos + target_vel
-
-        # Draw the robot's velocity vector in blue
-        p1 = gymapi.Vec3(*base_pos)
-        p2 = gymapi.Vec3(*robot_vel_end)
-        color_blue = gymapi.Vec3(0, 0, 1)
-        gymutil.draw_line(p1, p2, color_blue, self.gym, self.viewer, self.env_draw_handle)
-
-        # Draw the target velocity vector in red
-        p3 = gymapi.Vec3(*base_pos)
-        p4 = gymapi.Vec3(*target_vel_end)
-        color_red = gymapi.Vec3(1, 0, 0)
-        gymutil.draw_line(p3, p4, color_red, self.gym, self.viewer, self.env_draw_handle)
 
 
 
