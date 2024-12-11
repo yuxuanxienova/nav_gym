@@ -24,6 +24,7 @@ if __name__ == "__main__":
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
     env_cfg.terrain_unity.grid_pattern.env_spacing = 0.5
     env_cfg.fld.enable_module_visualization = False
+    # env_cfg.terrain_unity.terrain_file:str = "/terrain/LocomotionMap_v1.obj"
     # env_cfg.terrain_unity.env_origin_pattern = "point"
     env_cfg.gym.viewer.eye = (3.0, 3.0, 3.0)
     

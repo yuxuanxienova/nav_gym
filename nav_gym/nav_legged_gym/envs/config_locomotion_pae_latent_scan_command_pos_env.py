@@ -179,7 +179,8 @@ class LocomotionPAELatentScanEnvCfg:
     commands = WaypointCommandCfg_LocomotionPAE()
 
     class terrain_unity:
-        terrain_file:str = "/terrain/Plane1.obj"
+        # terrain_file:str = "/terrain/Plane1.obj"
+        terrain_file:str = "/terrain/LocomotionMap_v1.obj"
         translation: Tuple = (0.0, 0.0, 0.0)
 
         env_origin_pattern:str = "grid" # "point" or "grid"
