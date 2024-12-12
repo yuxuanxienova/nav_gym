@@ -18,7 +18,7 @@ class InteractModuleVelocity:
 
         # Define maximum velocities
         self.max_x_vel = 2
-        self.max_y_vel = 1.0
+        self.max_y_vel = 0.3
         self.max_yaw_rate = 1.0# Adjust this value based on your environment's limits
 
         if env_cfg is not None:

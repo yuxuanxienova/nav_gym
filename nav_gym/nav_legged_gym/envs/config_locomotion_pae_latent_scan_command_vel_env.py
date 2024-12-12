@@ -8,7 +8,7 @@ import nav_gym.nav_legged_gym.common.terminations.terminations as T
 import nav_gym.nav_legged_gym.common.curriculum.curriculum as C
 from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
-from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
+from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg_LocomotionPAE
 from nav_gym import NAV_GYM_ROOT_DIR
 class LocomotionPAELatentScanEnvCfg:
     class env:
@@ -174,7 +174,7 @@ class LocomotionPAELatentScanEnvCfg:
     #         lin_vel_y: List = [-1.0, 1.0]  # min max [m/s]
     #         ang_vel_yaw: List = [-1.5, 1.5]  # min max [rad/s]
     #         heading: List = [-3.14, 3.14]  # [rad]
-    commands = UnifromVelocityCommandCfg()
+    commands = UnifromVelocityCommandCfg_LocomotionPAE()
 
     class terrain_unity:
         terrain_file:str = "/terrain/Plane1.obj"

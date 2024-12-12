@@ -383,6 +383,7 @@ class LocomotionPAELatentScanEnv:
         # self.sphere_geoms_green.draw(sphere_pos_init + y_offset, self.gym, self.viewer, self.envs[0])
         # self.sphere_geoms_blue.draw(sphere_pos_init + z_offset, self.gym, self.viewer, self.envs[0])
         # #4. Drawing the velocity and target velocity
+        print("[Debug][render]command_generator.velocities:{0}".format(self.command_generator.get_velocity_command()))
         
 
     def _post_physics_step(self):
