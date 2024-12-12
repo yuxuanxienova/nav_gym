@@ -51,6 +51,7 @@ class ObsManager:
                 self.func_to_func_name[function] = func_name
                 #-----------------------------
             self.obs_dims_per_group[group_name] = obs_dim
+        # self.compute_obs(env)
 
     def compute_obs(self, env, obs_group=None):
         #1. Resetting Observations
