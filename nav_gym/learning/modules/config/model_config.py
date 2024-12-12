@@ -89,3 +89,9 @@ class betaActionDistCfg:
     model_class: str = "BetaDistribution"
     scale: float = 3.0  # initial scale to alpha + beta
     num_logits: int = 6  # SHOULD BE 2 x action dim
+
+@configclass
+class betaActionDistCfg_pae_latent:
+    model_class: str = "BetaDistribution"
+    scale: float = 3.0  # initial scale to alpha + beta
+    num_logits: int = 32  # SHOULD BE 2 x action dim

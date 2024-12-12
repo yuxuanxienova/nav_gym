@@ -29,7 +29,7 @@ if __name__ == "__main__":
     env_cfg.gym.headless = False
     env_cfg.env.enable_debug_vis = True
     env_cfg.robot.randomization.randomize_friction = False
-    env_cfg.fld.enable_module_visualization = False
+    env_cfg.fld.enable_module_visualization = True
     env_cfg.randomization.push_robots = False
     env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     obs, extras = env.reset()
 
     interact_module = InteractModuleVelocity()
-    interact_module.max_x_vel = 2.0
+    interact_module.max_x_vel = 1.0
     interact_module.max_y_vel = 0.3
     interact_module.max_yaw_rate = 1.5
     # Main loop

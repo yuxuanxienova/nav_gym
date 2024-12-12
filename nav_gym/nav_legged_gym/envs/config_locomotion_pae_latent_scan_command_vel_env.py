@@ -71,8 +71,6 @@ class LocomotionPAELatentScanEnvCfg:
 
     class observations:
 
-
-
         class prop:
             # --add this to every group--
             add_noise: bool = True # turns off the noise in all observations

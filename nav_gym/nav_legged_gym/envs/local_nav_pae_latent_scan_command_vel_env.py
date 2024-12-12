@@ -10,7 +10,7 @@ import math
 import torch
 import abc
 # legged-gym
-from nav_gym.nav_legged_gym.envs.locomotion_pae_command_env import LocomotionPAECommandEnv
+from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_command_vel_env import LocomotionPAELatentScanEnv
 from nav_gym.nav_legged_gym.envs.config_locomotion_pae_command_env import LocomotionPAECommandEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
@@ -24,7 +24,7 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
-from nav_gym.nav_legged_gym.envs.config_local_nav_pae_env import LocalNavPAEEnvCfg
+from nav_gym.nav_legged_gym.envs.config_local_nav_pae_latent_scan_command_vel_env import LocalNavPAEEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
 from nav_gym.nav_legged_gym.envs.modules.pose_history import PoseHistoryData
 import os
@@ -32,13 +32,13 @@ from nav_gym import NAV_GYM_ROOT_DIR
 
 class LocalNavPAEEnv:
     #-------- 1. Initialization -----------
-    def __init__(self, cfg:LocalNavPAEEnvCfg, ll_env_cls:LocomotionPAECommandEnv) -> None:
+    def __init__(self, cfg:LocalNavPAEEnvCfg, ll_env_cls:LocomotionPAELatentScanEnv) -> None:
         self.cfg = cfg
         #1. Parse the configuration
         cfg.ll_env_cfg.gym.headless = cfg.gym.headless
         cfg.ll_env_cfg.env.num_envs = cfg.env.num_envs
         #1.1 Create the low-level environment
-        self.ll_env: LocomotionPAECommandEnv = ll_env_cls(cfg.ll_env_cfg)
+        self.ll_env: LocomotionPAELatentScanEnv = ll_env_cls(cfg.ll_env_cfg)
         self.ll_env.play_mode = True #enable play mode
         #1.2 Extract the necessary attributes
         self.sim = self.ll_env.sim
