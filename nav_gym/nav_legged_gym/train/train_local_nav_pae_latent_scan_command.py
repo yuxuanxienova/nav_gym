@@ -20,8 +20,9 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     hl_env_cfg = LocalNavPAEEnvCfg()
-    hl_env_cfg.env.num_envs = 1
-    hl_env_cfg.gym.headless = False
+    hl_env_cfg.env.num_envs = 4096
+    hl_env_cfg.gym.headless = True
+    hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 0.5
 
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
