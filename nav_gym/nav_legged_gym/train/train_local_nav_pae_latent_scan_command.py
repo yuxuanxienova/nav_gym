@@ -15,7 +15,7 @@ if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/" + time.strftime("%Y%m%d-%H%M%S"))
     # log_dir = None
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241103-205557/" + "model_600.pt")
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs//local_nav/pae_latent_scan_command/cluster_1217_1/" + "model_6000.pt")
+    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs//local_nav/pae_latent_scan_command/cluster_1217_1/" + "model_6000.pt")
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
@@ -34,6 +34,5 @@ if __name__ == "__main__":
     dest_dir = os.path.join(log_dir, "config")
     save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionPAEEnvCfg.py")
 
-    runner.load(checkpoint_dir)
+    # runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)
-    runner.load(checkpoint_dir)

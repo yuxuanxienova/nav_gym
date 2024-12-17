@@ -166,7 +166,12 @@ class LocalNavPAEEnv:
     def _preprocess_actions(self, actions: torch.Tensor):
         # scale the actions
         self.actions = actions
-        self.scaled_action = self.actions
+        # self.scaled_action = self.actions
+        #---------------------
+        #scale latent params except phase
+        self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:] = self.actions[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
+        self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+        #--------------------
         # self.scaled_action = self.actions * self.action_scale
         # self.scaled_action += self.action_offset
         # set the velocity command
