@@ -22,7 +22,7 @@ if __name__ == "__main__":
     hl_env_cfg = LocalNavPAEEnvCfg()
     hl_env_cfg.env.num_envs = 512
     hl_env_cfg.gym.headless = True
-    hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 9.0
+    hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 8.0
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
     hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
     hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
@@ -30,9 +30,9 @@ if __name__ == "__main__":
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
 
-    # src_file_path = inspect.getfile(LocalNavPAEEnvCfg)
-    # dest_dir = os.path.join(log_dir, "config")
-    # save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionPAEEnvCfg.py")
+    src_file_path = inspect.getfile(LocalNavPAEEnvCfg)
+    dest_dir = os.path.join(log_dir, "config")
+    save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionPAEEnvCfg.py")
 
     runner.load(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)
