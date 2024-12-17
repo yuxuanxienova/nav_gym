@@ -10,7 +10,7 @@ import math
 import torch
 import abc
 # legged-gym
-from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_command_env import LocomotionPAELatentScanEnv
+from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_residual_command_env import LocomotionPAELatentScanEnv
 from nav_gym.nav_legged_gym.envs.config_locomotion_pae_command_env import LocomotionPAECommandEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
@@ -24,7 +24,7 @@ from nav_gym.nav_legged_gym.common.curriculum.curriculum_manager import Curricul
 from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg,WaypointCommand,WaypointCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
-from nav_gym.nav_legged_gym.envs.config_local_nav_pae_latent_scan_command_env import LocalNavPAEEnvCfg
+from nav_gym.nav_legged_gym.envs.config_local_nav_pae_latent_scan_residual_command_env import LocalNavPAEEnvCfg
 from nav_gym.nav_legged_gym.envs.modules.exp_memory import ExplicitMemory
 from nav_gym.nav_legged_gym.envs.modules.pose_history import PoseHistoryData
 import os
@@ -135,7 +135,7 @@ class LocalNavPAEEnv:
         self.actions = torch.zeros(self.num_envs, self.cfg.env.num_actions, device=self.device)
         self.last_actions = torch.zeros_like(self.actions)
         self.last_last_actions = torch.zeros_like(self.actions)
-        self.scaled_action = torch.zeros(self.num_envs,self.cfg.env.num_actions, device=self.device)
+        # self.scaled_action = torch.zeros(self.num_envs,self.cfg.env.num_actions, device=self.device)
 
         # vel_cmd_scale = np.array(self.cfg.vel_cmd_scale)
         # vel_cmd_offset = np.array(self.cfg.vel_cmd_offset)
@@ -168,19 +168,23 @@ class LocalNavPAEEnv:
         self.actions = actions
         # self.scaled_action = self.actions
         #---------------------
+        latent_action = self.actions[:,:16]
+        residual_action = self.actions[:,16:]
         #scale latent params except phase
-        self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:] = self.actions[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
-        self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(self.scaled_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+        scaled_latent_action = latent_action
+        scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
+        scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
         #--------------------
         # self.scaled_action = self.actions * self.action_scale
         # self.scaled_action += self.action_offset
         # set the velocity command
         if self.flag_enable_set_ll_commands:
             commands:dict = {}
-            commands["phase"] = self.scaled_action[:,0:4]
-            commands["freq"] = self.scaled_action[:,4:8]
-            commands["amp"] = self.scaled_action[:,8:12]
-            commands["offset"] = self.scaled_action[:,12:16]
+            commands["phase"] = scaled_latent_action[:,0:4]
+            commands["freq"] = scaled_latent_action[:,4:8]
+            commands["amp"] = scaled_latent_action[:,8:12]
+            commands["offset"] = scaled_latent_action[:,12:16]
+            commands["residual"] = residual_action
             self.ll_env.set_commands(commands)
         self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
         return actions  
