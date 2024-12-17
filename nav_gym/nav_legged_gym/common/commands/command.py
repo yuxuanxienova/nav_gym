@@ -248,7 +248,19 @@ class WaypointCommand(CommandBase):
         ray_directions = torch.zeros_like(ray_starts_world)
         ray_directions[..., :] = torch.tensor([0.0, 0.0, -1.0], device=self.device)
 
-        ray_hit_positions, _ = ray_cast(ray_starts_world, ray_directions, self.terrain.wp_meshes)
+        ray_hit_positions, _ = ray_cast(ray_starts_world, ray_directions, self.terrain.wp_meshes)#Dim: [num_envs, 3]
+
+        MAX_DISTANCE = 100.0
+
+        # Identify inf values
+        inf_mask = torch.isinf(ray_hit_positions).any(dim=1)  # [num_envs]
+
+        # Handle inf values by replacing with DEFAULT_POSITION or a scaled position
+        ray_hit_positions = torch.where(
+            inf_mask.unsqueeze(1),
+            ray_starts_world + ray_directions * MAX_DISTANCE,  # Example: replace with max distance position
+            ray_hit_positions
+        )
 
         self.goal_commands[env_ids, 2] = ray_hit_positions[:, 2] + 0.5
 
