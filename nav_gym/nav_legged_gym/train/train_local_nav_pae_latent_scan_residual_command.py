@@ -12,7 +12,7 @@ import torch
 import os
 import time
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/" + time.strftime("%Y%m%d-%H%M%S"))
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/" + time.strftime("%Y%m%d-%H%M%S"))
     # log_dir = None
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241103-205557/" + "model_600.pt")
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs//local_nav/pae_latent_scan_command/cluster_1217_1/" + "model_6000.pt")
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     hl_env_cfg = LocalNavPAEEnvCfg()
     hl_env_cfg.env.num_envs = 512
-    hl_env_cfg.gym.headless = True
+    hl_env_cfg.gym.headless = False
     hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 2.5
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
     hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]

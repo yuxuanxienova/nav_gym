@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from nav_gym.nav_legged_gym.envs.locomotion_fld_env import LocomotionFLDEnv
     from nav_gym.nav_legged_gym.envs.locomotion_mimic_env import LocomotionMimicEnv
     from nav_gym.nav_legged_gym.envs.locomotion_pae_env import LocomotionPAEEnv
+    from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_residual_command_env import LocomotionPAELatentScanEnv
 
     ANY_ENV = Union[LocomotionEnv]
 
@@ -611,3 +612,8 @@ def mimic_tracking_base_lin_vel(env: "LocomotionMimicEnv", params):
 def mimic_tracking_base_ang_vel(env: "LocomotionMimicEnv", params):
     error = torch.sum(torch.square(env.mimic_module.get_target_base_ang_vel_w_cur_step() - env.robot.root_ang_vel_w), dim=1)
     return torch.exp(-error)
+
+"""PAE residual specific reward Functions"""
+def residual_actions(env: "LocomotionPAELatentScanEnv", params):
+    sum = torch.sum(torch.square(env.command_residual), dim=1)
+    return sum
