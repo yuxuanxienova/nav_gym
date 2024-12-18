@@ -143,6 +143,7 @@ class LocalNavPAEEnv:
         # self.action_scale = torch.tensor(vel_cmd_scale, device=self.device, dtype=torch.float)
         # self.action_offset = torch.tensor(vel_cmd_offset, device=self.device, dtype=torch.float)
         # self.scaled_action_max = torch.tensor(vel_cmd_max, device=self.device, dtype=torch.float)
+        self.residual_action = torch.zeros(self.num_envs, 12, device=self.device)
 
     #--------------2. Step ---------------
     def step(self, actions):
@@ -186,6 +187,7 @@ class LocalNavPAEEnv:
             commands["offset"] = scaled_latent_action[:,12:16]
             commands["residual"] = residual_action
             self.ll_env.set_commands(commands)
+            self.residual_action = residual_action
         self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
         return actions  
         
@@ -261,7 +263,7 @@ class LocalNavPAEEnv:
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
         if self.flag_enable_resample_pos and env_ids.numel() > 0:
-            print("[INFO][Local Nav Env]Resampling position with env_ids:{0}".format(env_ids))  
+            # print("[INFO][Local Nav Env]Resampling position with env_ids:{0}".format(env_ids))  
             self.command_generator.resample(env_ids)
         self.command_generator.update()
     #--------------3. Reset ---------------
