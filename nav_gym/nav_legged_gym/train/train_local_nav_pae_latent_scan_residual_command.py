@@ -27,7 +27,8 @@ if __name__ == "__main__":
     hl_env_cfg.ll_env_cfg.gym.viewer.eye = (-60.0, -60.0, 3.0)
     # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [60.0, 60.0, 0.0]
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/simple_terrain2.obj"
-    # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
+    hl_env_cfg.ll_env_cfg.terrain_unity.translation = [110.0, 110.0, 0.0]
+    hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
 
 
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
