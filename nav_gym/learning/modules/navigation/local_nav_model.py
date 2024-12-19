@@ -16,7 +16,7 @@ from nav_gym.learning.modules.normalizer_module import EmpiricalNormalization
 #         self.obs_shape_dict = obs_shape_dict
 
 #         # self.command_size = self.obs_shape_dict["command"][0]
-#         self.h_map_shape = self.obs_shape_dict["ext"]
+#         self.h_map_shape = self.obs_shape_dict["exte"]
 #         self.h_map_size = self.h_map_shape.numel()
 #         self.prop_size = self.obs_shape_dict["prop"][0]
 #         self.history_shape = self.obs_shape_dict["history"]
@@ -89,7 +89,7 @@ class NavPolicyWithMemory(nn.Module):
         #1. get the shape of the observation
         self.prop_size = self.obs_shape_dict["prop"][0]
 
-        self.h_map_shape = self.obs_shape_dict["ext"]
+        self.h_map_shape = self.obs_shape_dict["exte"]
         self.h_map_size = self.h_map_shape.numel()
         self.grid_map_length = int(np.sqrt(self.h_map_shape[-1]))
 
@@ -146,13 +146,13 @@ class NavPolicyWithMemory(nn.Module):
         #obs_size = prop_size + h_map_size + history_obs_size + memory_size
 
         #1. split the observation
-        prop, ext,  history, memory = self.split_obs(obs)
+        prop, exte,  history, memory = self.split_obs(obs)
         #2. normalize the observation
         prop = self.obs_normalizer_prop(prop)
-        ext = self.obs_normalizer_scan(ext)
+        exte = self.obs_normalizer_scan(exte)
         #3. encode the observation
-        # ext
-        ext_latent = self.ext_encoder(ext)
+        # exte
+        ext_latent = self.ext_encoder(exte)
         # history
         history_latent = self.history_encoder(history)
         # memory
@@ -165,7 +165,95 @@ class NavPolicyWithMemory(nn.Module):
 
     def split_obs(self, obs):
         return torch.split(obs, [ self.prop_size, self.h_map_size, self.history_obs_size, self.memory_size], dim=1)
+    
 
+class LocalNavPAEScanResidualActorCritic(nn.Module):
+    def __init__(self, obs_shape_dict, action_size, cfg, **kwargs):
+        super().__init__()
+        self.cfg = cfg
+        self.obs_shape_dict = obs_shape_dict
+
+        #1. get the shape of the observation
+        self.prop_size = self.obs_shape_dict["prop"][0]
+
+        # self.h_map_shape = self.obs_shape_dict["exte"]
+        # self.h_map_size = self.h_map_shape.numel()
+        # self.grid_map_length = int(np.sqrt(self.h_map_shape[-1]))
+        self.exte_size = self.obs_shape_dict["exte"][0]
+        self.exte_latent_size = cfg["scan_latent_size"]
+
+        self.history_shape = self.obs_shape_dict["history"]
+        self.history_obs_size = self.history_shape.numel()
+
+        
+        self.memory_shape = self.obs_shape_dict["memory"]
+        self.memory_size = self.memory_shape.numel()
+        self.num_nodes = self.memory_shape[0]
+
+        self.num_obs = self.prop_size + self.exte_size + self.history_obs_size + self.memory_size
+        self.action_size = action_size
+        #2, Initialize the modules
+        self.activation_fn = get_activation(cfg["activation_fn"])
+
+        self.prop_normalizer = EmpiricalNormalization(shape=[self.prop_size], until=1.0e8)
+        self.exte_normalizer = EmpiricalNormalization(shape=[self.exte_size], until=1.0e8)
+
+
+        
+        self.exte_encoder = MLP(
+            cfg["scan_encoder_shape"],
+            self.activation_fn,
+            self.exte_size,
+            cfg["scan_latent_size"],
+            init_scale=1.0 / np.sqrt(2),
+        )
+
+        self.history_encoder = Pool1DConv(self.history_shape,
+                                          cfg["history_channels"],
+                                          cfg["history_fc_shape"],
+                                          cfg["history_latent_size"],
+                                          cfg["history_kernel_size"],
+                                          activation_fn=self.activation_fn)
+        self.memory_encoder = SimplePointNet([self.num_nodes, self.memory_shape[1]],
+                                         cfg["pointnet_channels"],
+                                         cfg["pointnet_fc_shape"],
+                                         cfg["aggregator_latent_size"],
+                                         activation_fn=self.activation_fn)
+
+        self.action_head = MLP(
+            cfg["output_mlp_size"],
+            self.activation_fn,
+            self.prop_size+ cfg["scan_latent_size"] + cfg["history_latent_size"] + cfg["aggregator_latent_size"],
+            self.action_size,
+            init_scale=1.0 / np.sqrt(2),
+        )
+
+
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+        self.num_envs = obs.shape[0]
+        #obs: [batch, obs_size]
+        #obs_size = prop_size + exte_size + history_obs_size + memory_size
+
+        #1. split the observation
+        prop, exte,  history, memory = self.split_obs(obs)
+        #2. normalize the observation
+        prop = self.prop_normalizer(prop)
+        exte = self.exte_normalizer(exte)
+        #3. encode the observation
+        # exte
+        ext_latent = self.exte_encoder(exte)
+        # history
+        history_latent = self.history_encoder(history)
+        # memory
+        memory = memory.reshape(self.num_envs, self.num_nodes, -1)
+        memory_feature = self.memory_encoder(memory)
+
+        concat_feature = torch.cat([prop, ext_latent, history_latent, memory_feature], dim=1)
+        output = self.action_head(concat_feature)
+        return output
+
+    def split_obs(self, obs):
+        return torch.split(obs, [ self.prop_size, self.exte_size, self.history_obs_size, self.memory_size], dim=1)
 
 def get_activation(act_name):
     if act_name == "elu":

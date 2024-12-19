@@ -14,7 +14,7 @@ class NavPolicyBase(nn.Module):
         self.cfg = cfg
         self.obs_shape_dict = obs_shape_dict
 
-        self.h_map_size = self.obs_shape_dict["ext"][0]
+        self.h_map_size = self.obs_shape_dict["exte"][0]
         self.node_p_shape = self.obs_shape_dict["node_p"]
         self.node_m_shape = self.obs_shape_dict["node_m"]
         self.history_shape = self.obs_shape_dict["history"]

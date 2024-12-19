@@ -23,10 +23,12 @@ SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
 class LocalNavPAEEnvCfg:
     ll_env_cfg = LocomotionPAELatentScanEnvCfg()
-    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 8 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 2.0
     max_y_vel = 1.0
     max_yaw_rate = 1.0
+
+    residual_action_scale = 0.1
 
     # for beta distribution
     # vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
@@ -48,7 +50,7 @@ class LocalNavPAEEnvCfg:
         send_timeouts: bool = True  # send time out information to the algorithm
         """Whether to send episode time-out information (added as part of infos)."""
 
-        enable_debug_vis: bool = True
+        enable_debug_vis: bool = False 
 
 
     gym = GymInterfaceCfg()
@@ -70,13 +72,14 @@ class LocalNavPAEEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                        #  "omni_scanner1": OmniScanRaycasterCfg(),
-                        # "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
-                        "height_scanner" : RaycasterCfg(
-                            attachement_pos=(0.0, 0.0, SENSOR_HEIGHT),
-                            attach_yaw_only=True,
-                            pattern_cfg=GridPatternCfg(resolution=0.25, width=FOV_RANGE * 2, length=FOV_RANGE * 2),
-                        ),
+                         "omni_scanner_back": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 0.0, 1.0)),
+                         "omni_scanner_front": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 1.0, 0.0)),
+                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
+                        # "height_scanner" : RaycasterCfg(
+                        #     attachement_pos=(0.0, 0.0, SENSOR_HEIGHT),
+                        #     attach_yaw_only=True,
+                        #     pattern_cfg=GridPatternCfg(resolution=0.25, width=FOV_RANGE * 2, length=FOV_RANGE * 2),
+                        # ),
                           }
     class randomization:
         # randomize_friction: bool = True
@@ -102,10 +105,12 @@ class LocalNavPAEEnvCfg:
 
             llc_prop: dict = {"func": O.llc_obs, "name": "prop"}  
             position_target: dict = {"func": O.position_target}
-        class ext:
+        class exte:
             # add this to every group
             add_noise: bool = True
             height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
+            # omni_scanner_back: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_back", "clip": (-1.0, 1.0)}
+            # omni_scanner_front: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_front", "clip": (-1.0, 1.0)}
             # height_scan: dict = {
             # "func": O.height_trav_map,
             # "occlusion_fill_height": 0.0,
@@ -139,17 +144,18 @@ class LocalNavPAEEnvCfg:
         # reward functions
         # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
         # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
-        termination = {"func": R.termination, "scale": -1.0}
+        termination = {"func": R.termination, "scale": -5.0}
+        survival = {"func": R.survival, "scale": 0.5}
         # feet_acc = {"func": R.feet_acc, "scale": -0.0001}
         action_rate = {"func": R.action_rate, "scale": -0.001}
         collision_THIGHSHANK = {"func": R.collision, "scale": -0.5, "bodies": ".*(THIGH|SHANK)"}
         collision_base = {"func": R.collision, "scale": -0.5, "bodies": "base"}
         # dof_acc = {"func": R.dof_acc, "scale": -5e-7}
-        torques = {"func": R.torques, "scale": -0.00001}
+        torques = {"func": R.torques, "scale": -0.000001}
         torque_limits = {"func": R.torque_limits, "scale": -0.01, "soft_ratio": 0.9}
-        residual_actions = {"func": R.residual_actions, "scale": -0.01}
+        residual_actions = {"func": R.residual_actions, "scale": -0.002}
 
-        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1, "scale": 11}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 10, "scale": 40}
         # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
 
         dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
@@ -160,13 +166,13 @@ class LocalNavPAEEnvCfg:
         # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
 
         # Exploration (when explicit memory is used)
-        # global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
-        # exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}
+        global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
+        exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.003}
         face_front = {
             "func": R.face_front,
             "angle_limit": 0.78,
             "min_vel": 0.2,
-            "scale": 0.025,
+            "scale": 0.05,
         }  # To account for the camera FOV. Vel direction in baseframe < 45 degrees
 
     class terminations:

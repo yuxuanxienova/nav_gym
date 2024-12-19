@@ -46,6 +46,27 @@ class PAEScanLocomotionActorCriticCfg:
     output_mlp_size: List[int] = [512, 256, 128]
 
 @configclass
+class LocalNavPAEScanResidualActorCriticCfg:
+    model_class: str = "LocalNavPAEScanResidualActorCritic"
+    activation_fn: str = "elu"
+
+    scan_encoder_shape: List[int] = [128]
+    scan_latent_size: int = 64
+
+    # 1D conv for short history
+    history_channels: List[int] = [8, 16]
+    history_kernel_size: int = 3
+    history_fc_shape: List[int] = [64]
+    history_latent_size: int = 32
+
+    output_mlp_size: List[int] = [256, 128]
+
+    # for memory observation
+    pointnet_channels: List[int] = [16, 32]
+    pointnet_fc_shape: List[int] = [32, 32]
+    aggregator_latent_size: int = 32
+
+@configclass
 class MimicLocomotionActorCriticCfg:
     model_class: str = "MimicLocomotionActorCritic"
     activation_fn: str = "elu"

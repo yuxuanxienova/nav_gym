@@ -278,7 +278,7 @@ class LocomotionPAELatentScanEnv:
             #Simulation loop interval = sim_params.dt (0.0025[s])
             # print("[INFO][step][self.common_step_counter]{0}".format(self.common_step_counter))
             # print("[INFO][step][self.processed_actions]{0}".format(processed_actions))
-            self._apply_actions(processed_actions + self.command_residual * 0.2)
+            self._apply_actions(processed_actions + self.command_residual)
             # apply external disturbance to base and feet
             #---------Debug-----------
             # print("[Debug][step]Disable external disturbance")

@@ -102,7 +102,7 @@ class LocalNavEnvCfg:
 
             llc_prop: dict = {"func": O.llc_obs, "name": "prop"}  
             position_target: dict = {"func": O.position_target}
-        class ext:
+        class exte:
             # add this to every group
             add_noise: bool = True
             height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}

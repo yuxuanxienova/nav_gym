@@ -127,12 +127,12 @@ class ActorCriticRecurrent(ActorCritic):
 
     def act(self, observations, masks=None, hidden_states=None):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
-            seq_length = ext.shape[0]
-            ext = ext.view(
+            prop_first, priv, exte, prop_second = self._split_obs(observations)
+            seq_length = exte.shape[0]
+            exte = exte.view(
                 seq_length, -1, self.num_ext_channels, self.num_ext_obs_per_channel
             )
-            ext_latent = self.ext_encoder(ext).view(seq_length, -1, self.num_ext_channels * self.ext_latent_dim).squeeze()
+            ext_latent = self.ext_encoder(exte).view(seq_length, -1, self.num_ext_channels * self.ext_latent_dim).squeeze()
             observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         input_a = self.memory_a(observations, masks, hidden_states)
         self.update_distribution(input_a.squeeze(0))
@@ -140,11 +140,11 @@ class ActorCriticRecurrent(ActorCritic):
 
     def act_inference(self, observations):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
-            ext = ext.view(
+            prop_first, priv, exte, prop_second = self._split_obs(observations)
+            exte = exte.view(
                 -1, self.num_ext_channels, self.num_ext_obs_per_channel
             )
-            ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
+            ext_latent = self.ext_encoder(exte).view(-1, self.num_ext_channels * self.ext_latent_dim)
             observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         input_a = self.memory_a(observations)
         actions_mean = self.actor(input_a.squeeze(0))
@@ -152,12 +152,12 @@ class ActorCriticRecurrent(ActorCritic):
 
     def evaluate(self, critic_observations, masks=None, hidden_states=None):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(critic_observations)
-            seq_length = ext.shape[0]
-            ext = ext.view(
+            prop_first, priv, exte, prop_second = self._split_obs(critic_observations)
+            seq_length = exte.shape[0]
+            exte = exte.view(
                 seq_length, -1, self.num_ext_channels, self.num_ext_obs_per_channel
             )
-            ext_latent = self.ext_encoder(ext).view(seq_length, -1, self.num_ext_channels * self.ext_latent_dim).squeeze()
+            ext_latent = self.ext_encoder(exte).view(seq_length, -1, self.num_ext_channels * self.ext_latent_dim).squeeze()
             observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         input_c = self.memory_c(observations, masks, hidden_states)
         value = self.critic(input_c.squeeze(0))

@@ -170,7 +170,7 @@ class LocalNavPAEEnv:
         # self.scaled_action = self.actions
         #---------------------
         latent_action = self.actions[:,:16]
-        residual_action = self.actions[:,16:]
+        residual_action = self.actions[:,16:] * self.cfg.residual_action_scale
         #scale latent params except phase
         scaled_latent_action = latent_action
         scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
@@ -255,7 +255,7 @@ class LocalNavPAEEnv:
         frame_quats = self.robot.root_quat_w
         self.global_memory.update_buffers(self, env_ids=env_ids, quats=frame_quats)
         #Update global memory: Add new Positions and Associated Features to the global memory
-        local_map = self.obs_dict["ext"]  # unused for now
+        local_map = self.obs_dict["exte"]  # unused for now
         self.global_memory.add_position_and_feature(env=self,env_ids=Ellipsis,positions=self.robot.root_pos_w,feature=local_map,quats=self.robot.root_quat_w,)
     #--------------2.2 Update Commands ---------------
     def _update_commands(self):
@@ -305,7 +305,7 @@ class LocalNavPAEEnv:
     def get_observations(self):
         return self.obs_buf, self.extras
     def set_observation_buffer(self):
-        self.obs_buf = torch.cat([self.obs_dict['prop'].reshape(self.num_envs, -1),self.obs_dict['ext'].reshape(self.num_envs, -1),self.obs_dict['history'].reshape(self.num_envs, -1),self.obs_dict['memory'].reshape(self.num_envs, -1)], dim=1)
+        self.obs_buf = torch.cat([self.obs_dict['prop'].reshape(self.num_envs, -1),self.obs_dict['exte'].reshape(self.num_envs, -1),self.obs_dict['history'].reshape(self.num_envs, -1),self.obs_dict['memory'].reshape(self.num_envs, -1)], dim=1)
         self.extras["observations"] = self.obs_dict
     def set_velocity_commands(self, x_vel, y_vel, yaw_vel):
         # print("[INFO][Local Nav Env]Setting velocity commands")

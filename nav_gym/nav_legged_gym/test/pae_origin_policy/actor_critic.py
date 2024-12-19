@@ -193,9 +193,9 @@ class ActorCritic(nn.Module):
 
     def act(self, observations, **kwargs):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
+            prop_first, priv, exte, prop_second = self._split_obs(observations)
             if self.use_navi_scan_enc and self.num_navi_obs != 0:
-                foot_exte, navi_exte = torch.split(ext, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
+                foot_exte, navi_exte = torch.split(exte, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
                 foot_exte = foot_exte.view(
                     -1, self.num_ext_channels - 1, self.num_ext_obs_per_channel
                 )
@@ -203,10 +203,10 @@ class ActorCritic(nn.Module):
                 navi_exte_latent = self.ext_navi_encoder(navi_exte)
                 ext_latent = torch.cat((foot_exte_latent, navi_exte_latent), dim=-1)
             else:
-                ext = ext.view(
+                exte = exte.view(
                     -1, self.num_ext_channels, self.num_ext_obs_per_channel
                 )
-                ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
+                ext_latent = self.ext_encoder(exte).view(-1, self.num_ext_channels * self.ext_latent_dim)
             observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         self.update_distribution(observations)
         return self.distribution.sample()
@@ -231,9 +231,9 @@ class ActorCritic(nn.Module):
 
     def act_inference(self, observations):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(observations)
+            prop_first, priv, exte, prop_second = self._split_obs(observations)
             if self.use_navi_scan_enc and self.num_navi_obs != 0:
-                foot_exte, navi_exte = torch.split(ext, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
+                foot_exte, navi_exte = torch.split(exte, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
                 foot_exte = foot_exte.view(
                     -1, self.num_ext_channels - 1, self.num_ext_obs_per_channel
                 )
@@ -241,10 +241,10 @@ class ActorCritic(nn.Module):
                 navi_exte_latent = self.ext_navi_encoder(navi_exte)
                 ext_latent = torch.cat((foot_exte_latent, navi_exte_latent), dim=-1)
             else:
-                ext = ext.view(
+                exte = exte.view(
                     -1, self.num_ext_channels, self.num_ext_obs_per_channel
                 )
-                ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
+                ext_latent = self.ext_encoder(exte).view(-1, self.num_ext_channels * self.ext_latent_dim)
             observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         if self.learn_std:
             hidden_features = self.shared_feature(observations)
@@ -255,9 +255,9 @@ class ActorCritic(nn.Module):
 
     def evaluate(self, critic_observations, **kwargs):
         if self.ext_encoder is not None:
-            prop_first, priv, ext, prop_second = self._split_obs(critic_observations)
+            prop_first, priv, exte, prop_second = self._split_obs(critic_observations)
             if self.use_navi_scan_enc and self.num_navi_obs != 0:
-                foot_exte, navi_exte = torch.split(ext, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
+                foot_exte, navi_exte = torch.split(exte, [self.num_ext_obs - self.num_navi_obs, self.num_navi_obs], dim=-1)
                 foot_exte = foot_exte.view(
                     -1, self.num_ext_channels - 1, self.num_ext_obs_per_channel
                 )
@@ -265,30 +265,30 @@ class ActorCritic(nn.Module):
                 navi_exte_latent = self.ext_navi_encoder(navi_exte)
                 ext_latent = torch.cat((foot_exte_latent, navi_exte_latent), dim=-1)
             else:
-                ext = ext.view(
+                exte = exte.view(
                     -1, self.num_ext_channels, self.num_ext_obs_per_channel
                 )
-                ext_latent = self.ext_encoder(ext).view(-1, self.num_ext_channels * self.ext_latent_dim)
+                ext_latent = self.ext_encoder(exte).view(-1, self.num_ext_channels * self.ext_latent_dim)
             critic_observations = torch.cat([prop_first, priv, ext_latent, prop_second], dim=-1)
         value = self.critic(critic_observations)
         return value
     
     def _split_obs(self, observations: torch.Tensor):
-        """Split the observations into prop and ext components
+        """Split the observations into prop and exte components
 
         Args:
             observations (torch.Tensor): tensor of observations
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: prop and ext observations
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: prop and exte observations
         """
-        prop_first, priv, ext, prop_second = torch.split(observations, [self.num_prop_obs_first, self.num_priv, self.num_ext_obs, self.num_prop_obs_second], dim=-1)
-        return prop_first, priv, ext, prop_second
+        prop_first, priv, exte, prop_second = torch.split(observations, [self.num_prop_obs_first, self.num_priv, self.num_ext_obs, self.num_prop_obs_second], dim=-1)
+        return prop_first, priv, exte, prop_second
     
     def split_obs(self, observations: torch.Tensor):
         """Same as _split_obs but public method which returns a dictionary, to avoid return signature issues"""
-        prop_first, priv, ext, prop_second = self._split_obs(observations)
-        return {"prop": (prop_first, prop_second), "ext": ext, "priv": priv}
+        prop_first, priv, exte, prop_second = self._split_obs(observations)
+        return {"prop": (prop_first, prop_second), "exte": exte, "priv": priv}
 
 
 def get_activation(act_name):
