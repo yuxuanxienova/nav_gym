@@ -1,7 +1,7 @@
 
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robots_cfg import LeggedRobotCfg,anymal_d_robot_cfg
 from nav_gym.nav_legged_gym.common.gym_interface.gym_interface_cfg import GymInterfaceCfg, ViewerCfg,SimParamsCfg,PhysxCfg
-from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import RaycasterCfg,OmniScanRaycasterCfg,FootScanCfg,GridPatternCfg
+from nav_gym.nav_legged_gym.common.sensors.sensors_cfg import RaycasterCfg,OmniScanRaycasterCfg,FootScanCfg,GridPatternCfg, VelodyneRaycasterCfg
 import nav_gym.nav_legged_gym.common.observations.observations as O
 import nav_gym.nav_legged_gym.common.rewards.rewards as R
 import nav_gym.nav_legged_gym.common.terminations.terminations as T
@@ -14,12 +14,10 @@ from nav_gym.nav_legged_gym.utils.config_utils import configclass
 from nav_gym.nav_legged_gym.envs.modules.utils import distance_compare
 #---Local Navigation Module Config Parameters---
 DIS_THRE = 2.0
-FOV_RANGE = 2.0
 GOAL_RADIUS = 2.0
 
 NUM_HISTORY = 50
 NUM_NODES = 20
-SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
 class LocalNavPAEEnvCfg:
     ll_env_cfg = LocomotionPAELatentScanEnvCfg()
@@ -72,15 +70,17 @@ class LocalNavPAEEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                         "omni_scanner_back": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 0.0, 1.0)),
-                         "omni_scanner_front": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 1.0, 0.0)),
-                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
+                        #  "omni_scanner_back": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 0.0, 1.0)),
+                        #  "omni_scanner_front": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 1.0, 0.0)),
+                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 0.4), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
                         # "height_scanner" : RaycasterCfg(
                         #     attachement_pos=(0.0, 0.0, SENSOR_HEIGHT),
                         #     attach_yaw_only=True,
                         #     pattern_cfg=GridPatternCfg(resolution=0.25, width=FOV_RANGE * 2, length=FOV_RANGE * 2),
                         # ),
+                        "velodyne_scanner": VelodyneRaycasterCfg(attachement_pos=(0.0, 0.0, 0.4), attach_yaw_only=True),
                           }
+                        
     class randomization:
         # randomize_friction: bool = True
         # friction_range: Tuple = (0.5, 1.25)
@@ -108,9 +108,9 @@ class LocalNavPAEEnvCfg:
         class exte:
             # add this to every group
             add_noise: bool = True
-            # height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
-            omni_scanner_back: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_back", "clip": (-1.0, 1.0)}
-            omni_scanner_front: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_front", "clip": (-1.0, 1.0)}
+            height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
+            # omni_scanner_back: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_back", "clip": (-1.0, 1.0)}
+            # omni_scanner_front: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_front", "clip": (-1.0, 1.0)}
             # height_scan: dict = {
             # "func": O.height_trav_map,
             # "occlusion_fill_height": 0.0,

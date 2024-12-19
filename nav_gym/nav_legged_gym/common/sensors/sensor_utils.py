@@ -88,3 +88,33 @@ def grid_pattern(pattern_cfg: "GridPatternCfg", device: str) -> Tuple[torch.Tens
     ray_directions = torch.zeros_like(ray_starts)
     ray_directions[..., :] = torch.tensor(list(pattern_cfg.direction), device=device)
     return ray_starts, ray_directions
+
+
+def velodyne_pattern(pattern_cfg: "VelodynePatternCfg", device: str) -> Tuple[torch.Tensor, torch.Tensor]:
+    """The Velodyne Puck pattern for ray casting.
+
+    Args:
+        pattern_cfg (RealSensePatternCfg): The config for the pattern.
+        device (str): The device
+    Returns:
+        ray_starts (torch.Tensor): The starting positions of the rays
+        ray_directions (torch.Tensor): The ray directions
+
+    """
+    horizontal_angles = torch.arange(0.0, 360.0, pattern_cfg.horizontal_resolution, device=device)
+    vertical_angles = torch.arange(
+        -pattern_cfg.vertical_fov / 2.0 + pattern_cfg.vertical_offset,
+        pattern_cfg.vertical_fov / 2.0 + pattern_cfg.vertical_offset + pattern_cfg.vertical_resolution,
+        pattern_cfg.vertical_resolution,
+        device=device,
+    )
+    xy_angles, z_angles = torch.meshgrid(
+        torch.deg2rad(horizontal_angles), torch.deg2rad(vertical_angles), indexing="xy"
+    )
+    ray_directions = torch.cat(
+        [torch.cos(xy_angles.unsqueeze(2)), torch.sin(xy_angles.unsqueeze(2)), torch.tan(z_angles.unsqueeze(2))], dim=2
+    )
+    ray_directions = torch.nn.functional.normalize(ray_directions, p=2.0, dim=-1).view(-1, 3)
+
+    ray_starts = torch.zeros_like(ray_directions)
+    return ray_starts, ray_directions

@@ -198,7 +198,7 @@ class LocalNavPAEEnv:
         return ll_action  
     def _draw_hl_debug_vis(self):
         if self.cfg.env.enable_debug_vis:
-            # self.sensor_manager.debug_vis(self.ll_env.envs)
+            self.sensor_manager.debug_vis(self.ll_env.envs)
             # self._draw_global_memory()
             self._draw_target_position()
     def _post_ll_step(self):

@@ -1,5 +1,5 @@
 from typing import Tuple, Callable, Optional, Any, List
-from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern, foot_scan_pattern, grid_pattern
+from nav_gym.nav_legged_gym.common.sensors.sensor_utils import my_pattern_func, omniscan_pattern, foot_scan_pattern, grid_pattern, velodyne_pattern
 from nav_gym.nav_legged_gym.utils.config_utils import configclass
 
 #----------------------------Sensor Base-------------------------------
@@ -41,6 +41,15 @@ class GridPatternCfg:
     length: float = 1.6
     direction: Tuple = (0.0, 0.0, -1.0)
     pattern_func: Callable = grid_pattern
+
+@configclass
+class VelodynePatternCfg(SensorCfgBase):
+    horizontal_resolution: float = 0.5  # [degrees]
+    vertical_resolution: float = 2.0  # [degrees]
+    vertical_fov: float = 30  # [degrees]
+    vertical_offset: float = 10 # [degrees]
+    pattern_func: Callable = velodyne_pattern
+
 #----------------------------Raycaster -------------------------------
 @configclass
 class RaycasterCfg(SensorCfgBase):
@@ -59,9 +68,22 @@ class RaycasterCfg(SensorCfgBase):
     max_xy_drift = 0.00
     max_z_drift = 0.00
 
+
+
+# RaycasterCfg(body_attachement_name='base', 
+#                                     pattern_cfg=VelodynePatternCfg(horizontal_resolution=9.0, vertical_resolution=7.50, vertical_offset=-10, vertical_fov=45), 
+#                                     enable_debug_vis=True)
+
+@configclass
+class VelodyneRaycasterCfg(RaycasterCfg):
+    class_name: str = "Raycaster_Velodyne"
+    pattern_cfg=VelodynePatternCfg(horizontal_resolution=9.0, vertical_resolution=5.00, vertical_offset=-10, vertical_fov=60)
+
+
+
 @configclass
 class OmniScanRaycasterCfg(RaycasterCfg):
-    class_name: str = "Raycaster"
+    class_name: str = "Raycaster_Omniscan"
     terrain_mesh_names: Tuple[str, ...] = ("terrain",)
     robot_name: str = "robot"
     body_attachement_name: str = "base"
