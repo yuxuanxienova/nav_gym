@@ -75,7 +75,7 @@ class InteractModulePosition:
         # Initialize Pygame
         pygame.init()
         # Create a window (you can adjust the size as needed)
-        self.screen = pygame.display.set_mode((400, 400))
+        self.screen = pygame.display.set_mode((2000, 2000))
         pygame.display.set_caption('Interact Module')
 
         # Initialize goal positions
@@ -103,8 +103,8 @@ class InteractModulePosition:
                 mouse_pos = pygame.mouse.get_pos()
                 # Map mouse position to goal position
                 # Adjust these mappings based on your environment's coordinate system
-                self.x_goal = (mouse_pos[0] - 200) / 20.0  # Scale factor
-                self.y_goal = (200 - mouse_pos[1]) / 20.0  # Invert y-axis and scale
+                self.x_goal = (mouse_pos[0] - 1000) / 20.0  # Scale factor
+                self.y_goal = (1000 - mouse_pos[1]) / 20.0  # Invert y-axis and scale
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -130,7 +130,7 @@ class InteractModulePosition:
             self.z_goal -= self.position_increment
 
         # Optionally, limit positions to a maximum value
-        max_pos = 10.0
+        max_pos = 200.0
         self.x_goal = max(min(self.x_goal, max_pos), -max_pos)
         self.y_goal = max(min(self.y_goal, max_pos), -max_pos)
         self.z_goal = max(min(self.z_goal, max_pos), -max_pos)

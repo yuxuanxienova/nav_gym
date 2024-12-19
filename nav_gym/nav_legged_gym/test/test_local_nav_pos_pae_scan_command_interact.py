@@ -20,15 +20,17 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/cluster_1217_1/" + "model_6000.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/cluster_1218_2/" + "model_6600.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
-    env_cfg = LocalNavPAEEnvCfg()
-    env_cfg.env.num_envs = 1
-
-    env = LocalNavPAEEnv(env_cfg, LocomotionPAELatentScanEnv)
+    hl_env_cfg = LocalNavPAEEnvCfg()
+    hl_env_cfg.env.num_envs = 1
+    hl_env_cfg.env.enable_debug_vis = True
+    hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
+    hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
+    env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     env.set_flag_enable_resample_pos(False)
     env.set_flag_enable_resample_vel(True)
     env.set_flag_enable_reset(False)

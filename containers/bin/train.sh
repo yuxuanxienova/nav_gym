@@ -17,7 +17,7 @@ sbatch \
   --mem-per-cpu=2048 \
   -G 1 \
   --gres=gpumem:10240 \
-  --time=12:00:00 \
+  --time=48:00:00 \
   -A es_hutter \
   --mail-type=END \
   --tmp=15G \
