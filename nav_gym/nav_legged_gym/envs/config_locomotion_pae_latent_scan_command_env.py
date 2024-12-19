@@ -177,12 +177,12 @@ class LocomotionPAELatentScanEnvCfg:
     commands = UnifromVelocityCommandCfg()
 
     class terrain_unity:
-        terrain_file:str = "/terrain/Plane1.obj"
-        translation: Tuple = (0.0, 0.0, 0.0)
+        terrain_file:str = "/terrain/LocomotionMap_v1.obj"
+        translation: Tuple = (-30.0, -30.0, 0.0)
 
         env_origin_pattern:str = "grid" # "point" or "grid"
         class grid_pattern:
-            env_spacing:float = 2.5
+            env_spacing:float = 3.0
             x_offset:float = -60.0
             y_offset:float = -60.0
         class point_pattern:
