@@ -108,9 +108,9 @@ class LocalNavPAEEnvCfg:
         class exte:
             # add this to every group
             add_noise: bool = True
-            height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
-            # omni_scanner_back: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_back", "clip": (-1.0, 1.0)}
-            # omni_scanner_front: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_front", "clip": (-1.0, 1.0)}
+            # height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1.0, 1.0)}
+            omni_scanner_back: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_back", "clip": (-1.0, 1.0)}
+            omni_scanner_front: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "omni_scanner_front", "clip": (-1.0, 1.0)}
             # height_scan: dict = {
             # "func": O.height_trav_map,
             # "occlusion_fill_height": 0.0,
