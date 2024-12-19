@@ -182,9 +182,9 @@ class LocomotionPAELatentScanEnvCfg:
 
         env_origin_pattern:str = "grid" # "point" or "grid"
         class grid_pattern:
-            env_spacing:float = 5.0
-            x_offset:float = -20.0
-            y_offset:float = -20.0
+            env_spacing:float = 2.5
+            x_offset:float = -60.0
+            y_offset:float = -60.0
         class point_pattern:
             env_origins:List = [(0.0, 0.0, 0.0)]
 #-----------------FLD Module--------------------

@@ -24,8 +24,8 @@ if __name__ == "__main__":
     hl_env_cfg.gym.headless = False
     hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 2.5
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
-    hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
-    hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
+    # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
+    # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
 
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
