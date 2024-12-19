@@ -166,7 +166,7 @@ class LocalNavPAEEnvCfg:
             "func": R.face_front,
             "angle_limit": 0.78,
             "min_vel": 0.2,
-            "scale": 0.45,
+            "scale": 0.025,
         }  # To account for the camera FOV. Vel direction in baseframe < 45 degrees
 
     class terminations:
