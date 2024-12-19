@@ -6,7 +6,7 @@
 # --mail-type=END : Triggers email to $USER@ethz.ch at the end of training
 # --warp: run command in ''. Does not work with variables (that's why run.sh is needed).
 
-export run_cmd="python3 /isaac_ws/nav_gym/nav_gym/nav_legged_gym/train/train_locomotion_pae.py"
+export run_cmd="python3 /isaac_ws/nav_gym/nav_gym/nav_legged_gym/train/train_local_nav_pae_latent_scan_residual_command.py"
 # Define the run command with environment variables
 # export run_cmd="TORCH_EXTENSIONS_DIR=${TMPDIR}/torch_extensions XDG_CACHE_HOME=${TMPDIR}/cache python3 /isaac_ws/nav_gym/nav_gym/nav_legged_gym/train/train_locomotion_mimic.py"
 
