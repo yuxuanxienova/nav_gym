@@ -12,6 +12,7 @@ from nav_gym.nav_legged_gym.train.config_train_local_nav_pae_latent_scan_command
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity,InteractModulePosition
 from nav_gym import NAV_GYM_ROOT_DIR
+import nav_gym.nav_legged_gym.common.rewards.rewards as R
 import torch
 import os
 import time
@@ -20,7 +21,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1219_1/" + "model_5700.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1220_1/" + "model_600.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)

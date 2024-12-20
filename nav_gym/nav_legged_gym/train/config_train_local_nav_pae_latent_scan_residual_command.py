@@ -39,7 +39,7 @@ class TrainConfig:
     class runner:
         policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
-        num_steps_per_env = 24 #24 per iteration
+        num_steps_per_env = 48 #24 per iteration
         max_iterations = 20000 # number of policy updates
         empirical_normalization: bool = True
 

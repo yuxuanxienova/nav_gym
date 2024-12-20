@@ -15,17 +15,18 @@ if __name__ == "__main__":
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/" + time.strftime("%Y%m%d-%H%M%S"))
     # log_dir = None
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/20241103-205557/" + "model_600.pt")
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "nav_gym/resources/model/local_nav/pae_latent_scan_command/cluster_1218_2/" + "model_6600.pt")
+    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "nav_gym/resources/model/local_nav/pae_latent_scan_command/cluster_1218_2/" + "model_6600.pt")
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     hl_env_cfg = LocalNavPAEEnvCfg()
-    hl_env_cfg.env.num_envs = 1
+    hl_env_cfg.env.num_envs = 512
     hl_env_cfg.gym.headless = False
     hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 2.5
+    hl_env_cfg.env.enable_debug_vis = True
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/Plane1.obj"
-    hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
-    hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
+    # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
+    # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
 
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     runner = OnPolicyRunner(env,train_cfg_dict , log_dir=log_dir, device="cuda:0")
@@ -35,5 +36,5 @@ if __name__ == "__main__":
     save_config_py_file(src_file_path, dest_dir, dest_file_name = "LocomotionPAEEnvCfg.py")
 
     # runner.load(checkpoint_dir)
-    runner.load_actor(checkpoint_dir)
+    # runner.load_actor(checkpoint_dir)
     runner.learn(num_learning_iterations=train_cfg_dict["runner"]["max_iterations"], init_at_random_ep_len=True)

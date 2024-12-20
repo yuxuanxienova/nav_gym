@@ -12,6 +12,7 @@ from nav_gym.nav_legged_gym.train.config_train_local_nav_pae_latent_scan_command
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity,InteractModulePosition
 from nav_gym import NAV_GYM_ROOT_DIR
+import nav_gym.nav_legged_gym.common.rewards.rewards as R
 import torch
 import os
 import time
@@ -20,16 +21,15 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_command/cluster_1218_2/" + "model_6600.pt")
-    # log_dir = None
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "nav_gym/resources/model/local_nav/pae_latent_scan_command/cluster_1218_2/" + "model_6600.pt")
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     hl_env_cfg = LocalNavPAEEnvCfg()
     hl_env_cfg.env.num_envs = 1
     hl_env_cfg.env.enable_debug_vis = True
-    hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
-    hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
+    # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-60.0, -60.0, 0.0]
+    # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
     env.set_flag_enable_resample_pos(False)
     env.set_flag_enable_resample_vel(True)
@@ -57,6 +57,8 @@ if __name__ == "__main__":
         action = policy(obs)
         obs, _, _, extras = env.step(action)
         env.ll_env.render()
+        params = {"exp_scale":0.01}
+        print("[REWARD]R.dont_wait:{0}".format(R.dont_wait(env,params)[0]))
 
         # Update the Pygame display (not strictly necessary unless you're drawing something)
         pygame.display.flip()

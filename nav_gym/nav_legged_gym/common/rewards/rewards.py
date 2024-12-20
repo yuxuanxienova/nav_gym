@@ -409,6 +409,12 @@ def goal_tracking_dense_dot(env: "ANY_ENV", params):
 
     return dot_product
 
+def tracking_objective(env: "ANY_ENV", params):
+    # tracking the given objective as fast as possible [TODO] define target pos and add it to the command sampler
+    pos_error = env.command_generator.get_goal_position_command() - env.robot.root_pos_w
+    distance = torch.norm(pos_error, dim=1)
+    return (1 - 0.5 * distance) 
+
 def reach_goal(env: "ANY_ENV", params):
     goal_radius = params["goal_radius"]
     # Retrieve goal and robot positions as torch tensors
@@ -429,6 +435,13 @@ def reach_goal(env: "ANY_ENV", params):
     total_reward = total_reward 
     
     return total_reward
+
+def dont_wait(env: "ANY_ENV", params):
+    pos_error = env.command_generator.get_goal_position_command() - env.robot.root_pos_w
+    distance = torch.norm(pos_error, dim=1)
+    far_away = distance > 0.5
+    waiting = torch.norm(env.robot.root_lin_vel_b, dim=1) < 0.2
+    return far_away * waiting
 
 def action_limits_penalty(env: "LeggedEnv", params):
     soft_ratio = params["soft_ratio"]

@@ -136,6 +136,7 @@ class LocalNavPAEEnv:
         self.last_actions = torch.zeros_like(self.actions)
         self.last_last_actions = torch.zeros_like(self.actions)
         self.scaled_action = torch.zeros(self.num_envs,self.cfg.env.num_actions, device=self.device)
+        # self.scaled_latent_action = torch.zeros(self.num_envs,16, device=self.device)
 
         # vel_cmd_scale = np.array(self.cfg.vel_cmd_scale)
         # vel_cmd_offset = np.array(self.cfg.vel_cmd_offset)
@@ -159,9 +160,64 @@ class LocalNavPAEEnv:
         self._post_ll_step()
         self.set_observation_buffer()
         self.episode_length_buf += 1
-        # print("[INFO][episode_length_buf]{0}".format(self.episode_length_buf))
-        # print(self.ll_env.reward_manager.episode_sums["contact_forces"])
         return (self.obs_buf,self.rew_buf, self.reset_buf, self.extras)
+    
+    # def _preprocess_actions(self, actions: torch.Tensor):
+    #     # scale the actions
+    #     self.actions = actions
+    #     # self.scaled_action = self.actions
+    #     #---------------------
+    #     latent_action = self.actions[:,:16]
+    #     residual_action = self.actions[:,16:] * self.cfg.residual_action_scale
+    #     #scale latent params except phase
+    #     self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
+    #     self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+    #     #--------------------
+    #     # self.scaled_action = self.actions * self.action_scale
+    #     # self.scaled_action += self.action_offset
+    #     # set the velocity command
+    #     if self.flag_enable_set_ll_commands:
+    #         self.commands:dict = {}
+    #         self.commands["phase"] = self.scaled_latent_action[:,0:4]
+    #         self.commands["freq"] = self.scaled_latent_action[:,4:8]
+    #         self.commands["amp"] = self.scaled_latent_action[:,8:12]
+    #         self.commands["offset"] = self.scaled_latent_action[:,12:16]
+    #         self.commands["residual"] = residual_action
+    #         self.ll_env.set_commands(self.commands)
+    #         self.residual_action = residual_action
+    #     self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
+    #     return actions  
+    # def _preprocess_actions2(self, actions: torch.Tensor):
+    #     # scale the actions
+    #     self.actions = actions
+    #     # self.scaled_action = self.actions
+    #     #---------------------
+    #     latent_action = self.actions[:,:16]
+    #     residual_action = self.actions[:,16:] * self.cfg.residual_action_scale
+    #     #scale latent params except phase
+    #     scaled_latent_action = latent_action
+    #     # scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean#-------------------!!!
+    #     scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+    #     #--------------------
+    #     # self.scaled_action = self.actions * self.action_scale
+    #     # self.scaled_action += self.action_offset
+    #     #set the velocity command
+    #     if self.flag_enable_set_ll_commands:
+    #         self.commands2:dict = {}
+    #         self.commands2["phase"] = torch.zeros_like(scaled_latent_action[:,0:4])
+    #         self.commands2["freq"] = scaled_latent_action[:,4:8]
+    #         self.commands2["amp"] = scaled_latent_action[:,8:12]
+    #         self.commands2["offset"] = scaled_latent_action[:,12:16]
+    #         self.commands2["residual"] = residual_action
+    #         # self.ll_env.set_commands(commands2)
+    #         # print("self.commands[phase] - self.commands2[phase]:{0}".format(self.commands["phase"] - self.commands2["phase"] ))
+    #         # print("self.commands[freq] - self.commands2[freq]:{0}".format(self.commands["freq"] - self.commands2["freq"] ))
+    #         # print("self.commands[amp] - self.commands2[amp]:{0}".format(self.commands["amp"] - self.commands2["amp"] ))
+    #         # print("self.commands[offset] - self.commands2[offset]:{0}".format(self.commands["offset"] - self.commands2["offset"] ))
+
+    #         self.residual_action = residual_action
+    #     self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
+    #     return actions  
     
     def _preprocess_actions(self, actions: torch.Tensor):
         # scale the actions
@@ -192,7 +248,7 @@ class LocalNavPAEEnv:
         return ll_action  
     def _draw_hl_debug_vis(self):
         if self.cfg.env.enable_debug_vis:
-            self.sensor_manager.debug_vis(self.ll_env.envs)
+            # self.sensor_manager.debug_vis(self.ll_env.envs)
             # self._draw_global_memory()
             self._draw_target_position()
     def _post_ll_step(self):
@@ -257,7 +313,7 @@ class LocalNavPAEEnv:
         env_ids = self.episode_length_buf % int(self.cfg.commands.resampling_time / self.dt) == 0
         env_ids = env_ids.nonzero(as_tuple=False).flatten()
         if self.flag_enable_resample_pos and env_ids.numel() > 0:
-            print("[INFO][Local Nav Env]Resampling position with env_ids:{0}".format(env_ids))  
+            # print("[INFO][Local Nav Env]Resampling position with env_ids:{0}".format(env_ids))  
             self.command_generator.resample(env_ids)
         self.command_generator.update()
     #--------------3. Reset ---------------

@@ -150,7 +150,8 @@ class Raycaster(SensorBase):
         #2. Drawing Ray Hits
         points = self.ray_hits_world.clone()
         points[..., :2] -= self.drift[..., :2]
-        self.sphere_geom.draw(points, self.env.gym, self.env.viewer, envs[0])
+        #3. only draw env 0
+        self.sphere_geom.draw(points[0,:,:].repeat(self.num_envs,1,1), self.env.gym, self.env.viewer, envs[0])
 
 
 

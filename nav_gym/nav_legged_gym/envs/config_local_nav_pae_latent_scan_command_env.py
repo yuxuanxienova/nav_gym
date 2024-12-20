@@ -23,11 +23,12 @@ SENSOR_HEIGHT = 5.0  # NOTE: be careful with multi-floor env.
 #-------------------------------------------------
 class LocalNavPAEEnvCfg:
     ll_env_cfg = LocomotionPAELatentScanEnvCfg()
-    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 1#4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 2.0
     max_y_vel = 1.0
     max_yaw_rate = 1.0
 
+    residual_action_scale = 0.2
     # for beta distribution
     # vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
     # vel_cmd_scale: Tuple[float, float, float] = (2.0 * max_x_vel, 2.0 * max_y_vel, 2.0 * max_yaw_rate)  # x, y, yaw
@@ -39,7 +40,7 @@ class LocalNavPAEEnvCfg:
         num_envs: int = 1
         """Number of environment instances."""
 
-        num_actions: int = 16
+        num_actions: int = 16 
         """The size of action space for the defined environment MDP."""
 
         episode_length_s: float = 15.0
@@ -149,7 +150,13 @@ class LocalNavPAEEnvCfg:
 
         # action_limits = {"func": R.action_limits_penalty, "scale": -0.1, "soft_ratio": 0.95}
         # near_goal_stability: dict = {"func": R.near_goal_stability, "std": 1.0, "threshold": 1.0, "scale": 0.1}
-
+        #----------------testing use
+        # goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 10, "scale": 40}
+        # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
+        # tracking_objective = {"func": R.tracking_objective, "scale": 20}
+        # tracking_pos_ase = {"func": R.tracking_pos_ase, "scale": 20, "exp_scale": 0.5}
+        # dont_wait = {"func": R.dont_wait, "scale": -20.0}
+        #--------------------------------------
         # Exploration (when explicit memory is used)
         #global_exp_volume: dict = {"func": R.global_exp_volume, "scale": 0.05}
         #exp_bonus: dict = {"func": R.exp_bonus, "max_count": 10.0, "scale": 0.001}

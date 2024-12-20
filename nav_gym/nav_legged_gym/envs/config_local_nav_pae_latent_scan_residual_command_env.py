@@ -21,12 +21,12 @@ NUM_NODES = 20
 #-------------------------------------------------
 class LocalNavPAEEnvCfg:
     ll_env_cfg = LocomotionPAELatentScanEnvCfg()
-    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 1#high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 2.0
     max_y_vel = 1.0
     max_yaw_rate = 1.0
 
-    residual_action_scale = 0.0
+    residual_action_scale = 0.2
 
     # for beta distribution
     # vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
@@ -73,11 +73,6 @@ class LocalNavPAEEnvCfg:
                         #  "omni_scanner_back": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 0.0, 1.0)),
                         #  "omni_scanner_front": OmniScanRaycasterCfg(attachement_quat= (0.0, 0.0, 1.0, 0.0)),
                         "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 0.4), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=1.0, length=2.0),max_xy_drift=0.075,max_z_drift=0.075),
-                        # "height_scanner" : RaycasterCfg(
-                        #     attachement_pos=(0.0, 0.0, SENSOR_HEIGHT),
-                        #     attach_yaw_only=True,
-                        #     pattern_cfg=GridPatternCfg(resolution=0.25, width=FOV_RANGE * 2, length=FOV_RANGE * 2),
-                        # ),
                         "velodyne_scanner": VelodyneRaycasterCfg(attachement_pos=(0.0, 0.0, 0.4), attach_yaw_only=True),
                           }
                         
@@ -156,8 +151,11 @@ class LocalNavPAEEnvCfg:
         torque_limits = {"func": R.torque_limits, "scale": -0.01, "soft_ratio": 0.9}
         residual_actions = {"func": R.residual_actions, "scale": -0.002}
 
-        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 10, "scale": 40}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 10, "scale": 10}
         # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
+        # tracking_objective = {"func": R.tracking_objective, "scale": 40}
+        # tracking_pos_ase = {"func": R.tracking_pos_ase, "scale": 40, "exp_scale": 0.005}
+        dont_wait = {"func": R.dont_wait, "scale": -1.0}
 
         dof_vel_legs = {"func": R.dof_vel_selected, "scale": -1.0e-6, "dofs": ".*(HAA|HFE|KFE)"}
         dof_acc_legs = {"func": R.dof_acc_selected, "scale": -1.0e-8, "dofs": ".*(HAA|HFE|KFE)"}

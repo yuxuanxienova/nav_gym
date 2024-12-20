@@ -136,6 +136,7 @@ class LocalNavPAEEnv:
         self.last_actions = torch.zeros_like(self.actions)
         self.last_last_actions = torch.zeros_like(self.actions)
         # self.scaled_action = torch.zeros(self.num_envs,self.cfg.env.num_actions, device=self.device)
+        self.scaled_latent_action = torch.zeros(self.num_envs,16, device=self.device)
 
         # vel_cmd_scale = np.array(self.cfg.vel_cmd_scale)
         # vel_cmd_offset = np.array(self.cfg.vel_cmd_offset)
@@ -163,7 +164,6 @@ class LocalNavPAEEnv:
         # print("[INFO][episode_length_buf]{0}".format(self.episode_length_buf))
         # print(self.ll_env.reward_manager.episode_sums["contact_forces"])
         return (self.obs_buf,self.rew_buf, self.reset_buf, self.extras)
-    
     def _preprocess_actions(self, actions: torch.Tensor):
         # scale the actions
         self.actions = actions
@@ -172,24 +172,51 @@ class LocalNavPAEEnv:
         latent_action = self.actions[:,:16]
         residual_action = self.actions[:,16:] * self.cfg.residual_action_scale
         #scale latent params except phase
-        scaled_latent_action = latent_action
-        scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
-        scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+        self.scaled_latent_action = torch.zeros_like(latent_action)
+        self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
+        self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(self.scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
         #--------------------
         # self.scaled_action = self.actions * self.action_scale
         # self.scaled_action += self.action_offset
         # set the velocity command
         if self.flag_enable_set_ll_commands:
-            commands:dict = {}
-            commands["phase"] = scaled_latent_action[:,0:4]
-            commands["freq"] = scaled_latent_action[:,4:8]
-            commands["amp"] = scaled_latent_action[:,8:12]
-            commands["offset"] = scaled_latent_action[:,12:16]
-            commands["residual"] = residual_action
-            self.ll_env.set_commands(commands)
+            self.commands:dict = {}
+            self.commands["phase"] = self.scaled_latent_action[:,0:4]#Note: phase is zero!!
+            self.commands["freq"] = self.scaled_latent_action[:,4:8]
+            self.commands["amp"] = self.scaled_latent_action[:,8:12]
+            self.commands["offset"] = self.scaled_latent_action[:,12:16]
+            self.commands["residual"] = residual_action
+            self.ll_env.set_commands(self.commands)
             self.residual_action = residual_action
         self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
         return actions  
+    
+    # def _preprocess_actions(self, actions: torch.Tensor):
+    #     # scale the actions
+    #     self.actions = actions
+    #     # self.scaled_action = self.actions
+    #     #---------------------
+    #     latent_action = self.actions[:,:16]
+    #     residual_action = self.actions[:,16:] * self.cfg.residual_action_scale
+    #     #scale latent params except phase
+    #     scaled_latent_action = latent_action
+    #     scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] * self.ll_env.fld_module.latent_param_std + self.ll_env.fld_module.latent_param_mean
+    #     scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:] = torch.clamp(scaled_latent_action[:,self.ll_env.cfg.fld.latent_channel:],self.ll_env.fld_module.latent_param_min, self.ll_env.fld_module.latent_param_max)
+    #     #--------------------
+    #     # self.scaled_action = self.actions * self.action_scale
+    #     # self.scaled_action += self.action_offset
+    #     # set the velocity command
+    #     if self.flag_enable_set_ll_commands:
+    #         commands:dict = {}
+    #         commands["phase"] = scaled_latent_action[:,0:4]
+    #         commands["freq"] = scaled_latent_action[:,4:8]
+    #         commands["amp"] = scaled_latent_action[:,8:12]
+    #         commands["offset"] = scaled_latent_action[:,12:16]
+    #         commands["residual"] = residual_action
+    #         self.ll_env.set_commands(commands)
+    #         self.residual_action = residual_action
+    #     self.ll_env.obs_dict = self.ll_env.obs_manager.compute_obs(self.ll_env)
+    #     return actions  
         
     def _get_ll_actions(self):
         """Apply actions to simulation buffers in the environment."""
@@ -198,7 +225,7 @@ class LocalNavPAEEnv:
         return ll_action  
     def _draw_hl_debug_vis(self):
         if self.cfg.env.enable_debug_vis:
-            self.sensor_manager.debug_vis(self.ll_env.envs)
+            # self.sensor_manager.debug_vis(self.ll_env.envs)
             # self._draw_global_memory()
             self._draw_target_position()
     def _post_ll_step(self):
