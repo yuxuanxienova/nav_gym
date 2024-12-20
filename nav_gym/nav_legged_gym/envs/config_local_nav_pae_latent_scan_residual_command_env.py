@@ -21,12 +21,12 @@ NUM_NODES = 20
 #-------------------------------------------------
 class LocalNavPAEEnvCfg:
     ll_env_cfg = LocomotionPAELatentScanEnvCfg()
-    hl_decimation: int = 8 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
+    hl_decimation: int = 4 #high level control loop: interval = hl_decimation * ll_env_cfg.dt (4 * 0.02 = 0.08[s])
     max_x_vel = 2.0
     max_y_vel = 1.0
     max_yaw_rate = 1.0
 
-    residual_action_scale = 0.1
+    residual_action_scale = 0.0
 
     # for beta distribution
     # vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw
