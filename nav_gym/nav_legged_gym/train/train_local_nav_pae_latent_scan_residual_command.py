@@ -20,9 +20,9 @@ if __name__ == "__main__":
     train_cfg_dict = class_to_dict(train_cfg)
 
     hl_env_cfg = LocalNavPAEEnvCfg()
-    hl_env_cfg.env.num_envs = 512
-    hl_env_cfg.gym.headless = False   
-    hl_env_cfg.env.enable_debug_vis = True
+    hl_env_cfg.env.num_envs = 4096
+    hl_env_cfg.gym.headless = True
+    hl_env_cfg.env.enable_debug_vis = False
     hl_env_cfg.ll_env_cfg.gym.viewer.eye = (-60.0, -60.0, 3.0)
     # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [60.0, 60.0, 0.0]
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/simple_terrain2.obj"
