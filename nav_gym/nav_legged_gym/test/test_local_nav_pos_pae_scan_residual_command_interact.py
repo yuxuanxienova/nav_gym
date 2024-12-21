@@ -8,7 +8,7 @@ from nav_gym.nav_legged_gym.envs.locomotion_pae_latent_scan_residual_command_env
 from nav_gym.nav_legged_gym.envs.config_local_nav_pae_latent_scan_residual_command_env import LocalNavPAEEnvCfg
 from nav_gym.nav_legged_gym.envs.local_nav_pae_latent_scan_residual_command_env import LocalNavPAEEnv
 from nav_gym.learning.runners.on_policy_runner import OnPolicyRunner
-from nav_gym.nav_legged_gym.train.config_train_local_nav_pae_latent_scan_command import TrainConfig
+from nav_gym.nav_legged_gym.train.config_train_local_nav_pae_latent_scan_residual_command import TrainConfig
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.test.interactive_module import InteractModuleVelocity,InteractModulePosition
 from nav_gym import NAV_GYM_ROOT_DIR
@@ -21,13 +21,14 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1220_1/" + "model_600.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1221_1/" + "model_300.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocalNavPAEEnvCfg()
     env_cfg.env.num_envs = 1
+    env_cfg.env.enable_debug_vis = True
 
     env = LocalNavPAEEnv(env_cfg, LocomotionPAELatentScanEnv)
     env.set_flag_enable_resample_pos(False)

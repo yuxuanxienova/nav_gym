@@ -343,6 +343,7 @@ class LocalNavPAEEnv:
         #command: torch.Tensor(self.num_envs, 3)
         command = torch.tensor([x_goal, y_goal, z_goal], device=self.device).repeat(self.num_envs, 1)
         self.command_generator.set_goal_position_command(command)
+        self.command_generator.update_goal_z()
     def set_flag_enable_reset(self, enable_reset: bool):
         self.flag_enable_reset = enable_reset
         print(f"[INFO][Local Nav Env]Reset flag set to {enable_reset}")
