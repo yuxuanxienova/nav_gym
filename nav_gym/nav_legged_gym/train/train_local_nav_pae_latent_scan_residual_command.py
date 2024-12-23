@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/CombinedMesh_v4_2.obj"
     # hl_env_cfg.ll_env_cfg.terrain_unity.translation = [-30.0, -30.0, 0.0]
     # hl_env_cfg.ll_env_cfg.terrain_unity.terrain_file = "/terrain/LocomotionMap_v1.obj"
-    # hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 3.0
+    # hl_env_cfg.ll_env_cfg.terrain_unity.grid_pattern.env_spacing = 5.0
 
 
     env = LocalNavPAEEnv(hl_env_cfg, LocomotionPAELatentScanEnv)
