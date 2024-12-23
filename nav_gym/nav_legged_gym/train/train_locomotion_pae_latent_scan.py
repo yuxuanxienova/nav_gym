@@ -10,15 +10,15 @@ import torch
 import os
 import time
 if __name__ == "__main__":
-    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan/" + time.strftime("%Y%m%d-%H%M%S"))
+    log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan_normalized/" + time.strftime("%Y%m%d-%H%M%S"))
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan/20241209-173845/" + "model_300.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
 
     env_cfg = LocomotionPAELatentScanEnvCfg()
-    env_cfg.env.num_envs = 256
-    # env_cfg.env.num_envs = 4096
+    # env_cfg.env.num_envs = 256
+    env_cfg.env.num_envs = 4096
     env_cfg.gym.headless = True
     env_cfg.terrain_unity.translation = [0.0, 0.0, -1.0]
     env_cfg.terrain_unity.grid_pattern.env_spacing = 0.5

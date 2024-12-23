@@ -473,9 +473,13 @@ class LocomotionPAELatentScanEnv:
         #4. fld
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_sin"])
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_freq"])
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_amp"])
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_offset"])
+        ##-------original
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_freq"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_amp"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_offset"])
+        #-------normalized
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_others_normalized"])
+
 
         self.obs_buf = torch.cat(obs_list, dim=1)
         #-------------

@@ -104,9 +104,15 @@ class LocomotionPAELatentScanEnvCfg:
             #---------------------------
             fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.01}
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.01}
-            fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.1}
-            fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.1}
-            fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.01}
+            #---------------------original-----------------
+            # fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.1}
+            # fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.1}
+            # fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.01}
+            #---------------------normalized latent-----------
+            fld_latent_others_normalized: dict = {"func": O.fld_latent_others_normalized, "noise": 0.01}
+            
+
+
             # fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
             # fld_latent_onehot: dict = {"func": O.fld_one_hot, "noise": 0.0}
             # fld_target_dof_pos_leg_fl: dict = {"func": O.fld_target_dof_pos_leg_fl, "noise": 0.0}
@@ -216,7 +222,9 @@ class LocomotionPAELatentScanEnvCfg:
             # "feet_pos_fr": [46, 47, 48],
             # "feet_pos_hr": [49, 50, 51],
         }
-        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/pae"
+        # load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/pae"#original
+        load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/pae_adjust_speed02_50"
+
         load_fld_model = "model_20000.pt" 
     class task_sampler:
         name = "OfflineSamplerPAE"

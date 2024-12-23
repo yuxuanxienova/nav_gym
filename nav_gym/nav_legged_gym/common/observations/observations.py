@@ -265,7 +265,7 @@ def fld_latent_phase_sin(env: "LocomotionFLDEnv", params):
     return torch.sin(2 * torch.pi * env.fld_module.latent_encoding[:, :, 0])
 def fld_latent_phase_cos(env: "LocomotionFLDEnv", params):
     return torch.cos(2 * torch.pi * env.fld_module.latent_encoding[:, :, 0])
-def fld_latent_others(env: "LocomotionFLDEnv", params):
+def fld_latent_others_normalized(env: "LocomotionFLDEnv", params):
     return (env.fld_module.latent_encoding[:, :, 1:].swapaxes(1, 2).flatten(1, 2) - env.fld_module.latent_param_mean) / env.fld_module.latent_param_std
 def fld_latent_freq(env: "LocomotionFLDEnv", params):
     return env.fld_module.latent_encoding[:, :, 1]#Dim: (num_envs, latent_dim)

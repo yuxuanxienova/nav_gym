@@ -99,7 +99,7 @@ class LocomotionFLDEnvCfg:
             #---------------------------
             fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.0}
             fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.0}
-            fld_latent_others: dict = {"func": O.fld_latent_others, "noise": 0.0}
+            fld_latent_others: dict = {"func": O.fld_latent_others_normalized, "noise": 0.0}
             fld_reconstructed_base_lin_vel: dict = {"func": O.fld_target_base_lin_vel, "noise": 0.0}
             fld_reconstructed_base_ang_vel: dict = {"func": O.fld_target_base_ang_vel, "noise": 0.0}
             fld_reconstructed_projected_gravity: dict = {"func": O.fld_target_projected_gravity, "noise": 0.0}
