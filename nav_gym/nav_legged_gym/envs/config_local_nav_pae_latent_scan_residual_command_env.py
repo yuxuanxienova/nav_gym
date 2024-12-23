@@ -27,6 +27,7 @@ class LocalNavPAEEnvCfg:
     max_yaw_rate = 1.0
 
     residual_action_scale = 0.2
+    latent_action_scale = 0.02
 
     # for beta distribution
     # vel_cmd_max: Tuple[float, float, float] = (max_x_vel, max_y_vel, max_yaw_rate)  # x, y, yaw

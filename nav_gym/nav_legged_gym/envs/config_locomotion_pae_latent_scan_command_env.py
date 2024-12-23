@@ -217,6 +217,9 @@ class LocomotionPAELatentScanEnvCfg:
             # "feet_pos_hr": [49, 50, 51],
         }
         load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/pae"
+        #----------debug use----------------
+        # load_root_pretrain = NAV_GYM_ROOT_DIR + "/resources/fld/pretrain/pae_adjust_speed02_50"
+        #-----------------------------------
         load_fld_model = "model_20000.pt" 
     class task_sampler:
         name = "OfflineSamplerPAE"

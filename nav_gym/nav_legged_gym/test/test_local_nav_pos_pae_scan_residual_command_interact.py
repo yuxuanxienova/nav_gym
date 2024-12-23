@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
-    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1221_1/" + "model_300.pt")
+    checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/local_nav/pae_latent_scan_residual_command/cluster_1223_0/" + "model_1200.pt")
     # log_dir = None
     train_cfg = TrainConfig
     train_cfg_dict = class_to_dict(train_cfg)
@@ -55,6 +55,12 @@ if __name__ == "__main__":
 
         # Run the policy and step the environment
         action = policy(obs)
+        #----------------Debug use----------------------
+        action = torch.tensor([[-1.5960,  0.7471, -0.4432, -1.0827,  3.4517,  0.2078, -0.2639,  2.0809,
+         -1.1038,  0.5347,  2.0505, -2.8823,  2.5569, -1.7329,  0.6075, -1.2961,
+          1.5774, -0.4106, -0.0981, -0.9135, -0.3734,  1.0960, -1.5318, -1.9521,
+         -3.0494, -0.5374,  0.6187, -1.7240,  0.0894]], device='cuda:0')
+        #------------------------------------------
         obs, _, _, extras = env.step(action)
         env.ll_env.render()
 
