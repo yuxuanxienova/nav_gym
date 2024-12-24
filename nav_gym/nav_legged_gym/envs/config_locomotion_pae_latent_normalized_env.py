@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 from nav_gym.nav_legged_gym.utils.conversion_utils import class_to_dict
 from nav_gym.nav_legged_gym.common.commands.commands_cfg import UnifromVelocityCommandCfg
 from nav_gym import NAV_GYM_ROOT_DIR
-class LocomotionPAELatentScanEnvCfg:
+class LocomotionPAELatentNormalizedEnvCfg:
     class env:
         """Common configuration for environment."""
 
@@ -50,7 +50,7 @@ class LocomotionPAELatentScanEnvCfg:
 
     class sensors:
         raycasters_dict = {
-                        "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=2.0, length=3.0, resolution=0.2),max_xy_drift=0.075,max_z_drift=0.075),
+                        # "height_scanner": RaycasterCfg(attachement_pos=(0.0, 0.0, 20.0), attach_yaw_only=True, pattern_cfg=GridPatternCfg(width=2.0, length=3.0, resolution=0.2),max_xy_drift=0.075,max_z_drift=0.075),
                         #  "base_scan_center" : BaseScanCfg(body_attachement_name="base", enable_debug_vis=False)  # to check base height
                           }
     class randomization:
@@ -92,24 +92,24 @@ class LocomotionPAELatentScanEnvCfg:
             base_ang_vel: dict = {"func": O.base_ang_vel, "noise": 0.2, "scale": 0.25}
             projected_gravity: dict = {"func": O.projected_gravity, "noise": 0.05, "scale": 1.0}
             
-        class exte:
-            # --add this to every group--
-            add_noise: bool = True  # turns off the noise in all observations
-            #--------------------------- 
-            height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
+        # class exte:
+        #     # --add this to every group--
+        #     add_noise: bool = True  # turns off the noise in all observations
+        #     #--------------------------- 
+        #     # height_scan: dict = {"func": O.ray_cast, "noise": 0.1, "sensor": "height_scanner", "clip": (-1, 1.0)}
 
         class fld:
             # --add this to every group--
             add_noise: bool = True
             #---------------------------
-            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.01}
-            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.01}
+            fld_latent_phase_sin: dict = {"func": O.fld_latent_phase_sin, "noise": 0.1}
+            fld_latent_phase_cos: dict = {"func": O.fld_latent_phase_cos, "noise": 0.1}
             #---------------------original-----------------
-            fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.1}
-            fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.1}
-            fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.01}
+            # fld_latent_freq: dict = {"func": O.fld_latent_freq, "noise": 0.1}
+            # fld_latent_amp: dict = {"func": O.fld_latent_amp, "noise": 0.1}
+            # fld_latent_offset: dict = {"func": O.fld_latent_offset, "noise": 0.01}
             #---------------------normalized latent-----------
-            # fld_latent_others_normalized: dict = {"func": O.fld_latent_others_normalized, "noise": 0.01}
+            fld_latent_others_normalized: dict = {"func": O.fld_latent_others_normalized, "noise": 0.1}
             
 
 
@@ -256,5 +256,5 @@ class LocomotionPAELatentScanEnvCfg:
             num_classes = 9
 
 if __name__ == "__main__":
-    env_cfg = LocomotionPAELatentEnvCfg()
+    env_cfg = LocomotionPAELatentNormalizedEnvCfg()
     print(env_cfg.robot.init_state.dof_pos.items())

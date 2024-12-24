@@ -18,6 +18,7 @@ if __name__ == "__main__":
     # Set up your environment and policy
     log_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/" + time.strftime("%Y%m%d-%H%M%S"))
     checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan/cluster_1211_1/" + "model_18000.pt")
+    # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae_latent_scan_normalized/cluster_1224_0/" + "model_8700.pt")
     # checkpoint_dir = os.path.join(os.path.dirname(NAV_GYM_ROOT_DIR), "logs/locomotion_pae/student_pc_1210_1/" + "model_29700.pt")
     # log_dir = None
     train_cfg = TrainConfig

@@ -150,7 +150,7 @@ class LocalNavPAEEnvCfg:
         # dof_acc = {"func": R.dof_acc, "scale": -5e-7}
         torques = {"func": R.torques, "scale": -0.000001}
         torque_limits = {"func": R.torque_limits, "scale": -0.01, "soft_ratio": 0.9}
-        residual_actions = {"func": R.residual_actions, "scale": -0.002}
+        residual_actions = {"func": R.residual_actions, "scale": -0.2}
 
         goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1.4, "scale": 10}
         # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}

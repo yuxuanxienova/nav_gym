@@ -18,7 +18,7 @@ import torch
 import abc
 import json
 # legged-gym
-from nav_gym.nav_legged_gym.envs.config_locomotion_pae_latent_scan_env import LocomotionPAELatentScanEnvCfg
+from nav_gym.nav_legged_gym.envs.config_locomotion_pae_latent_normalized_env import LocomotionPAELatentNormalizedEnvCfg
 from nav_gym.nav_legged_gym.common.assets.robots.legged_robots.legged_robot import LeggedRobot
 from nav_gym.nav_legged_gym.common.sensors.sensors import SensorBase, Raycaster
 from nav_gym.nav_legged_gym.utils.math_utils import wrap_to_pi
@@ -33,12 +33,12 @@ from nav_gym.nav_legged_gym.common.sensors.sensor_manager import SensorManager
 from nav_gym.nav_legged_gym.common.commands.command import CommandBase,UnifromVelocityCommand,UnifromVelocityCommandCfg
 from nav_gym.nav_legged_gym.utils.visualization_utils import BatchWireframeSphereGeometry
 from nav_gym.nav_legged_gym.envs.modules.pae_module import FLD_PAEModule
-class LocomotionPAELatentScanEnv:
+class LocomotionPAELatentNormalizedEnv:
     robot: LeggedRobot
-    cfg: LocomotionPAELatentScanEnvCfg
+    cfg: LocomotionPAELatentNormalizedEnvCfg
     """Environment for locomotion tasks using a legged robot."""
 #-------- 1. Initialize the environment--------
-    def __init__(self, cfg: LocomotionPAELatentScanEnvCfg):
+    def __init__(self, cfg: LocomotionPAELatentNormalizedEnvCfg):
         #1. Store the environment information from config
         self._init_done = False
         self.cfg = cfg
@@ -468,17 +468,17 @@ class LocomotionPAELatentScanEnv:
         obs_list.append(self.obs_manager.obs_per_func["projected_gravity"])
 
         #3. exte
-        obs_list.append(self.obs_manager.obs_per_func["height_scan"])
+        # obs_list.append(self.obs_manager.obs_per_func["height_scan"])
 
         #4. fld
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_sin"])
         obs_list.append(self.obs_manager.obs_per_func["fld_latent_phase_cos"])
         ##-------original
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_freq"])
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_amp"])
-        obs_list.append(self.obs_manager.obs_per_func["fld_latent_offset"])
-        # #-------normalized
-        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_others_normalized"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_freq"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_amp"])
+        # obs_list.append(self.obs_manager.obs_per_func["fld_latent_offset"])
+        #-------normalized
+        obs_list.append(self.obs_manager.obs_per_func["fld_latent_others_normalized"])
 
 
         self.obs_buf = torch.cat(obs_list, dim=1)
