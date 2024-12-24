@@ -141,18 +141,18 @@ class LocalNavPAEEnvCfg:
         # reward functions
         # goal_position = {"func": R.tracking_dense, "max_error": GOAL_RADIUS, "scale": 0.5}
         # goal_dot = {"func": R.goal_dot_prod_decay, "goal_radius": GOAL_RADIUS, "max_magnitude": 0.5, "scale": 0.2}
-        termination = {"func": R.termination, "scale": -5.0}
+        termination = {"func": R.termination, "scale": -200.0}
         survival = {"func": R.survival, "scale": 0.5}
-        # feet_acc = {"func": R.feet_acc, "scale": -0.0001}
+        feet_acc = {"func": R.feet_acc, "scale": -0.0001}
         action_rate = {"func": R.action_rate, "scale": -0.001}
         collision_THIGHSHANK = {"func": R.collision, "scale": -0.5, "bodies": ".*(THIGH|SHANK)"}
         collision_base = {"func": R.collision, "scale": -0.5, "bodies": "base"}
-        # dof_acc = {"func": R.dof_acc, "scale": -5e-7}
+        dof_acc = {"func": R.dof_acc, "scale": -5e-7}
         torques = {"func": R.torques, "scale": -0.000001}
         torque_limits = {"func": R.torque_limits, "scale": -0.01, "soft_ratio": 0.9}
         residual_actions = {"func": R.residual_actions, "scale": -0.2}
 
-        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1.4, "scale": 10}
+        goal_tracking_dense_dot = {"func": R.goal_tracking_dense_dot, "goal_radius": GOAL_RADIUS, "max_magnitude": 1.4, "scale": 15}
         # reach_goal = {"func": R.reach_goal, "goal_radius": GOAL_RADIUS, "scale": 0.1}
         # tracking_objective = {"func": R.tracking_objective, "scale": 40}
         # tracking_pos_ase = {"func": R.tracking_pos_ase, "scale": 40, "exp_scale": 0.005}
